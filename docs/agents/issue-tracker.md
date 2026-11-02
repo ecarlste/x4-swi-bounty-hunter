@@ -1,7 +1,5 @@
 # Issue tracker: GitHub
 
-> This repo isn't on GitHub yet. Until it's published, `gh` commands fail, so ask the user to publish rather than falling back to another tracker.
-
 Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
 ## Conventions

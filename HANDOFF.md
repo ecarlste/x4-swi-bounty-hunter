@@ -4,6 +4,7 @@ Read this first in a new session, then the docs it links. Update it or delete it
 
 ## What exists
 
+- The repo is public at https://github.com/ecarlste/x4-swi-bounty-hunter (since 2026-11-01), with GitHub Issues and the five triage labels set up (CLAUDE.md, docs/agents/).
 - [concept.md](concept.md): the series concept and its open questions. Not grilled yet.
 - [mods.md](mods.md): the install (8.00 HF4, DLCs, SWI 0.90), how we check a mod, and the candidates. Head Hunter - Reloaded 1.01 is rejected as is, because it's built for 9.00.
 - [bounty-research.md](bounty-research.md): how bounty hunting works in SWI and vanilla 8.00, Head Hunter's features, and the gap analysis. All 17 Head Hunter features can be built on 8.00 + SWI: 14 we know how to build, and 3 SWI or vanilla already cover. The detail is in [research/](research/): `swi-bounty.md`, `vanilla-bounty.md`, `headhunter.md` and `save-check-knw-904.md`.
@@ -31,7 +32,6 @@ The extension's design was agreed on 2026-11-01: see [design.md](design.md). Bui
 4. **More automated tests:** T10, T11, T17 and T19 (see test-plan.md).
 5. **Research:** whether the user's "war missions" are Mayday, Escort or Sector Raid. Whether kuertee's UI Extensions installed separately overrides SWI's built-in menus (mods.md). Whether SirNukes 1.95 runs on 8.00 with SWI (T14).
 6. **Deferred sessions:** the "give up or die" hail, full immunity's price, hunters hunting the player, grilling concept.md's other open questions and which Head Hunter features the series wants, and a brainstorm for the name.
-7. **Repo:** this folder isn't a git repo yet and isn't on GitHub. `git init` and publish when the user asks. Then create the five triage labels on GitHub (`gh label create`, see docs/agents/triage-labels.md); CLAUDE.md and docs/agents/ set GitHub Issues as the tracker.
 
 ## Working notes
 
