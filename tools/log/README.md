@@ -12,6 +12,7 @@ The `swibh` extension writes one `[swibh] {json}` line to `debuglog.txt` per **l
 | [md.ts](md.ts) | Builds the MD library [extension/swibh/md/swibh_log.xml](../../extension/swibh/md/swibh_log.xml) from the schema |
 | [generate.ts](generate.ts) | Writes that file (`make log-xml`) or checks it's current (`--check`) |
 | [parse.ts](parse.ts) | The parser extractors import: `readLog(lines)` gives typed events, errors by line number, events by **hunt key**, and **open hunts**. `parseLine(text)` checks one line, for an extractor that judges replays itself (`tools/hunt-log` undoes reloaded branches before it drops repeated lines, so it can't use `readLog`'s early drop) |
+| [game-check.ts](game-check.ts) | Reads the engagement game test's events from a `debuglog.txt` (run by `make game-test`) |
 
 ## Writing an event from MD
 
@@ -26,7 +27,7 @@ Call the generated library; never write a `[swibh]` line by hand:
 </run_actions>
 ```
 
-- Each data field is a param of the same name; events that carry the hunt key also take `hunt`. The library adds `v`, `type` and `t` (`player.age`) itself.
+- Each data field is a param of the same name; events that carry the hunt key also take `hunt`. Where the key is optional (`engagement.start`/`.end`: only a hunt engagement has one), `hunt` defaults to `null` and the line leaves `"hunt"` out. The library adds `v`, `type` and `t` (`player.age`) itself.
 - A field typed as a shape takes that shape's input: a component for `Ship`, `Ref` and `FactionRef` (the helper reads `.idcode`, `.macro.id` and so on), and a table for the others, keyed by field name, such as `table[$kill = $Kill, $upTo = $UpTo]` for `Offer`.
 - A list field takes a list of those inputs. A nullable field's param defaults to `null`, so it can be left out.
 - Money must be an MD money value (`1Cr`, `$x * 1ct`): it prints as integer ct.

@@ -100,12 +100,15 @@ export function parseLine(text: string): LogEvent | string | null {
     v: int(),
     type: id(),
     t: number(),
-    ...(def.hunt ? { hunt: id() } : {}),
+    ...(def.hunt === true || (def.hunt === "optional" && "hunt" in json) ? { hunt: id() } : {}),
     data: shape({ name: json.type, fields: def.data }),
   };
   const error = checkFields(envelope, json, json.type);
   return error ?? (json as LogEvent);
 }
+
+// Hunt events always carry the key; engagements only when the target's wing took part
+const hasHuntKey = (event: LogEvent): event is HuntEvent => "hunt" in event && event.hunt !== undefined;
 
 // Reads a debug log's lines. Lines replayed by a reload are dropped: an event whose
 // JSON is the same as an earlier one's, except session.start, which marks each load.
@@ -129,7 +132,7 @@ export async function readLog(lines: Iterable<string> | AsyncIterable<string>): 
       seen.add(json);
     }
     log.events.push(result);
-    if ("hunt" in result) {
+    if (hasHuntKey(result)) {
       const hunt = log.hunts.get(result.hunt) ?? [];
       hunt.push(result);
       log.hunts.set(result.hunt, hunt);

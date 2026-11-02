@@ -26,7 +26,7 @@
       <actions>
         <!-- Set to false to keep the game open after the run, e.g. to look around after a failure -->
         <set_value name="$QuitWhenDone" exact="true"/>
-        <set_value name="$Tests" exact="[Smoke, T01PayCap, T01Knw904]"/>
+        <set_value name="$Tests" exact="[Smoke, T01PayCap, T01Knw904, Engagement]"/>
         <set_value name="$Index" exact="0"/>
         <set_value name="$StartAge" exact="player.age"/>
         <set_value name="$Passed" exact="0"/>
@@ -316,6 +316,177 @@
             <do_if value="@$Target.exists">
               <destroy_object object="$Target"/>
             </do_if>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+
+    <!-- Engagement (#23): the swibh extension's engagement log events (extension/swibh/md/
+         swibh_engagement.xml, installed into this extension by the runner). Gives the player a
+         wingman (t65b_xwing_macro on defence) and makes galempire hostile, then fights twice:
+           1. a TIE (tie_fighter_macro) registered as a hunt's target (HuntStarted), so the
+              engagement must carry the hunt key swibh-test-hunt;
+           2. another TIE that's in no hunt, so it must not.
+         Each TIE attacks the player's ship; it's kept alive (min hull) until the player's ship has
+         taken a hit and the wingman has dealt one, then destroyed. The quiet gap is shortened to
+         10 s, so each engagement ends with reason quiet. The player's ship and the wingman keep a
+         min hull, so nobody dies. Hit counts and durations go to INFO (the hit-rate unknown).
+         The runner's log check (tools/log/game-check.ts) then reads the same engagements from
+         debuglog.txt with the log parser. -->
+    <cue name="Engagement">
+      <conditions>
+        <event_cue_signalled/>
+      </conditions>
+      <actions>
+        <set_value name="$Engagements" exact="md.SWIBH_Engagement.Engagements"/>
+        <set_value name="$Problems" exact="''"/>
+        <set_value name="$Summary" exact="''"/>
+        <set_value name="$OldRelation" exact="faction.galempire.relationto.{faction.player}"/>
+        <set_faction_relation faction="faction.galempire" otherfaction="faction.player" value="-1"/>
+        <set_value name="$OldQuietGap" exact="md.SWIBH_Engagement.Engagements.$QuietGap"/>
+        <set_value name="md.SWIBH_Engagement.Engagements.$QuietGap" exact="10s"/>
+        <set_object_min_hull object="player.occupiedship" exact="50"/>
+        <create_ship name="$Wingman" macro="t65b_xwing_macro" sector="player.sector">
+          <owner exact="faction.player" overridenpc="true"/>
+          <pilot>
+            <select race="player.entity.race" tags="tag.aipilot"/>
+          </pilot>
+          <loadout>
+            <level exact="1.0"/>
+          </loadout>
+          <safepos object="player.occupiedship" x="300m" allowyaxis="true"/>
+        </create_ship>
+      </actions>
+      <cues>
+        <cue name="Engagement_Setup">
+          <delay exact="2s"/>
+          <actions>
+            <do_if value="not @$Wingman.exists">
+              <set_value name="$Problems" exact="' t65b_xwing_macro wingman was not created;'"/>
+              <signal_cue_instantly cue="Engagement_Done"/>
+            </do_if>
+            <do_else>
+              <set_object_min_hull object="$Wingman" exact="50"/>
+              <set_object_commander object="$Wingman" commander="player.occupiedship" assignment="assignment.defence"/>
+              <signal_cue_instantly cue="Engagement_Fight" param="table[$phase = 1, $hunt = 'swibh-test-hunt']"/>
+            </do_else>
+          </actions>
+        </cue>
+
+        <!-- One fight: param table[$phase, $hunt], $hunt null for a TIE in no hunt -->
+        <cue name="Engagement_Fight" instantiate="true" namespace="this">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$Phase" exact="event.param.$phase"/>
+            <set_value name="$Hunt" exact="event.param.$hunt"/>
+            <set_value name="$Begun" exact="player.age"/>
+            <create_ship name="$Enemy" macro="tie_fighter_macro" sector="player.sector">
+              <owner exact="faction.galempire" overridenpc="true"/>
+              <pilot>
+                <select faction="faction.galempire" tags="tag.aipilot"/>
+              </pilot>
+              <loadout>
+                <level exact="1.0"/>
+              </loadout>
+              <safepos object="player.occupiedship" z="2km" allowyaxis="true"/>
+            </create_ship>
+            <do_if value="@$Enemy.exists">
+              <set_object_min_hull object="$Enemy" exact="30"/>
+              <do_if value="$Hunt">
+                <run_actions ref="md.SWIBH_Engagement.HuntStarted">
+                  <param name="hunt" value="$Hunt"/>
+                  <param name="target" value="$Enemy"/>
+                </run_actions>
+              </do_if>
+              <create_order object="$Enemy" id="'Attack'" immediate="true">
+                <param name="primarytarget" value="player.occupiedship"/>
+              </create_order>
+            </do_if>
+          </actions>
+          <cues>
+            <!-- Both ships have a hit (or 120 s passed): the TIE has done its job -->
+            <cue name="Engagement_Hits" checkinterval="1s">
+              <conditions>
+                <check_value value="not @$Enemy.exists or player.age gt $Begun + 120s or (@Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0 and @Engagement.$Engagements.$Ships.{Engagement.$Wingman}.$hitsDealt gt 0)"/>
+              </conditions>
+              <actions>
+                <set_value name="$HitsAt" exact="player.age"/>
+                <do_if value="@$Enemy.exists">
+                  <destroy_object object="$Enemy"/>
+                </do_if>
+              </actions>
+              <cues>
+                <!-- The quiet gap ran out (10 s, then up to 2 s for the poll), or 30 s passed -->
+                <cue name="Engagement_Closed" checkinterval="1s">
+                  <conditions>
+                    <check_value value="not Engagement.$Engagements.$Open or player.age gt $HitsAt + 30s"/>
+                  </conditions>
+                  <actions>
+                    <set_value name="$Problems" exact="''"/>
+                    <set_value name="$Closed" exact="Engagement.$Engagements.$LastClosed"/>
+                    <!-- $Start is the last engagement's: one from before this fight means none opened -->
+                    <do_if value="Engagement.$Engagements.$Open or not $Closed or Engagement.$Engagements.$Start lt $Begun">
+                      <set_value name="$Problems" exact="' fight %s: no engagement opened and closed (hits at t %s, last start t %s, open %s);'.[$Phase, $HitsAt, Engagement.$Engagements.$Start, Engagement.$Engagements.$Open]"/>
+                    </do_if>
+                    <do_else>
+                      <set_value name="$PlayerStats" exact="null"/>
+                      <set_value name="$WingStats" exact="null"/>
+                      <do_for_each name="$Stats" in="$Closed.$ships">
+                        <do_if value="$Stats.$player">
+                          <set_value name="$PlayerStats" exact="$Stats"/>
+                        </do_if>
+                        <do_elseif value="$Stats.$idcode == @Engagement.$Wingman.idcode">
+                          <set_value name="$WingStats" exact="$Stats"/>
+                        </do_elseif>
+                        <debug_text text="'[swibh-test] INFO engagement: fight %s: %s %s (player %s) took %s hits, dealt %s, kills %s, sectors %s, between t %s and %s (%s s)'.[$Phase, $Stats.$macro, $Stats.$idcode, $Stats.$player, $Stats.$hitsTaken, $Stats.$hitsDealt, $Stats.$kills, $Stats.$sectors, Engagement.$Engagements.$Start, Engagement.$Engagements.$LastHit, Engagement.$Engagements.$LastHit - Engagement.$Engagements.$Start]" filter="general"/>
+                      </do_for_each>
+                      <do_if value="$Closed.$reason != 'quiet'">
+                        <set_value name="$Problems" exact="$Problems + ' fight %s ended with reason %s, not quiet;'.[$Phase, $Closed.$reason]"/>
+                      </do_if>
+                      <do_if value="$Closed.$hunt != $Hunt">
+                        <set_value name="$Problems" exact="$Problems + ' fight %s has hunt key %s, expected %s;'.[$Phase, $Closed.$hunt, $Hunt]"/>
+                      </do_if>
+                      <do_if value="not $PlayerStats or $PlayerStats.$hitsTaken le 0">
+                        <set_value name="$Problems" exact="$Problems + ' fight %s: no hit taken by the player\'s ship;'.[$Phase]"/>
+                      </do_if>
+                      <do_if value="not $WingStats or $WingStats.$hitsDealt le 0">
+                        <set_value name="$Problems" exact="$Problems + ' fight %s: no hit dealt by the wingman;'.[$Phase]"/>
+                      </do_if>
+                    </do_else>
+                    <do_if value="$Hunt">
+                      <run_actions ref="md.SWIBH_Engagement.HuntEnded">
+                        <param name="hunt" value="$Hunt"/>
+                      </run_actions>
+                    </do_if>
+                    <set_value name="Engagement.$Problems" exact="Engagement.$Problems + $Problems"/>
+                    <set_value name="Engagement.$Summary" exact="Engagement.$Summary + ' fight %s (%s): %s;'.[$Phase, (if $Hunt then 'hunt' else 'no hunt'), (if $Problems == '' then 'ok' else 'failed')]"/>
+                    <do_if value="$Phase == 1">
+                      <signal_cue_instantly cue="Engagement_Fight" param="table[$phase = 2, $hunt = null]"/>
+                    </do_if>
+                    <do_else>
+                      <signal_cue_instantly cue="Engagement_Done"/>
+                    </do_else>
+                  </actions>
+                </cue>
+              </cues>
+            </cue>
+          </cues>
+        </cue>
+
+        <cue name="Engagement_Done">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="md.SWIBH_Engagement.Engagements.$QuietGap" exact="$OldQuietGap"/>
+            <set_faction_relation faction="faction.galempire" otherfaction="faction.player" value="$OldRelation"/>
+            <set_object_min_hull object="player.occupiedship" exact="0"/>
+            <do_if value="@$Wingman.exists">
+              <destroy_object object="$Wingman"/>
+            </do_if>
+            <signal_cue_instantly cue="Report" param="table[$name = 'engagement', $ok = ($Problems == ''), $detail = (if $Problems == '' then 'player ship and wingman logged in both engagements; hunt key only on the hunt target\'s;%s'.[$Summary] else $Problems)]"/>
           </actions>
         </cue>
       </cues>

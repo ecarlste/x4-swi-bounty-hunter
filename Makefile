@@ -65,6 +65,8 @@ hunt-log:
 	@if [ -z "$(LOG)" ]; then echo "Usage: make hunt-log LOG=<copy of debuglog.txt>"; exit 2; fi
 	@node tools/hunt-log.ts "$(LOG)"
 
-# The runner installs the test extension itself (and removes it afterwards), so there's no separate deploy
+# The runner installs the test extension itself (and removes it afterwards), so there's no separate deploy.
+# Then the log parser reads the run's [swibh] log events from the copy of debuglog.txt it leaves
 game-test:
 	@$(POWERSHELL) "$$(wslpath -w tools/run-game-tests.ps1)" $(ARGS)
+	@case "$(ARGS)" in *-Manual*) ;; *) node tools/log/game-check.ts tests/game/debuglog.txt ;; esac

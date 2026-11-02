@@ -104,3 +104,27 @@ Extend the section 5 manager cue above rather than adding a second engagement:
 5. `engagement.end` adds `ships`: list of {ship (Ship ref), role 'player'|'wing', hitsIn, hitsOut, kills, destroyed}, capped ~12. Wing kills: `event_object_destroyed` on opponents with `event.param` (killer) in `$Wing` [inferred], since `event_player_killed_object` covers the player only.
 
 Unverified in game: hit rates for a 10-ship wing; turret hits on NPC ships firing `event_object_attacked_object`; whether `allsubordinates` includes docked ships and units; sub-subordinate add events reaching the player's ship.
+
+## What was built (#23, 2026-11-02)
+
+`extension/swibh/md/swibh_engagement.xml` follows the recommendations above, with these choices:
+
+- **Hooks:** `event_object_attacked` and `event_object_attacked_object` on two groups, `$LeadGroup` (the ship the player flies) and `$Wing` (its `allsubordinates` that are ships, operational, not units, and not docked in a ship: `@$s.dock.container.isclass.ship`). The player-only events (`event_player_attacked_object`, `event_player_ship_hit`) aren't needed: the lead's group gets both directions, as V md/cover.xml 464-465 does for `$PlayerOccupiedShipGroup`.
+- **Filters:** `killmethod.collided` and `killmethod.hitbyareadamage` dropped; the other object must be defensible (no asteroids), not player-owned (no friendly fire) and not a wreck.
+- **The lead** is `player.occupiedship` unless that's null or a spacesuit; then it stays the last ship flown, so a fight goes on being tracked from the seat-less ship until the quiet gap ends it.
+- **Wing upkeep:** rebuilt on `event_object_subordinate_added/removed` on either group, on `event_control_entity_added/removed object="player.entity"`, and on every 2 s poll while an engagement is open.
+- **Kills:** `event_object_destroyed` on a `$FoeGroup` of every opponent seen; `event.param` (the killer) gets the kill if it's a wing ship with a hit. A kill by a missile or drone may name something else as the killer [**unverified**].
+- **Hunt key:** the hunt hooks (#19) register each active hunt with `md.SWIBH_Engagement.HuntStarted` (`hunt`, `target`), which stashes the target's wing (its top commander and every ship under it, unless that's a station), and remove it with `HuntEnded`. An opponent in a stashed wing, or with the same top commander as the live target, makes the engagement a hunt engagement from then on. **#19 must call these**; until then only the game test does.
+- **End stamp:** `engagement.end` carries `lastHit` (`player.age` of the last hit). The line is written up to the quiet gap + 2 s later, so its wall time at the last hit is about `wall - (t - lastHit)`; that's off only if the game was paused or on SETA in those seconds.
+
+## Unknowns checked in game
+
+To fill in from `make game-test` (test `engagement`, INFO lines) and the T20 playtest in [test-plan.md](../test-plan.md#t20-engagement-log-events-for-the-players-wing). Not run yet.
+
+| Unknown | Answer | Source |
+| --- | --- | --- |
+| Hit-event rate with ~10 wingmen in a big fight (and frame rate) | | T20 playtest (4) |
+| Turret hits and missiles fire `event_object_attacked(_object)` | | T20 playtest (5) |
+| Docked ships or units in `allsubordinates` (filtered either way) | | T20 playtest (6) |
+| 20 s is the right quiet gap | | T20 playtest (7) |
+| Hits per second for one S fighter against the player's ship and one wingman | | `make game-test`, `engagement` INFO lines |

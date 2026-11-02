@@ -193,6 +193,61 @@
         <return value="$Json"/>
       </actions>
     </library>
+    <!-- A WingShip as JSON -->
+    <library name="Json_WingShip" purpose="run_actions">
+      <params>
+        <param name="In"/>
+      </params>
+      <actions>
+        <set_value name="$Json" exact="''"/>
+        <set_value name="$Json" exact="$Json + '{&quot;class&quot;:' + '&quot;%s&quot;'.[$In.$class]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;destroyed&quot;:' + (if $In.$destroyed then 'true' else 'false')"/>
+        <set_value name="$Json" exact="$Json + ',&quot;hitsDealt&quot;:' + '%s'.[($In.$hitsDealt)i]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;hitsTaken&quot;:' + '%s'.[($In.$hitsTaken)i]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;idcode&quot;:' + '&quot;%s&quot;'.[$In.$idcode]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;kills&quot;:' + '%s'.[($In.$kills)i]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;macro&quot;:' + '&quot;%s&quot;'.[$In.$macro]"/>
+        <run_actions ref="md.SWIBH_Log.Json_Name" result="$V1">
+          <param name="In" value="$In.$name"/>
+        </run_actions>
+        <set_value name="$Json" exact="$Json + ',&quot;name&quot;:' + $V1"/>
+        <set_value name="$Json" exact="$Json + ',&quot;player&quot;:' + (if $In.$player then 'true' else 'false')"/>
+        <set_value name="$Json" exact="$Json + ',&quot;sectors&quot;:['"/>
+        <do_for_each name="$E1" in="$In.$sectors" counter="$I1">
+          <do_if value="$I1 gt 1">
+            <set_value name="$Json" exact="$Json + ','"/>
+          </do_if>
+          <set_value name="$Json" exact="$Json + '&quot;%s&quot;'.[$E1]"/>
+        </do_for_each>
+        <set_value name="$Json" exact="$Json + ']'"/>
+        <set_value name="$Json" exact="$Json + '}'"/>
+        <return value="$Json"/>
+      </actions>
+    </library>
+    <!-- A Opponent as JSON -->
+    <library name="Json_Opponent" purpose="run_actions">
+      <params>
+        <param name="In"/>
+      </params>
+      <actions>
+        <set_value name="$Json" exact="''"/>
+        <do_if value="@$In.$idcode == null">
+          <set_value name="$Json" exact="$Json + '{&quot;idcode&quot;:null'"/>
+        </do_if>
+        <do_else>
+          <set_value name="$Json" exact="$Json + '{&quot;idcode&quot;:' + '&quot;%s&quot;'.[@$In.$idcode]"/>
+        </do_else>
+        <set_value name="$Json" exact="$Json + ',&quot;killed&quot;:' + (if $In.$killed then 'true' else 'false')"/>
+        <set_value name="$Json" exact="$Json + ',&quot;macro&quot;:' + '&quot;%s&quot;'.[$In.$macro]"/>
+        <run_actions ref="md.SWIBH_Log.Json_Name" result="$V1">
+          <param name="In" value="$In.$name"/>
+        </run_actions>
+        <set_value name="$Json" exact="$Json + ',&quot;name&quot;:' + $V1"/>
+        <set_value name="$Json" exact="$Json + ',&quot;owner&quot;:' + '&quot;%s&quot;'.[$In.$owner]"/>
+        <set_value name="$Json" exact="$Json + '}'"/>
+        <return value="$Json"/>
+      </actions>
+    </library>
     <!-- Writes a session.start log event. Params: saveMarker, gameVersion, swiVersion -->
     <library name="Log_SessionStart" purpose="run_actions">
       <params>
@@ -422,6 +477,85 @@
         <set_value name="$Line" exact="$Line + ',&quot;lost&quot;:' + $V1"/>
         <set_value name="$Line" exact="$Line + ',&quot;piloted&quot;:' + (if $piloted then 'true' else 'false')"/>
         <set_value name="$Line" exact="$Line + ',&quot;value&quot;:' + '%s'.[$value]"/>
+        <set_value name="$Line" exact="$Line + '}}'"/>
+        <debug_text text="'[swibh] ' + $Line" context="false" filter="general"/>
+      </actions>
+    </library>
+    <!-- Writes a engagement.start log event. Params: hunt, ship, wingmen, firstHit, attacker, attacked -->
+    <library name="Log_EngagementStart" purpose="run_actions">
+      <params>
+        <param name="hunt" default="null"/>
+        <param name="ship"/>
+        <param name="wingmen"/>
+        <param name="firstHit"/>
+        <param name="attacker"/>
+        <param name="attacked"/>
+      </params>
+      <actions>
+        <set_value name="$Line" exact="'{&quot;v&quot;:1,&quot;type&quot;:&quot;engagement.start&quot;,&quot;t&quot;:' + '%s'.[(player.age)f]"/>
+        <do_if value="$hunt != null">
+          <set_value name="$Line" exact="$Line + ',&quot;hunt&quot;:' + '&quot;%s&quot;'.[$hunt]"/>
+        </do_if>
+        <run_actions ref="md.SWIBH_Log.Json_Ref" result="$V1">
+          <param name="In" value="$attacked"/>
+        </run_actions>
+        <set_value name="$Line" exact="$Line + ',&quot;data&quot;:{&quot;attacked&quot;:' + $V1"/>
+        <run_actions ref="md.SWIBH_Log.Json_Ref" result="$V1">
+          <param name="In" value="$attacker"/>
+        </run_actions>
+        <set_value name="$Line" exact="$Line + ',&quot;attacker&quot;:' + $V1"/>
+        <set_value name="$Line" exact="$Line + ',&quot;firstHit&quot;:' + '&quot;%s&quot;'.[$firstHit]"/>
+        <run_actions ref="md.SWIBH_Log.Json_Ship" result="$V1">
+          <param name="In" value="$ship"/>
+        </run_actions>
+        <set_value name="$Line" exact="$Line + ',&quot;ship&quot;:' + $V1"/>
+        <set_value name="$Line" exact="$Line + ',&quot;wingmen&quot;:' + '%s'.[($wingmen)i]"/>
+        <set_value name="$Line" exact="$Line + '}}'"/>
+        <debug_text text="'[swibh] ' + $Line" context="false" filter="general"/>
+      </actions>
+    </library>
+    <!-- Writes a engagement.end log event. Params: hunt, start, lastHit, reason, ships, opponents, opponentsSeen -->
+    <library name="Log_EngagementEnd" purpose="run_actions">
+      <params>
+        <param name="hunt" default="null"/>
+        <param name="start"/>
+        <param name="lastHit"/>
+        <param name="reason"/>
+        <param name="ships"/>
+        <param name="opponents"/>
+        <param name="opponentsSeen"/>
+      </params>
+      <actions>
+        <set_value name="$Line" exact="'{&quot;v&quot;:1,&quot;type&quot;:&quot;engagement.end&quot;,&quot;t&quot;:' + '%s'.[(player.age)f]"/>
+        <do_if value="$hunt != null">
+          <set_value name="$Line" exact="$Line + ',&quot;hunt&quot;:' + '&quot;%s&quot;'.[$hunt]"/>
+        </do_if>
+        <set_value name="$Line" exact="$Line + ',&quot;data&quot;:{&quot;lastHit&quot;:' + '%s'.[($lastHit)f]"/>
+        <set_value name="$Line" exact="$Line + ',&quot;opponents&quot;:['"/>
+        <do_for_each name="$E1" in="$opponents" counter="$I1">
+          <do_if value="$I1 gt 1">
+            <set_value name="$Line" exact="$Line + ','"/>
+          </do_if>
+          <run_actions ref="md.SWIBH_Log.Json_Opponent" result="$V2">
+            <param name="In" value="$E1"/>
+          </run_actions>
+          <set_value name="$Line" exact="$Line + $V2"/>
+        </do_for_each>
+        <set_value name="$Line" exact="$Line + ']'"/>
+        <set_value name="$Line" exact="$Line + ',&quot;opponentsSeen&quot;:' + '%s'.[($opponentsSeen)i]"/>
+        <set_value name="$Line" exact="$Line + ',&quot;reason&quot;:' + '&quot;%s&quot;'.[$reason]"/>
+        <set_value name="$Line" exact="$Line + ',&quot;ships&quot;:['"/>
+        <do_for_each name="$E1" in="$ships" counter="$I1">
+          <do_if value="$I1 gt 1">
+            <set_value name="$Line" exact="$Line + ','"/>
+          </do_if>
+          <run_actions ref="md.SWIBH_Log.Json_WingShip" result="$V2">
+            <param name="In" value="$E1"/>
+          </run_actions>
+          <set_value name="$Line" exact="$Line + $V2"/>
+        </do_for_each>
+        <set_value name="$Line" exact="$Line + ']'"/>
+        <set_value name="$Line" exact="$Line + ',&quot;start&quot;:' + '%s'.[($start)f]"/>
         <set_value name="$Line" exact="$Line + '}}'"/>
         <debug_text text="'[swibh] ' + $Line" context="false" filter="general"/>
       </actions>

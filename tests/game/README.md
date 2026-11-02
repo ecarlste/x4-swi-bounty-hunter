@@ -21,6 +21,8 @@ Status: **runs in game** (2026-11-02): `make game-test` passes 4 of 4 in about 1
 | `swibh_tests/md/swibh_tests.xml` | The harness and the tests |
 | `swibh_tests/extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml` | T12's diff on SWI's Emergent Missions script (H12): two `HOOK T12` log lines, no behaviour change |
 | `swibh_tests/md/swibh_hooks.xml` | H13: `HOOK H13` lines on `event_universe_generated` and on every load; on load it also calls EM's patched cap library |
+| `../../extension/swibh/md/*.xml` | The `swibh` extension's MD (log libraries, engagements). The runner copies it into the installed test extension's `md/`, so tests run against it without installing `swibh` |
+| `../../tools/log/game-check.ts` | After the run, `make game-test` reads the engagement test's log events from `tests/game/debuglog.txt` (the runner's copy) with the log parser |
 | `../../tools/run-game-tests.ps1` | The runner |
 | `../../tools/check_game_tests.py`, `../../tools/validate-xml.ps1`, `../GameTests.Check.ps1` | Offline checks (`make check`) |
 | `../../test.config` | Paths and test profile id (copy `test.config.example`) |
@@ -135,7 +137,7 @@ Every harness line in `debuglog.txt` starts with `[swibh-test]`.
 | `DONE passed=<n> failed=<n>` | All tests ran; MD quits the game 2 s later |
 | `HOOK <text>` | A line from the test extension's hooks outside its tests: `HOOK T12 kEMissions …` and `HOOK T12 CapRewardBasedOnMissionTarget …` from the diff on EM, `HOOK H13 …` from `md/swibh_hooks.xml`. Listed under "Measured" as `hook` |
 
-Plain `[swibh]` lines are the `swibh` extension's JSON log events ([ADR 0001](../../docs/adr/0001-one-schema-for-log-events.md)), never the harness's.
+Plain `[swibh]` lines are the `swibh` extension's JSON log events ([ADR 0001](../../docs/adr/0001-one-schema-for-log-events.md)), never the harness's. After the runner, `make game-test` runs `tools/log/game-check.ts` on them, which prints `PASS engagement log` or a `FAIL engagement log` line per problem and fails the make target.
 
 A run fails if a test fails, fewer than `<n>` results arrive, `DONE` never comes (game exited or timed out), or the log has errors mentioning `swibh` (signature warnings excluded). Errors in EM's `CapRewardBasedOnMissionTarget` are listed in the report separately: they are T01 data, not a harness failure.
 
@@ -147,6 +149,7 @@ A run fails if a test fails, fewer than `<n>` results arrive, `DONE` never comes
 | `t01_pay_cap` | [T01](../../test-plan.md#t01-lxl-search-and-destroy-pay-cap)'s question: does SWI's cap shrink an L/XL hunt reward to a few credits? | Both targets were spawned and measured, and the numbers were logged. The cap's answer is in the `VERDICT` line, not the PASS |
 | `t12_diff_patch` | [T12](../../test-plan.md#t12-our-diff-patch-on-swis-em-file-applies): does a diff from our extension apply to SWI's EM script? Judged by the runner, not MD: added after `DONE` | Both `HOOK T12` lines are in the log (kEMissions runs at game start, the library runs in the T01 tests) and no error names `kuertee_emergent_missions`. The detail also gives H13's line |
 | `t01_knw904` | The real KNW-904 contract: its target's class and `size`, and what the cap pays for its reward | `mc40a_macro` was spawned and measured, and EM's library returned both cases. The pay is in the `VERDICT` line |
+| `engagement` | [T20](../../test-plan.md#t20-engagement-log-events-for-the-players-wing): `engagement.start`/`engagement.end` for the player's wing (#23). Gives the player a `t65b_xwing_macro` wingman, makes galempire hostile, and sends a `tie_fighter_macro` at the player's ship twice: first registered as a hunt's target (`HuntStarted`, key `swibh-test-hunt`), then in no hunt. Quiet gap shortened to 10 s; min hulls keep everyone alive | Each fight closes one engagement with reason `quiet`, a hit taken by the player's ship and one dealt by the wingman, and the hunt key only on the first. INFO lines give each ship's hits and the duration. Then the log check must pass too |
 
 **How T01 works.** It spawns an L target (`hapan_nova_macro`, SWI's Hapan Nova-class Battle Cruiser, the ship in the 2026-10-31 offers, owner `hapes`) and an XL target (`isd_2_macro`, Imperial Star Destroyer II, owner `galempire`), 30 km away, with no loadout, crew or pilot. Two seconds later, for each, it logs macro, owner, class, `isclass.ship_l/xl` and `size`, then calls EM's own library the way `Mission_Hunt_Resolve` does (EM 5684-5694):
 
@@ -163,7 +166,7 @@ and computes the pay with EM's own expression, `(($Capped.$RewardForTarget)f + (
 
 **`t01_knw904`** spawns `mc40a_macro` (MC40A Light Cruiser, owner `newrepublic`, the KNW-904 contract's target, [save check](../../research/save-check-knw-904.md)) and calls the same library with the offer's numbers: `RewardForTarget` 35,835 Cr, and `RewardForPlayerKills` 1,141,130 × 1.25 Cr (100% damage, player kill) or 114,113 Cr (10% damage, another ship's kill).
 
-`smoke`, `t01_pay_cap` and `t01_knw904` are listed in `$Tests` in `md/swibh_tests.xml`. To add a test: a root cue named after it that fires on `event_cue_signalled`, sets up its scenario, and signals `Report` once with `table[$name, $ok, $detail]`; then add it to `$Tests`, and clean up what it spawned. `make check` fails if `$Tests` and the root cues don't match. A diff on a game script goes in `md/` under its file name; a diff on another extension's script goes in `extensions/<its folder>/md/` (8.00 patches those by path: a diff in our `md/` named after SWI's script is loaded as a new script and ignored). `make check` checks each `sel` matches exactly one node in SWI's (or the game's) unpacked copy, and validates it against `diff.xsd`.
+`smoke`, `t01_pay_cap`, `t01_knw904` and `engagement` are listed in `$Tests` in `md/swibh_tests.xml`. To add a test: a root cue named after it that fires on `event_cue_signalled`, sets up its scenario, and signals `Report` once with `table[$name, $ok, $detail]`; then add it to `$Tests`, and clean up what it spawned. `make check` fails if `$Tests` and the root cues don't match. A diff on a game script goes in `md/` under its file name; a diff on another extension's script goes in `extensions/<its folder>/md/` (8.00 patches those by path: a diff in our `md/` named after SWI's script is loaded as a new script and ignored). `make check` checks each `sel` matches exactly one node in SWI's (or the game's) unpacked copy, and validates it against `diff.xsd`.
 
 ## Unverified
 
