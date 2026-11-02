@@ -32,7 +32,7 @@ The extension's design was agreed on 2026-11-01: see [design.md](design.md). Bui
 3. **Remove the L/XL cap**, then rerun the T01 tests expecting the full offer amount, plus an automated T02.
 4. **More automated tests:** T10, T11, T17 and T19 (see test-plan.md).
 5. **Research:** whether the user's "war missions" are Mayday, Escort or Sector Raid. Whether kuertee's UI Extensions installed separately overrides SWI's built-in menus (mods.md). Whether SirNukes 1.95 runs on 8.00 with SWI (T14).
-6. **Deferred sessions:** the "give up or die" hail, full immunity's price, hunters hunting the player, grilling concept.md's other open questions and which Head Hunter features the series wants, and a brainstorm for the name.
+6. **Deferred sessions:** the "give up or die" hail, full immunity's price, hunters hunting the player, grilling concept.md's other open questions and and which Head Hunter features the series wants. The display name is decided: "No Disintegrations - SWI Bounty Hunting" ([#12](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/12)).
 
 ## Working notes
 
