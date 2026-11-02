@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The test gamestart: the same quiet start every run, on SWI's one-sector showcase galaxy
+     (sws_galaxy_macro: one cluster, one sector, one empty zone; SWI's maps/swshowcase/), where SWI's
+     own showcase and battle starts run. Far quicker to build than swi_galaxy_macro, and every test
+     spawns what it needs in player.sector.
+
+     God off: no stations, so no SWI economy to build. Jobs off: no NPC traffic, so no fights or
+     EM pilot records appear on their own and every run starts the same. Neither is needed: Emergent
+     Missions' cues start on md.Setup.GameStart on any non-scenario gamestart
+     (kuertee_emergent_missions.xml kEMissions and UserSettings, 135-222) and T01 calls its library
+     directly. A test that needs live traffic (EM's tracker, named hunters) needs its own gamestart
+     on swi_galaxy_macro with jobs on.
+
+     The player is the Bankrupt Bounty Hunter's character and ship (x4ep1_sw_bhg, SWI
+     libraries/gamestarts.xml 1055-1100): character_player_pirate_gamestart1_macro (vanilla Tides of
+     Avarice, a dependency of SWI) in SWI's fortitude_macro. SETA in the inventory, so a later test
+     can speed up time. nosave keeps test games out of the save list. Group 9 is SWI's "utility"
+     group (SWI's gamestarts replace vanilla's groups), so it can also be started by hand from the
+     New Game menu for debugging a test. -->
+<diff>
+  <add sel="/gamestarts">
+    <gamestart id="swibh_test" name="SWI Bounty Hunter: game tests" description="Automated test scenarios for the SWI Bounty Hunter playthrough. Dev only." image="gamestart_bhg" group="9" tags="nosave">
+      <!-- Where SWI's showcase starts put the player (sws_showcase, SWI gamestarts.xml 2196-2200) -->
+      <location galaxy="sws_galaxy_macro" sector="sws_clustercoruscant_sector001_macro">
+        <position x="-1000" y="0" z="-8000"/>
+      </location>
+      <player macro="character_player_pirate_gamestart1_macro" money="10000" name="SWIBH Test">
+        <ship macro="fortitude_macro">
+          <loadout>
+            <macros>
+              <engine macro="engine_incomh_macro" path="../con_engine_01"/>
+              <engine macro="engine_incomh_macro" path="../con_engine_02"/>
+              <weapon macro="weapon_ix4_s_laser_macro" path="../con_weapon_01"/>
+              <weapon macro="weapon_ix4_s_laser_macro" path="../con_weapon_02"/>
+              <shield macro="shield_s_p12_macro" path="../con_shield_01"/>
+              <shield macro="shield_s_p12_macro" path="../con_shield_02"/>
+              <shield macro="shield_s_p12_macro" path="../con_shield_03"/>
+              <shield macro="shield_s_p12_macro" path="../con_shield_04"/>
+            </macros>
+            <software>
+              <software ware="software_dockmk2"/>
+              <software ware="software_flightassistmk1"/>
+              <software ware="software_scannerlongrangemk1"/>
+              <software ware="software_scannerobjectmk1"/>
+              <software ware="software_targetmk1"/>
+            </software>
+            <virtualmacros>
+              <thruster macro="thruster_gen_s_combat_01_mk1_macro"/>
+            </virtualmacros>
+          </loadout>
+        </ship>
+        <inventory>
+          <!-- SETA, so tests can speed up time (toggle_timewarp needs it in the inventory) -->
+          <ware ware="inv_timewarp" amount="1"/>
+        </inventory>
+      </player>
+      <universe ventures="false" visitors="false">
+        <jobs enabled="false"/>
+        <god enabled="false"/>
+      </universe>
+    </gamestart>
+  </add>
+</diff>

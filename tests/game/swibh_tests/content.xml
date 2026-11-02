@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dev-only test extension for the SWI Bounty Hunter playthrough: never part of a recorded
+     episode. The game test runner (tools/run-game-tests.ps1) installs it for a run and removes it
+     afterwards. With it installed, X4 starts the "swibh_test" gamestart straight from the main
+     menu, runs the tests in md/swibh_tests.xml and quits. See tests/game/README.md.
+
+     It depends on SWI so it loads after it: SWI's libraries/gamestarts.xml does
+     <replace sel="//gamestarts">, which would wipe a gamestart added before it. SWI's own
+     content.xml has enabled="0", so the test profile's content.xml must switch SWI on, or this
+     extension is off too (missing dependency) and nothing starts. -->
+<content id="swibh_tests" name="SWI Bounty Hunter: game tests" description="Automated in-game tests for the SWI Bounty Hunter playthrough. Dev only: starts a test game automatically." author="Erik S. Carlsten" version="100" date="2026-10-31" save="false" enabled="true">
+  <dependency version="800"/>
+  <dependency id="SW Interworlds" name="SW Interworlds"/>
+</content>

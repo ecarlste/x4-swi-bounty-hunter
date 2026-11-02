@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- In-game tests for the SWI Bounty Hunter playthrough. Runs only in the "swibh_test" gamestart
+     (libraries/gamestarts.xml), one test at a time, then quits the game.
+
+     Every line the runner reads starts with "[swibh-test]":
+       RUN START <n> tests
+       INFO <name>: <data>        numbers a test measured, copied into the report
+       VERDICT <name>: <answer>   the answer to the test plan's question, copied into the report
+       PASS <name>: <detail>
+       FAIL <name>: <detail>
+       DONE passed=<n> failed=<n>
+
+     Adding a test: a root cue named after it that fires on event_cue_signalled, sets things up,
+     and signals Report exactly once (from a result cue or a timeout cue) with
+     table[$name, $ok, $detail]. Then add it to $Tests in Run. Clean up what it spawned, so tests
+     don't affect each other. -->
+<mdscript name="SWIBH_Tests" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="Run">
+      <conditions>
+        <event_cue_signalled cue="md.Setup.GameStart"/>
+        <check_value value="player.module == 'swibh_test'"/>
+      </conditions>
+      <!-- No delay here: X4 activates sub-cues as soon as these conditions are met, before a
+           delay would end, so Begin could run before these variables exist -->
+      <actions>
+        <!-- Set to false to keep the game open after the run, e.g. to look around after a failure -->
+        <set_value name="$QuitWhenDone" exact="true"/>
+        <set_value name="$Tests" exact="[Smoke, T01PayCap, T01Knw904]"/>
+        <set_value name="$Index" exact="0"/>
+        <set_value name="$StartAge" exact="player.age"/>
+        <set_value name="$Passed" exact="0"/>
+        <set_value name="$Failed" exact="0"/>
+      </actions>
+      <cues>
+        <!-- Waits for Emergent Missions' own start cues (kEMissions sets $IsSWIExists, UserSettings
+             sets the debug chances its library reads), or 30s, so the tests see EM as a real game
+             would. The Smoke test reports what was found. -->
+        <cue name="Begin" checkinterval="1s">
+          <conditions>
+            <check_value value="(@md.kuertee_emergent_missions.kEMissions.$IsSWIExists != null and @md.kuertee_emergent_missions.UserSettings.$debugChance != null) or player.age gt $StartAge + 30s"/>
+          </conditions>
+          <!-- Let the game settle after loading -->
+          <delay exact="2s"/>
+          <actions>
+            <debug_text text="'[swibh-test] RUN START %s tests'.[$Tests.count]" filter="general"/>
+            <signal_cue cue="NextTest"/>
+          </actions>
+        </cue>
+
+        <cue name="NextTest" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$Index" operation="add"/>
+            <do_if value="$Index le $Tests.count">
+              <signal_cue cue="$Tests.{$Index}"/>
+            </do_if>
+            <do_else>
+              <debug_text text="'[swibh-test] DONE passed=%s failed=%s'.[$Passed, $Failed]" filter="general"/>
+              <do_if value="$QuitWhenDone">
+                <signal_cue cue="Quit"/>
+              </do_if>
+            </do_else>
+          </actions>
+        </cue>
+
+        <!-- Each test signals this once, with table[$name, $ok, $detail] -->
+        <cue name="Report" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <do_if value="event.param.$ok">
+              <set_value name="$Passed" operation="add"/>
+              <debug_text text="'[swibh-test] PASS %s: %s'.[event.param.$name, event.param.$detail]" filter="general"/>
+            </do_if>
+            <do_else>
+              <set_value name="$Failed" operation="add"/>
+              <debug_text text="'[swibh-test] FAIL %s: %s'.[event.param.$name, event.param.$detail]" filter="general"/>
+            </do_else>
+            <signal_cue cue="NextTest"/>
+          </actions>
+        </cue>
+
+        <cue name="Quit">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <!-- Give the log a moment to flush -->
+          <delay exact="2s"/>
+          <actions>
+            <quit_to_desktop/>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+
+    <!-- ===== Tests ===== -->
+
+    <!-- Smoke: the run is on the test gamestart, SWI is loaded (its galactic Empire faction and its
+         TIE fighter ware exist; EM uses the same ware check, kuertee_emergent_missions.xml 228), and
+         Emergent Missions' script ran its start cue in SWI mode (kEMissions, 215-230). -->
+    <cue name="Smoke">
+      <conditions>
+        <event_cue_signalled/>
+      </conditions>
+      <actions>
+        <set_value name="$Problems" exact="''"/>
+        <set_value name="$Galaxy" exact="@player.galaxy.macro.id"/>
+        <set_value name="$Empire" exact="@faction.galempire"/>
+        <set_value name="$Tie" exact="@ware.tie_fighter"/>
+        <set_value name="$EmState" exact="@md.kuertee_emergent_missions.kEMissions.state"/>
+        <set_value name="$EmSwi" exact="@md.kuertee_emergent_missions.kEMissions.$IsSWIExists"/>
+        <do_if value="player.module != 'swibh_test'">
+          <set_value name="$Problems" exact="$Problems + ' gamestart is %s, not swibh_test;'.[player.module]"/>
+        </do_if>
+        <do_if value="not $Empire">
+          <set_value name="$Problems" exact="$Problems + ' faction.galempire not found (SWI not loaded?);'"/>
+        </do_if>
+        <do_if value="not $Tie">
+          <set_value name="$Problems" exact="$Problems + ' ware.tie_fighter not found (SWI not loaded?);'"/>
+        </do_if>
+        <do_if value="$EmState != cuestate.complete">
+          <set_value name="$Problems" exact="$Problems + ' Emergent Missions kEMissions cue state is %s, expected complete;'.[$EmState]"/>
+        </do_if>
+        <do_if value="not $EmSwi">
+          <set_value name="$Problems" exact="$Problems + ' Emergent Missions is not in SWI mode ($IsSWIExists %s);'.[$EmSwi]"/>
+        </do_if>
+        <debug_text text="'[swibh-test] INFO smoke: gamestart %s, galaxy %s, sector %s, faction.galempire %s, ware.tie_fighter %s, EM kEMissions %s, EM $IsSWIExists %s'.[player.module, $Galaxy, @player.sector.macro.id, @$Empire.knownname, @$Tie.name, $EmState, $EmSwi]" filter="general"/>
+        <signal_cue_instantly cue="Report" param="table[$name = 'smoke', $ok = ($Problems == ''), $detail = (if $Problems == '' then 'gamestart %s on %s; SWI loaded (%s); Emergent Missions running in SWI mode'.[player.module, $Galaxy, $Empire.knownname] else $Problems)]"/>
+      </actions>
+    </cue>
+
+    <!-- T01 L/XL pay cap (test-plan.md T01; research/swi-bounty.md 4.4 and 15). Spawns an L and an
+         XL ship of SWI factions and runs EM's own CapRewardBasedOnMissionTarget library on each,
+         with a 1,000,000 Cr reward, exactly as Mission_Hunt_Resolve does (EM 5684-5694): the target,
+         reward_forTargetKills as RewardForTarget, the player's damage reward as
+         RewardForPlayerKills, then RewardCr = ((part1)f + (part2)f) * 1ct. As a cross-check it also
+         runs a copy of the cap expression (EM 7340-7375) and logs both, so a library that can't be
+         called still gives numbers (the log says which is which).
+
+         Targets: hapan_nova_macro (SWI, class ship_l, Hapes "Nova-class Battle Cruiser", the
+         offers seen on 2026-10-31) owned by hapes, and isd_2_macro (SWI, class ship_xl, Imperial
+         Star Destroyer II, group galempire_isd_xl) owned by galempire. No loadout, crew or pilot:
+         they only need a size and a class, and must not fight. 30 km apart from the player. -->
+    <cue name="T01PayCap">
+      <conditions>
+        <event_cue_signalled/>
+      </conditions>
+      <actions>
+        <create_ship name="$L" macro="hapan_nova_macro" sector="player.sector">
+          <owner exact="faction.hapes" overridenpc="true"/>
+          <loadout>
+            <level exact="0"/>
+          </loadout>
+          <safepos object="player.occupiedship" z="30km" allowyaxis="true"/>
+        </create_ship>
+        <create_ship name="$XL" macro="isd_2_macro" sector="player.sector">
+          <owner exact="faction.galempire" overridenpc="true"/>
+          <loadout>
+            <level exact="0"/>
+          </loadout>
+          <safepos object="player.occupiedship" z="-30km" allowyaxis="true"/>
+        </create_ship>
+        <!-- The reward a finished hunt would have: half for the target's kill record, half for the
+             player's damage, 1,000,000 Cr in all (an L class reward is about 1.0 M, swi-bounty 4.4) -->
+        <set_value name="$RewardForTargetKills" exact="500000Cr"/>
+        <set_value name="$RewardForPlayerKills" exact="500000Cr"/>
+      </actions>
+      <cues>
+        <!-- Measure a moment later, once the ships are in the sector -->
+        <cue name="T01PayCap_Measure">
+          <delay exact="2s"/>
+          <actions>
+            <set_value name="$Total" exact="$RewardForTargetKills + $RewardForPlayerKills"/>
+            <set_value name="$Problems" exact="''"/>
+            <set_value name="$Results" exact="[]"/>
+            <do_for_each name="$Ship" in="[$L, $XL]">
+              <do_if value="not @$Ship.exists">
+                <set_value name="$Problems" exact="$Problems + ' a target ship was not created;'"/>
+                <continue/>
+              </do_if>
+              <set_value name="$Label" exact="if $Ship.isclass.ship_xl then 'XL' else (if $Ship.isclass.ship_l then 'L' else 'not L/XL')"/>
+              <debug_text text="'[swibh-test] INFO t01_pay_cap: %s target %s (%s), owner %s, class %s, isclass.ship_l %s, isclass.ship_xl %s, size %s (raw %s)'.[$Label, $Ship.macro.id, $Ship.knownname, $Ship.owner.id, $Ship.class, $Ship.isclass.ship_l, $Ship.isclass.ship_xl, $Ship.size, ($Ship.size)f]" filter="general"/>
+              <do_if value="$Ship.size le 0">
+                <set_value name="$Problems" exact="$Problems + ' %s target size is %s, so the cap is meaningless;'.[$Label, $Ship.size]"/>
+              </do_if>
+
+              <!-- 1. EM's own library, called as Mission_Hunt_Resolve calls it (EM 5684-5689) -->
+              <set_value name="$Capped" exact="null"/>
+              <run_actions ref="md.kuertee_emergent_missions.CapRewardBasedOnMissionTarget" result="$Capped">
+                <param name="Cue_Mission" value="this"/>
+                <param name="MissionTarget" value="$Ship"/>
+                <param name="RewardForTarget" value="$RewardForTargetKills"/>
+                <param name="RewardForPlayerKills" value="$RewardForPlayerKills"/>
+              </run_actions>
+              <set_value name="$EmPay" exact="null"/>
+              <do_if value="$Capped != null">
+                <!-- EM 5694: the sum it pays with reward_player -->
+                <set_value name="$EmPay" exact="(($Capped.$RewardForTarget)f + ($Capped.$RewardForPlayerKills)f) * 1ct"/>
+                <debug_text text="'[swibh-test] INFO t01_pay_cap: %s EM library: in %s + %s = %s; out %s + %s; RewardCr (EM 5694) %s (raw %s)'.[$Label, $RewardForTargetKills, $RewardForPlayerKills, $Total, $Capped.$RewardForTarget, $Capped.$RewardForPlayerKills, $EmPay, ($EmPay)f]" filter="general"/>
+              </do_if>
+              <do_else>
+                <debug_text text="'[swibh-test] INFO t01_pay_cap: %s EM library md.kuertee_emergent_missions.CapRewardBasedOnMissionTarget returned nothing; see the copy below'.[$Label]" filter="general"/>
+              </do_else>
+
+              <!-- 2. A copy of the library's expression (EM 7347-7365), as a cross-check -->
+              <set_value name="$Mult" exact="0"/>
+              <do_if value="$Ship.isclass.ship_l">
+                <set_value name="$Mult" exact="5"/>
+              </do_if>
+              <do_elseif value="$Ship.isclass.ship_xl">
+                <set_value name="$Mult" exact="2"/>
+              </do_elseif>
+              <set_value name="$CopyForTarget" exact="$RewardForTargetKills"/>
+              <set_value name="$CopyForPlayerKills" exact="$RewardForPlayerKills"/>
+              <set_value name="$CapReward" exact="null"/>
+              <do_if value="$Mult">
+                <set_value name="$CapReward" exact="$Ship.size * $Mult"/>
+                <do_if value="$Total ge $CapReward">
+                  <set_value name="$CopyForTarget" exact="(($RewardForTargetKills)f / ($Total)f * $CapReward)ct"/>
+                  <set_value name="$CopyForPlayerKills" exact="(($RewardForPlayerKills)f / ($Total)f * $CapReward)ct"/>
+                </do_if>
+              </do_if>
+              <set_value name="$CopyPay" exact="(($CopyForTarget)f + ($CopyForPlayerKills)f) * 1ct"/>
+              <debug_text text="'[swibh-test] INFO t01_pay_cap: %s copy of EM 7340-7375: mult %s, CapReward = size * mult = %s (raw %s), total ge cap %s; RewardCr %s (raw %s)'.[$Label, $Mult, $CapReward, (if $CapReward == null then null else ($CapReward)f), (if $CapReward == null then null else $Total ge $CapReward), $CopyPay, ($CopyPay)f]" filter="general"/>
+
+              <set_value name="$Pay" exact="if $EmPay != null then $EmPay else $CopyPay"/>
+              <append_to_list name="$Results" exact="table[$label = $Label, $size = $Ship.size, $pay = $Pay, $source = (if $EmPay != null then 'EM library' else 'copy of EM 7340-7375'), $bites = ($Pay lt $Total)]"/>
+            </do_for_each>
+
+            <set_value name="$Summary" exact="''"/>
+            <set_value name="$Bites" exact="0"/>
+            <do_for_each name="$Result" in="$Results">
+              <set_value name="$Summary" exact="$Summary + ' %s (size %s) pays %s (%s);'.[$Result.$label, $Result.$size, $Result.$pay, $Result.$source]"/>
+              <do_if value="$Result.$bites">
+                <set_value name="$Bites" operation="add"/>
+              </do_if>
+            </do_for_each>
+            <do_if value="$Results.count">
+              <debug_text text="'[swibh-test] VERDICT t01_pay_cap: %s: a %s reward%s'.[(if $Bites == $Results.count then 'cap bites' else (if $Bites == 0 then 'cap doesn\'t bite' else 'cap bites for %s of %s targets'.[$Bites, $Results.count])), $Total, $Summary]" filter="general"/>
+            </do_if>
+            <do_if value="$Results.count lt 2">
+              <set_value name="$Problems" exact="$Problems + ' measured %s of 2 targets;'.[$Results.count]"/>
+            </do_if>
+            <signal_cue_instantly cue="Report" param="table[$name = 't01_pay_cap', $ok = ($Problems == ''), $detail = (if $Problems == '' then '%s reward:%s'.[$Total, $Summary] else $Problems)]"/>
+            <do_if value="@$L.exists">
+              <destroy_object object="$L"/>
+            </do_if>
+            <do_if value="@$XL.exists">
+              <destroy_object object="$XL"/>
+            </do_if>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+
+    <!-- T01 for the KNW-904 hunt (research/save-check-knw-904.md): the real mission's target and
+         reward. Spawns mc40a_macro (SWI, class ship_l, "MC40A Light Cruiser") owned by newrepublic,
+         as KNW-904 is, and runs EM's CapRewardBasedOnMissionTarget with the mission's own numbers:
+         reward_forTargetKills 35,835 Cr, and two player shares of the 1,141,130 Cr target reward:
+         100% damage and a player kill (x 1.25, EM 7157-7166), and 10% damage, another ship's kill.
+         Logs class, size and the capped RewardCr (EM 5694) for each. -->
+    <cue name="T01Knw904">
+      <conditions>
+        <event_cue_signalled/>
+      </conditions>
+      <actions>
+        <create_ship name="$Target" macro="mc40a_macro" sector="player.sector">
+          <owner exact="faction.newrepublic" overridenpc="true"/>
+          <loadout>
+            <level exact="0"/>
+          </loadout>
+          <safepos object="player.occupiedship" x="30km" allowyaxis="true"/>
+        </create_ship>
+        <set_value name="$RewardForTargetKills" exact="35835Cr"/>
+        <!-- 1,141,130 Cr x 1.25 = 1,426,412.50 Cr, and 1,141,130 Cr x 10% = 114,113 Cr -->
+        <set_value name="$Cases" exact="[table[$label = '100% damage, player kill', $kills = 142641250ct], table[$label = '10% damage, not player kill', $kills = 11411300ct]]"/>
+      </actions>
+      <cues>
+        <cue name="T01Knw904_Measure">
+          <delay exact="2s"/>
+          <actions>
+            <set_value name="$Problems" exact="''"/>
+            <set_value name="$Summary" exact="''"/>
+            <do_if value="not @$Target.exists">
+              <set_value name="$Problems" exact="' mc40a_macro was not created;'"/>
+            </do_if>
+            <do_else>
+              <debug_text text="'[swibh-test] INFO t01_knw904: target %s (%s), owner %s, class %s, isclass.ship_l %s, isclass.ship_xl %s, size %s (raw %s)'.[$Target.macro.id, $Target.knownname, $Target.owner.id, $Target.class, $Target.isclass.ship_l, $Target.isclass.ship_xl, $Target.size, ($Target.size)f]" filter="general"/>
+              <do_if value="$Target.size le 0">
+                <set_value name="$Problems" exact="$Problems + ' size is %s;'.[$Target.size]"/>
+              </do_if>
+              <do_for_each name="$Case" in="$Cases">
+                <set_value name="$Total" exact="$RewardForTargetKills + $Case.$kills"/>
+                <set_value name="$Capped" exact="null"/>
+                <run_actions ref="md.kuertee_emergent_missions.CapRewardBasedOnMissionTarget" result="$Capped">
+                  <param name="Cue_Mission" value="this"/>
+                  <param name="MissionTarget" value="$Target"/>
+                  <param name="RewardForTarget" value="$RewardForTargetKills"/>
+                  <param name="RewardForPlayerKills" value="$Case.$kills"/>
+                </run_actions>
+                <do_if value="$Capped == null">
+                  <set_value name="$Problems" exact="$Problems + ' EM library returned nothing for %s;'.[$Case.$label]"/>
+                  <continue/>
+                </do_if>
+                <set_value name="$Pay" exact="(($Capped.$RewardForTarget)f + ($Capped.$RewardForPlayerKills)f) * 1ct"/>
+                <debug_text text="'[swibh-test] INFO t01_knw904: %s: in %s + %s = %s; cap size * 5 = %s; out %s + %s; RewardCr (EM 5694) %s (raw %s)'.[$Case.$label, $RewardForTargetKills, $Case.$kills, $Total, $Target.size * 5, $Capped.$RewardForTarget, $Capped.$RewardForPlayerKills, $Pay, ($Pay)f]" filter="general"/>
+                <set_value name="$Summary" exact="$Summary + ' %s: %s pays %s;'.[$Case.$label, $Total, $Pay]"/>
+              </do_for_each>
+              <debug_text text="'[swibh-test] VERDICT t01_knw904: KNW-904 (mc40a_macro, size %s) caps to:%s'.[$Target.size, $Summary]" filter="general"/>
+            </do_else>
+            <signal_cue_instantly cue="Report" param="table[$name = 't01_knw904', $ok = ($Problems == ''), $detail = (if $Problems == '' then 'mc40a_macro size %s:%s'.[$Target.size, $Summary] else $Problems)]"/>
+            <do_if value="@$Target.exists">
+              <destroy_object object="$Target"/>
+            </do_if>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+  </cues>
+</mdscript>
