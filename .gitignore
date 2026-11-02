@@ -10,3 +10,7 @@ __pycache__/
 
 # Node tooling
 node_modules/
+
+# Claude Code: session worktrees and personal settings
+.claude/worktrees/
+.claude/settings.local.json

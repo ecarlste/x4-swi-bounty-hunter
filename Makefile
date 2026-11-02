@@ -8,7 +8,7 @@ help:
 	@echo "SWI Bounty Hunter playthrough: in-game test harness"
 	@echo ""
 	@echo "Available commands:"
-	@echo "  make setup       - Create test.config from test.config.example"
+	@echo "  make setup       - npm install, create test.config, and turn on the git hooks in .githooks"
 	@echo "  make check       - Offline checks, no game: XML, test list, macro/faction/ware ids, Lua, 8.00 XSDs, runner, TypeScript tools"
 	@echo "  make log-xml     - Regenerate extension/swibh/md/swibh_log.xml from the log schema (tools/log/schema.ts)"
 	@echo "  make game-test   - Install the test extension, run the in-game tests in X4 8.00 + SWI, remove it (Windows)"
@@ -20,6 +20,7 @@ help:
 
 setup:
 	@npm install --no-fund --no-audit
+	@git config core.hooksPath .githooks
 	@if [ -f test.config ]; then \
 		echo "test.config already exists"; \
 		echo "Edit it to update your X4 paths and test profile id"; \
