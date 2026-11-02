@@ -19,8 +19,10 @@ session works in the main checkout. Its working tree belongs to nobody, and main
 
 - **Worktree first:** before the first edit, call `EnterWorktree` with a name like `issue-17`. Or
   start the session with the app's worktree option. This applies to every change, docs and
-  research notes included. A hook (`tools/hooks/guard-main.ts`) blocks edits in a checkout on
-  main, and `.githooks/pre-commit` blocks commits there.
+  research notes included. Switching branches in the main checkout doesn't count.
+  `tools/hooks/guard-main.ts` blocks Edit and Write anywhere in the main checkout. It can't see
+  shell writes (`sed -i`, `>`), so don't write files there from Bash. `.githooks` blocks
+  commits and merge commits on main.
 - **In the worktree:** `test.config` is copied in (`.worktreeinclude`), and Node finds the main
   checkout's `node_modules`, so `make check` works as is.
 - **One issue per session and branch.** Don't edit another session's worktree or branch. If you
@@ -34,7 +36,8 @@ session works in the main checkout. Its working tree belongs to nobody, and main
   small, and expect to rebase.
 - **The game is shared:** one `make game-test` or `make install` at a time. The runner refuses
   while X4 is running. Another session's `make install` replaces the installed extension.
-- **New clone:** run `make setup` once. It also points git at `.githooks`.
+- **New clone:** run `make setup` once. It also points git at `.githooks`, which a clone made
+  before these hooks existed still needs.
 
 ## Agent skills
 

@@ -1,0 +1,3 @@
+#!/bin/sh
+# A merge commit on main (git pull without --ff-only) is a commit on main too: same rule as pre-commit
+exec "$(dirname "$0")/pre-commit"
