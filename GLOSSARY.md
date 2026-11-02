@@ -31,7 +31,7 @@ A lead ship and every wingman attached to it. The two that matter are the **targ
 _Avoid_: Fleet, squadron, group
 
 **Wingman**:
-A ship attached to a wing's lead, directly or as an escort of an escort, on either side. Drones are never wingmen.
+A ship attached to a wing's lead, directly or as an escort of an escort, on either side. Drones, and ships docked inside another ship, are never wingmen.
 _Avoid_: Escort (when the ship rather than the order is meant), wing ship
 
 **Deserter**:
@@ -61,7 +61,7 @@ The real-world local time a log event happened, as opposed to game time, which s
 _Avoid_: Real time, system time, timestamp (when wall time is meant)
 
 **Engagement**:
-A stretch of combat involving the player's wing, in any sector, from the first hit by or on any of its ships to the last before a quiet gap. A **hunt engagement** is one the target's wing takes part in. A wingman joins it with its first hit.
+A stretch of combat involving the player's wing, in any sector, from the first hit by or on any of its ships to the last before a quiet gap, or until the player's ship is lost or changed. A **hunt engagement** is one the target's wing takes part in.
 _Avoid_: Fight, battle, combat (when the logged span is meant)
 
 **Extractor**:
@@ -79,7 +79,7 @@ One video file captured during a session. A session usually has one recording, m
 _Avoid_: Session (when the file is meant), footage
 
 **Edit marker**:
-A key moment of a recording (hunt accept, sanction, kill, payout or failure, a loss, the game load) with its position in that recording, for cutting story videos.
+A key moment of a recording (game load, hunt accept, sanction, kill, payout or failure, a loss, an engagement's start and end) with its position in that recording, for cutting story videos.
 _Avoid_: Bookmark, chapter, timestamp
 
 ## Releases

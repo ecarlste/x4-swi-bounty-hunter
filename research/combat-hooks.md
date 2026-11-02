@@ -1,6 +1,6 @@
 # Combat hooks: engagement start/end for the player's ship (2026-11-02)
 
-Facts for new log events `combat.start` / `combat.end` (video edit markers). Paths: V = vanilla 8.00 `E:\x4-dev\reference\x4-8.00\base` (`libraries/common.xsd` holds the MD event definitions; `md.xsd` has only 24 `event_` mentions); SWI = `mods/swi-0.90/ext`. Tags: [read] = seen in files; [inferred]; **unverified** = confirm in game.
+Facts for new log events `engagement.start` / `engagement.end` (video edit markers). Paths: V = vanilla 8.00 `E:\x4-dev\reference\x4-8.00\base` (`libraries/common.xsd` holds the MD event definitions; `md.xsd` has only 24 `event_` mentions); SWI = `mods/swi-0.90/ext`. Tags: [read] = seen in files; [inferred]; **unverified** = confirm in game.
 
 ## 1. Events when the player's ship is hit
 
@@ -48,13 +48,13 @@ One manager cue in the swibh MD with state `$inCombat`, `$start`, `$lastIn`, `$l
 
 1. **Hit in** (instantiate): `event_object_attacked group="global.$PlayerOccupiedShipGroup"`, check `event.param2 != killmethod.collided and event.param2 != killmethod.hitbyareadamage`, `typeof event.param == datatype.component`, and `not event.param.isplayerowned` (friendly fire, optional). Sets `$lastIn = player.age`, records the opponent. Alternative: `event_player_ship_hit` (already excludes collisions/hazards, no group upkeep).
 2. **Hit out** (instantiate): `event_player_attacked_object`, filters as notifications.xml 1505-1506 plus `event.param2 != killmethod.collided`. Sets `$lastOut`, records the opponent.
-3. Either, while `not $inCombat` → `combat.start` now (`t` = first hit), `$initiator = 'player'|'enemy'` by which fired first.
+3. Either, while `not $inCombat` → `engagement.start` now (`t` = first hit), `$initiator = 'player'|'enemy'` by which fired first.
 4. **End poll**: `checkinterval="2s"`, `check_value $inCombat`. End when `player.age - max($lastIn, $lastOut, player.occupiedship.lastattacktime) ge 20s` (reason `quiet`, `t` = the last hit, so the marker sits where the action stops, not 20 s later). Also end right away on `event_object_destroyed` of the occupied ship (`destroyed`), occupied-ship change (`shipChange`), and `event_game_loaded` while open (`reload`). 20 s matches masstraffic.flee; tune in playtests (missile-boat fights have long gaps).
 5. Fallback for being shot while out of the pilot seat (group empty): the poll can also open an engagement if `player.occupiedship.lastattacktime` (or `player.ship`) is newer than the last check. Latency ≤ 2 s.
 
 Data:
-- `combat.start`: `ship` (Ship: player.occupiedship), `initiator`, `opponent` (Ship/Ref + FactionRef of the first attacker/attacked), `method` (killmethod id), `hunt` key(s) if the opponent is an active hunt's `$MissionTarget` or in its wing (look up `md.kuertee_emergent_missions.Missions_Hunts.$missions_active`, research/hunt-logging-hooks.md §2), `hull`/`shield` %.
-- `combat.end`: `start` time (or duration), `reason`, `opponents` (list, capped ~10, by id/faction with hits in/out), `hitsIn`, `hitsOut`, `kills` (from `event_player_killed_object` while open), hunt target involved / killed, hull/shield % at end.
+- `engagement.start`: `ship` (Ship: player.occupiedship), `initiator`, `opponent` (Ship/Ref + FactionRef of the first attacker/attacked), `method` (killmethod id), `hunt` key(s) if the opponent is an active hunt's `$MissionTarget` or in its wing (look up `md.kuertee_emergent_missions.Missions_Hunts.$missions_active`, research/hunt-logging-hooks.md §2), `hull`/`shield` %.
+- `engagement.end`: `start` time (or duration), `reason`, `opponents` (list, capped ~10, by id/faction with hits in/out), `hitsIn`, `hitsOut`, `kills` (from `event_player_killed_object` while open), hunt target involved / killed, hull/shield % at end.
 
 Unverified in game: per-hit rates; turret hits counting as `event_player_attacked_object`; missiles in `event_player_ship_hit`; whether `lastattacktime` updates on collisions; the 20 s gap.
 
@@ -76,7 +76,7 @@ Added 2026-11-02. Scope: player-owned ships under the ship the player is flying 
 
 ### 2. Hits on wing ships
 
-- `event_object_attacked group="$Wing"` (XSD 12944): object = attacked wing ship, param = attacker, param2 = killmethod, param3 = attacked component. Filters `attacker=`, `method=` [read]. Same collision/hazard filtering as §1/§5 (`killmethod.collided`, `hitbyareadamage`). Per hit, no throttle documented [inferred, **unverified**]. `event.object` gives the wing ship for per-ship counts.
+- `event_object_attacked group="$Wing"` (XSD 12944): object = attacked wing ship, param = attacker, param2 = killmethod, param3 = attacked component. Filters `attacker=`, `method=` [read]. Same collision/hazard filtering as sections 1 and 5 above (`killmethod.collided`, `hitbyareadamage`). Per hit, no throttle documented [inferred, **unverified**]. `event.object` gives the wing ship for per-ship counts.
 - No-upkeep alternative: `event_player_owned_attacked` (XSD 15280), same params, all player-owned objects, filtered with `check_value value="event.object.commander and event.object.toplevelcommander == player.occupiedship"` (+ sector check). Fires for every player asset in the universe (stations, traders), so many wasted condition checks during big fights elsewhere [inferred]. Prefer the group.
 
 ### 3. Hits by wing ships
@@ -87,7 +87,7 @@ Added 2026-11-02. Scope: player-owned ships under the ship the player is flying 
 
 ### 4. Cost and pitfalls
 
-- Two group-event cues on ~10 ships: one condition evaluation per hit per event. A busy 10-ship fighter wing may produce tens to low hundreds of events per second [inferred, **unverified**]. Keep the cue bodies to a few `set_value`s on a table (as §4). Rebuilding a 10-element group every 2 s is trivial.
+- Two group-event cues on ~10 ships: one condition evaluation per hit per event. A busy 10-ship fighter wing may produce tens to low hundreds of events per second [inferred, **unverified**]. Keep the cue bodies to a few `set_value`s on a table (as in section 4 above). Rebuilding a 10-element group every 2 s is trivial.
 - Destroyed members leave groups automatically ("when an object is destroyed ... it is automatically removed from a group", XSD 20475) [read]. Use `add_to_group ... checkoperational="true"` to skip wrecks. Keep per-ship counts keyed by component in a table; a destroyed ship's key stays but later reads of it need `@` / `.exists` guards.
 - Staleness: the group does not follow the player into a new ship. Rebuild on occupied-ship change; while the player is out of the seat `player.occupiedship` is null (setup.xml 646), so fall back to `player.ship` or freeze the group [inferred]. Ships reassigned away (commander_set to someone else) stay in the group until rebuilt; the 2 s rebuild bounds that to 2 s.
 - Subordinates far away (other sector, still assigned) would count as "the wing". Filter in the event condition by `event.object.sector == player.occupiedship.sector` (or `distanceto` le ~20 km, the escort pursue distance for player defence wings, order.fight.escort.xml 43) [read].
@@ -95,12 +95,12 @@ Added 2026-11-02. Scope: player-owned ships under the ship the player is flying 
 
 ### 5. Recommendation
 
-Extend the §5 manager cue rather than adding a second engagement:
+Extend the section 5 manager cue above rather than adding a second engagement:
 
 1. Maintain `$Wing` (group): rebuild from `player.occupiedship.allsubordinates` (filter `not isunit`, `isoperational`, optionally combat assignments) on `event_object_subordinate_added/removed object="player.occupiedship"`, `event_object_commander_set group="$Wing"`, occupied-ship change, and every 2 s poll tick.
 2. Hit in: `event_object_attacked` on `global.$PlayerOccupiedShipGroup` **and** `group="$Wing"` (two conditions in a `check_any`), same filters plus same-sector check. Hit out: `event_player_attacked_object` (player) plus `event_object_attacked_object group="$Wing"`.
 3. Any of them opens the engagement if closed (`initiator` = 'player' / 'wing' / 'enemy'). Each updates `$lastIn`/`$lastOut` and a per-ship table `$ships.{ship} = [hitsIn, hitsOut, kills]` keyed by `event.object` (or `player.occupiedship` for the player events), plus the opponents table.
 4. End rule unchanged (20 s quiet), but the quiet clock uses the max over the player ship and wing (`lastattacktime` of each `$Wing` member is a cheap extra source on the 2 s poll). Wing losses: `event_object_destroyed group="$Wing"` adds to a `wingLost` list; it does not end the engagement.
-5. `combat.end` adds `ships`: list of {ship (Ship ref), role 'player'|'wing', hitsIn, hitsOut, kills, destroyed}, capped ~12. Wing kills: `event_object_destroyed` on opponents with `event.param` (killer) in `$Wing` [inferred], since `event_player_killed_object` covers the player only.
+5. `engagement.end` adds `ships`: list of {ship (Ship ref), role 'player'|'wing', hitsIn, hitsOut, kills, destroyed}, capped ~12. Wing kills: `event_object_destroyed` on opponents with `event.param` (killer) in `$Wing` [inferred], since `event_player_killed_object` covers the player only.
 
 Unverified in game: hit rates for a 10-ship wing; turret hits on NPC ships firing `event_object_attacked_object`; whether `allsubordinates` includes docked ships and units; sub-subordinate add events reaching the player's ship.
