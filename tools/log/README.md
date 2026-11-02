@@ -11,7 +11,7 @@ The `swibh` extension writes one `[swibh] {json}` line to `debuglog.txt` per **l
 | [schema.ts](schema.ts) | The log schema: every event, its fields, and the named shapes (`Ship`, `FactionRef`, `Ref`, `Payout`, ...). The single source of truth |
 | [md.ts](md.ts) | Builds the MD library [extension/swibh/md/swibh_log.xml](../../extension/swibh/md/swibh_log.xml) from the schema |
 | [generate.ts](generate.ts) | Writes that file (`make log-xml`) or checks it's current (`--check`) |
-| [parse.ts](parse.ts) | The parser extractors import: `readLog(lines)` gives typed events, errors by line number, events by **hunt key**, and **open hunts** |
+| [parse.ts](parse.ts) | The parser extractors import: `readLog(lines)` gives typed events, errors by line number, events by **hunt key**, and **open hunts**. `parseLine(text)` checks one line, for an extractor that judges replays itself (`tools/hunt-log` undoes reloaded branches before it drops repeated lines, so it can't use `readLog`'s early drop) |
 
 ## Writing an event from MD
 

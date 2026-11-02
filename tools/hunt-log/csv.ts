@@ -32,7 +32,7 @@ const columns = [
   "netCt",
 ] as const satisfies readonly (keyof HuntRow)[];
 
-const text = new Set<keyof HuntRow>([
+const textColumns = new Set<keyof HuntRow>([
   "huntKey",
   "faction",
   "wharf",
@@ -88,7 +88,7 @@ export function parseCsv(csv: string): HuntRow[] {
     const record: Record<string, string | number | null> = {};
     columns.forEach((key, i) => {
       const value = row[i] ?? "";
-      record[key] = value === "" ? (key === "relations" ? "" : null) : text.has(key) ? value : Number(value);
+      record[key] = value === "" ? (key === "relations" ? "" : null) : textColumns.has(key) ? value : Number(value);
     });
     return record as HuntRow;
   });

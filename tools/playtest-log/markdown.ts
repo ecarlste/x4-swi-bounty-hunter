@@ -15,7 +15,7 @@ export function duration(seconds: number): string {
   return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
 }
 
-const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+export const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 // A table without the columns no row fills, or "None." with no rows.
 export function table(headers: string[], rows: (string | undefined)[][]): string {

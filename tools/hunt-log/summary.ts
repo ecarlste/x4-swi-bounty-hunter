@@ -64,9 +64,9 @@ ${table(
   ["Hunt key", "Accepted (game time)", "Target", "Offering faction", "Losses so far"],
   open.map((hunt) => [
     hunt.huntKey,
-    hunt.acceptT === null ? undefined : gameTime(hunt.acceptT),
-    hunt.target ?? undefined,
-    hunt.faction ?? undefined,
+    gameTime(hunt.acceptT),
+    hunt.target,
+    hunt.faction,
     cr(hunt.lossValueCt),
   ]),
 )}

@@ -103,16 +103,18 @@ With the `swibh` extension installed, every hunt writes **log events** to `debug
 make hunt-log LOG=<copy of debuglog.txt>    # or: node tools/hunt-log.ts <log> [--data <folder>]
 ```
 
-A Windows path (`E:\...`) works from WSL. It updates three files in `data/`; commit them:
+A Windows path (`E:\...`) works from WSL. It updates four files in `data/`; commit them:
 
 - **`hunts.csv`:** one row per finished hunt, added once by **hunt key**, so rerunning on the same log adds nothing. Money is integer ct, game time is seconds. Columns: hunt key, accept and end game time, duration, offering faction, wharf, target (idcode, macro, size class), sanction (last tier, total cost of `hunt.sanction` events), offered pay (kill, up to), paid (kill, destruction, total, cap before and after), result and failed step, wing size at accept, escorts killed, relation changes, losses (count, value), repairs, and **net = paid - losses - repairs** (the sanction cost isn't taken off).
 - **`hunts-open.jsonl`:** the log events of **open hunts** (accepted, not ended), carried over so a hunt that ends in the next session's log gets its accept data and earlier losses. Open hunts are never in `hunts.csv` or the stats.
-- **`hunts-summary.md`:** rebuilt each run: hunts by result, total paid, losses, repairs and net, pay per game hour (from the first accept to the last end), the hunts with a net loss, and the open hunts.
+- **`hunts-summary.md`:** rebuilt each run: hunts by result, total paid, losses, repairs and net, pay per game hour (from the first accept to the last end, over every playthrough in the file), the hunts with a net loss, and the open hunts.
+- **`hunts-read.txt`:** the SHA-256 of every log read. A log read before changes nothing, even after newer logs: replaying its old loads would undo the newer open hunts. A log read while X4 still runs and read again later has new lines, so it's read again, and its hunts already in `hunts.csv` are skipped.
 
 The rules (`tools/hunt-log/hunts.ts`):
 
 - **Losses:** a `player.loss` counts against the active hunt whose wing made the kill, else the first active hunt whose target is in the loss's sector (`attributeLoss`). Others are printed as losses outside any hunt and kept out of the files.
-- **Reloads:** loading a save at game time T (a `session.start` with the same `saveMarker`) undoes that save's events after T, including open hunts carried over from an earlier log. A line written twice with the same JSON counts once. A hunt with two `hunt.end` left after that keeps the last.
+- **Reloads:** each `session.start` at game time T starts a new branch of play from that save's history: the events up to T of the latest branch with the same `saveMarker` that reached T (a save can only be made in a branch that got there). What the other branches did after T is thrown away, including open hunts carried over from an earlier log. A line written twice with the same JSON counts once. A hunt with two `hunt.end` left after that keeps the last.
+- **Open hunts** need their `hunt.accept`: a hunt with neither accept nor end in the log (accepted before the extension or the log) is dropped, and its losses count as outside any hunt. A hunt with an end and no accept is a row with the accept columns empty.
 - A hunt already in `hunts.csv` is never changed, even if a later log loads a save from before its end.
 - Bad `[swibh]` lines (truncated, not in the schema) are printed by line number and skipped.
 

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readHunts } from "./hunts.ts";
-import { accept, failure, huntKey, kill, loss, sanction, session, ship, success } from "./fixtures.ts";
+import { accept, failure, huntKey, kill, loss, myShip, sanction, session, ship, success } from "./fixtures.ts";
 
 const ael = huntKey(133, "AEL-112", 19000.5);
 
@@ -58,7 +58,6 @@ test("a hunt accepted and ended is one row with its pay, sanction, wing and rela
 
 const a = huntKey(1, "AAA-111", 100);
 const b = huntKey(2, "BBB-222", 200);
-const myShip = (idcode: string) => ship(idcode, "player", "ship_m");
 
 test("a loss during two active hunts counts against the hunt whose wing made the kill, else the one in its sector", async () => {
   const { rows, lossesOutside } = await readHunts([
@@ -188,4 +187,42 @@ test("an open hunt carried over is dropped when the next log loads a save from b
   const second = await readHunts([session(150)], { carried: first.open.flatMap((hunt) => hunt.entries) });
 
   assert.deepEqual(second.open, []);
+});
+
+test("loading a later save after an older one brings back the later save's history, not the older branch's", async () => {
+  const { rows } = await readHunts([
+    session(10),
+    accept(a, 20),
+    loss(60, myShip("PLR-001"), 500000, [{ hunt: a, byHuntWing: true, sameSector: true }]),
+    // Saved at 90, then played on
+    loss(95, myShip("PLR-002"), 70000, [{ hunt: a, byHuntWing: true, sameSector: true }]),
+    // Loaded the save made at 50 and played to 70
+    session(50),
+    loss(70, myShip("PLR-003"), 9000, [{ hunt: a, byHuntWing: true, sameSector: true }]),
+    // Loaded the save made at 90: only the first branch reached it
+    session(90),
+    success(a, 120, { kill: 1000000, destruction: 0 }),
+  ]);
+
+  assert.deepEqual(
+    rows.map((row) => [row.huntKey, row.losses, row.lossValueCt]),
+    [[a, 1, 500000]],
+  );
+});
+
+test("events of a hunt whose accept isn't in the log make no open hunt, and its losses are outside any hunt", async () => {
+  const { rows, open, lossesOutside } = await readHunts([
+    session(50),
+    kill(b, 150, ship("ESC-001"), "escort"),
+    loss(160, myShip("PLR-001"), 500000, [{ hunt: b, byHuntWing: true, sameSector: true }]),
+  ]);
+
+  assert.deepEqual([rows, open], [[], []]);
+  assert.deepEqual(lossesOutside.map((event) => event.data.lost.idcode), ["PLR-001"]);
+});
+
+test("a hunt's duration is rounded to the millisecond", async () => {
+  const { rows } = await readHunts([accept(a, 100.1), success(a, 200.3, { kill: 0, destruction: 0 })]);
+
+  assert.equal(rows[0].durationS, 100.2);
 });

@@ -4,7 +4,7 @@ import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { updateHuntLog } from "./update.ts";
-import { accept, failure, huntKey, loss, session, ship, success } from "./fixtures.ts";
+import { accept, failure, huntKey, loss, myShip, session, success } from "./fixtures.ts";
 
 const dataDir = () => mkdtempSync(join(tmpdir(), "hunt-log-"));
 const read = (dir: string) => Object.fromEntries(readdirSync(dir).map((file) => [file, readFileSync(join(dir, file), "utf8")]));
@@ -12,7 +12,6 @@ const read = (dir: string) => Object.fromEntries(readdirSync(dir).map((file) => 
 const a = huntKey(1, "AAA-111", 100);
 const b = huntKey(2, "BBB-222", 200);
 const c = huntKey(3, "CCC-333", 300);
-const myShip = (idcode: string) => ship(idcode, "player", "ship_m");
 
 const log = [
   session(50),
@@ -31,7 +30,7 @@ test("the first run writes the hunts, the open hunt and the summary", async () =
 
   assert.deepEqual([result.added, result.open], [2, 1]);
   const files = read(dir);
-  assert.deepEqual(Object.keys(files).sort(), ["hunts-open.jsonl", "hunts-summary.md", "hunts.csv"]);
+  assert.deepEqual(Object.keys(files).sort(), ["hunts-open.jsonl", "hunts-read.txt", "hunts-summary.md", "hunts.csv"]);
   assert.deepEqual(
     files["hunts.csv"].split("\n").map((line) => line.split(",").slice(0, 3).join(",")),
     ["huntKey,acceptT,endT", `${a},100,1900`, `${b},200,400`, ""],
@@ -82,6 +81,19 @@ test("rerunning on the same log adds nothing", async () => {
   const result = await updateHuntLog(log, dir);
 
   assert.equal(result.added, 0);
+  assert.deepEqual(read(dir), before);
+});
+
+test("rerunning an older log after a newer one changes nothing", async () => {
+  const dir = dataDir();
+  await updateHuntLog(log, dir);
+  const newer = [session(3050), accept(huntKey(4, "DDD-444", 3500), 3500)];
+  await updateHuntLog(newer, dir);
+  const before = read(dir);
+
+  const result = await updateHuntLog(log, dir);
+
+  assert.deepEqual([result.added, result.alreadyRead], [0, true]);
   assert.deepEqual(read(dir), before);
 });
 

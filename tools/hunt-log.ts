@@ -37,6 +37,10 @@ const file = createReadStream(logPath);
 const lines = createInterface({ input: file, crlfDelay: Infinity });
 try {
   const update = await updateHuntLog(lines, dataDir);
+  if (update.alreadyRead) {
+    process.stdout.write(`Already read this log; nothing changed. ${update.open} open.\n`);
+    process.exit(0);
+  }
   const out = [`Added ${plural(update.added, "hunt")} to ${join(dataDir, "hunts.csv")}; ${update.open} open.`];
   if (update.lossesOutside.length) {
     const ships = update.lossesOutside.map((loss) => `${loss.data.lost.idcode} at ${loss.t}`).join(", ");

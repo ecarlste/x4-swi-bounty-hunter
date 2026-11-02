@@ -1,6 +1,7 @@
 // The hunt-log extractor's rules: turns the log events of a debug log into one row per
 // finished hunt, the hunts still open, and the losses outside any hunt.
 import { parseLine, type LineError } from "../log/parse.ts";
+import { signed } from "../playtest-log/markdown.ts";
 import type { HuntEvent, HuntKey, LogEvent, LogEventOf } from "../log/schema.ts";
 
 export type HuntRow = {
@@ -41,9 +42,9 @@ export type Entry = { saveMarker: string | null; event: LogEvent };
 
 export type OpenHunt = {
   huntKey: HuntKey;
-  acceptT: number | null;
-  faction: string | null;
-  target: string | null;
+  acceptT: number;
+  faction: string;
+  target: string;
   losses: number;
   lossValueCt: number;
   // Its events and the losses it's charged with, to carry over to the next log
@@ -66,7 +67,7 @@ export function attributeLoss(loss: Loss): HuntKey | null {
   return (activeHunts.find((hunt) => hunt.byHuntWing) ?? activeHunts.find((hunt) => hunt.sameSector))?.hunt ?? null;
 }
 
-const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+const lossValue = (losses: Loss[]) => losses.reduce((sum, loss) => sum + loss.data.value, 0);
 
 function row(key: HuntKey, events: HuntEvent[], losses: Loss[], end: LogEventOf<"hunt.end">): HuntRow {
   const accept = events.find((event) => event.type === "hunt.accept");
@@ -75,12 +76,12 @@ function row(key: HuntKey, events: HuntEvent[], losses: Loss[], end: LogEventOf<
   const { payout, relations, repairs } = end.data;
   const paid = payout?.total ?? 0;
   const repairsCt = repairs.reduce((sum, repair) => sum + repair.repairprice, 0);
-  const lossValueCt = losses.reduce((sum, loss) => sum + loss.data.value, 0);
+  const lossValueCt = lossValue(losses);
   return {
     huntKey: key,
     acceptT: accept?.t ?? null,
     endT: end.t,
-    durationS: accept ? end.t - accept.t : null,
+    durationS: accept ? Math.round((end.t - accept.t) * 1000) / 1000 : null,
     faction: accept?.data.faction.id ?? null,
     wharf: accept ? (accept.data.wharf.idcode ?? accept.data.wharf.macro) : null,
     target: accept?.data.target.idcode ?? null,
@@ -107,22 +108,42 @@ function row(key: HuntKey, events: HuntEvent[], losses: Loss[], end: LogEventOf<
   };
 }
 
+// One line of play in a save: its events in log order, and the game time it reached
+type Branch = { entries: (Entry & { order: number })[]; reached: number };
+
 // The events that still stand once reloads are taken out, after the carried-over
-// entries. Loading a save at game time T (a session.start) undoes that save's events
-// after T: they were played in a branch the player threw away. A line written again
-// with the same JSON counts once.
+// entries. Loading a save at game time T (a session.start) starts a new branch from
+// the save's own history: the events up to T of the latest branch of that save marker
+// that reached T (a save can only be made in a branch that got there). The rest is a
+// branch the player threw away. A line written again with the same JSON counts once.
 function timeline(carried: Entry[], events: LogEvent[]): Entry[] {
-  let kept = [...carried];
+  const branches = new Map<string | null, Branch[]>();
+  let order = 0;
+  const push = (entry: Entry) => {
+    const list = branches.get(entry.saveMarker) ?? [{ entries: [], reached: -Infinity }];
+    branches.set(entry.saveMarker, list);
+    const live = list.at(-1)!;
+    live.entries.push({ ...entry, order: order++ });
+    live.reached = Math.max(live.reached, entry.event.t);
+  };
+  carried.forEach(push);
   let saveMarker: string | null = null;
   for (const event of events) {
     if (event.type === "session.start") {
-      const marker = event.data.saveMarker;
-      kept = kept.filter((entry) => entry.saveMarker !== marker || entry.event.t <= event.t);
-      saveMarker = marker;
+      saveMarker = event.data.saveMarker;
+      const list = branches.get(saveMarker) ?? [];
+      const source = list.findLast((branch) => branch.reached >= event.t) ?? list.at(-1);
+      const entries = source?.entries.filter((entry) => entry.event.t <= event.t) ?? [];
+      list.push({ entries, reached: event.t });
+      branches.set(saveMarker, list);
     } else {
-      kept.push({ saveMarker, event });
+      push({ saveMarker, event });
     }
   }
+  const kept = [...branches.values()]
+    .flatMap((list) => list.at(-1)!.entries)
+    .sort((x, y) => x.order - y.order)
+    .map(({ saveMarker, event }) => ({ saveMarker, event }));
   const seen = new Set<string>();
   return kept.filter((entry) => {
     const json = JSON.stringify(entry.event);
@@ -132,16 +153,14 @@ function timeline(carried: Entry[], events: LogEvent[]): Entry[] {
   });
 }
 
-function openHunt(key: HuntKey, entries: Entry[]): OpenHunt {
-  const accept = entries.map((entry) => entry.event).find((event) => event.type === "hunt.accept");
-  const losses = entries.map((entry) => entry.event).filter((event) => event.type === "player.loss");
+function openHunt(accept: LogEventOf<"hunt.accept">, losses: Loss[], entries: Entry[]): OpenHunt {
   return {
-    huntKey: key,
-    acceptT: accept?.t ?? null,
-    faction: accept?.data.faction.id ?? null,
-    target: accept?.data.target.idcode ?? null,
+    huntKey: accept.hunt,
+    acceptT: accept.t,
+    faction: accept.data.faction.id,
+    target: accept.data.target.idcode,
     losses: losses.length,
-    lossValueCt: losses.reduce((sum, loss) => sum + loss.data.value, 0),
+    lossValueCt: lossValue(losses),
     entries,
   };
 }
@@ -178,8 +197,11 @@ export async function readHunts(
     const huntEvents = events.filter((event): event is HuntEvent => "hunt" in event);
     const losses = events.filter((event): event is Loss => event.type === "player.loss");
     const end = huntEvents.findLast((event) => event.type === "hunt.end");
+    const accept = huntEvents.find((event) => event.type === "hunt.accept");
     if (end) hunts.rows.push(row(key, huntEvents, losses, end));
-    else hunts.open.push(openHunt(key, entries));
+    else if (accept) hunts.open.push(openHunt(accept, losses, entries));
+    // Accepted before the log starts (or undone) and not ended: nothing to report but its losses
+    else hunts.lossesOutside.push(...losses);
   }
   return hunts;
 }

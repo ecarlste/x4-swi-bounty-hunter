@@ -14,6 +14,9 @@ export const ship = (idcode: string, owner = "newrepublic", shipClass: Ship["cla
   name: "NRL Patrol B-wing",
 });
 
+// A ship of the player's
+export const myShip = (idcode: string) => ship(idcode, "player", "ship_m");
+
 export const huntKey = (mission: number, target: string, t: number) => `kEM_Hunt_${mission}-${target}-${t}`;
 
 export const session = (t: number, saveMarker = "s1") =>
