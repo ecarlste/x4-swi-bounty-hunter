@@ -9,6 +9,7 @@ Read this first in a new session, then the docs it links. Update it or delete it
 - [mods.md](mods.md): the install (8.00 HF4, DLCs, SWI 0.90), how we check a mod, and the candidates. Head Hunter - Reloaded 1.01 is rejected as is, because it's built for 9.00.
 - [bounty-research.md](bounty-research.md): how bounty hunting works in SWI and vanilla 8.00, Head Hunter's features, and the gap analysis. All 17 Head Hunter features can be built on 8.00 + SWI: 14 we know how to build, and 3 SWI or vanilla already cover. The detail is in [research/](research/): `swi-bounty.md`, `vanilla-bounty.md`, `headhunter.md` and `save-check-knw-904.md`.
 - [test-plan.md](test-plan.md): 18 in-game tests (T01-T18) grouped into sessions, with a results table.
+- [playtests/stock-bounty-loop.md](playtests/stock-bounty-loop.md): the checklist and results sheet for the play session where you test the stock bounty loop (wayfinder ticket "Playtest the stock bounty loop", claimed 2026-11-01, not played yet).
 - An automated game-test harness: `make check` (offline) and `make game-test` (launches X4 8.00 NoSteam with SWI in test profile 90000201). See [tests/game/README.md](tests/game/README.md). It's modelled on `make game-test` in the [A Pirate's Life](https://github.com/ecarlste/x4-pirates-life-mod) repo.
 
 ## Key findings so far
