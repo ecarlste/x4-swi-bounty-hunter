@@ -1,0 +1,7 @@
+#!/bin/sh
+# Every change reaches main through a PR (CLAUDE.md, Parallel sessions), so no commits on main.
+# make setup points core.hooksPath here. Bypass for a real emergency: git commit --no-verify
+if [ "$(git branch --show-current)" = "main" ]; then
+  echo "pre-commit: no commits on main. Commit on an issue branch in its own worktree, then open a PR." >&2
+  exit 1
+fi

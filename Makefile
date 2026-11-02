@@ -20,6 +20,7 @@ help:
 
 setup:
 	@npm install --no-fund --no-audit
+	@git config core.hooksPath .githooks
 	@if [ -f test.config ]; then \
 		echo "test.config already exists"; \
 		echo "Edit it to update your X4 paths and test profile id"; \

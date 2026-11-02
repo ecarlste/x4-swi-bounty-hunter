@@ -12,6 +12,30 @@ bounty-research.md, test-plan.md, tests/game/README.md). Read research/ only as 
 - Commit or push only when the user asks. The repo is public: https://github.com/ecarlste/x4-swi-bounty-hunter
 - New scripts in TypeScript (Node runs `.ts` directly) unless there's a real reason not to.
 
+## Parallel sessions
+
+Several sessions run at once, one per issue (`/mattpocock-skills:implement <issue>`), so no
+session works in the main checkout. Its working tree belongs to nobody, and main only moves by PR.
+
+- **Worktree first:** before the first edit, call `EnterWorktree` with a name like `issue-17`. Or
+  start the session with the app's worktree option. This applies to every change, docs and
+  research notes included. A hook (`tools/hooks/guard-main.ts`) blocks edits in a checkout on
+  main, and `.githooks/pre-commit` blocks commits there.
+- **In the worktree:** `test.config` is copied in (`.worktreeinclude`), and Node finds the main
+  checkout's `node_modules`, so `make check` works as is.
+- **One issue per session and branch.** Don't edit another session's worktree or branch. If you
+  need something from it, message that session (`ListAgents`, `SendMessage`).
+- **PRs:** every change reaches main through a PR. Write the body with `/mattpocock-skills:pr`
+  and include `Closes #<issue>`. Rebase on origin/main first. Push and open the PR when the user
+  asks.
+- **After the merge:** update the main checkout with `git pull --ff-only`, then remove the
+  worktree (`ExitWorktree`).
+- **Shared files:** HANDOFF.md and test-plan.md are edited by many issues. Keep those edits
+  small, and expect to rebase.
+- **The game is shared:** one `make game-test` or `make install` at a time. The runner refuses
+  while X4 is running. Another session's `make install` replaces the installed extension.
+- **New clone:** run `make setup` once. It also points git at `.githooks`.
+
 ## Agent skills
 
 ### Issue tracker
