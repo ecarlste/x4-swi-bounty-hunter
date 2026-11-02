@@ -10,37 +10,37 @@ A bounty hunting system for Star Wars Interworlds 0.90 on X4 8.00, as a separate
 
 - Internal ID and folder: `swibh` (plain, so the display name can change without breaking saves). Depends on `SW Interworlds`.
 - Not part of A Pirate's Life for now. That's a 9.x mod with no SWI profile yet ([research/cap-fix-facts.md](research/cap-fix-facts.md)). Keep it in mind for when SWI reaches 9.x.
-- Works on existing saves where it can. A diff patch on SWI's MD libraries takes effect when a save loads (high confidence, to be proven by T12). It's preferred, not required.
+- Works on existing saves. A diff patch on SWI's MD libraries takes effect when a save loads (high confidence, to be proven by T12). A pre-release may need a new game; a release on Nexus or Steam Workshop must work on existing saves (decided 2026-11-01).
 
 ## Features, in build order
 
 ### 1. Patch proof and per-hunt logging
 
-- **T12:** prove that a diff patch on SWI's `md/kuertee_emergent_missions.xml` applies.
-- **Logging:** the extension writes one line, `[swibh-hunt] {json}`, to the debug log for each hunt's ending: success, failure or abort. Every ending goes through `Mission_Hunt_Resolve` (EM 5630-5721). Each line records:
-  - the target's class and size;
-  - the offered and paid amounts;
-  - the sanction tier;
-  - each wingman's roll and its inputs;
-  - loyal wingmen killed, and the bonus paid for them;
-  - relation changes;
-  - time taken.
+Decided 2026-11-02 (grilling); facts in [research/hunt-logging-hooks.md](research/hunt-logging-hooks.md).
 
-  The sanction tier, escorts and relation changes have to be recorded as they happen ([research/wing-split-facts.md](research/wing-split-facts.md)). The player's own losses are noted by hand until there's a hook for them.
-- **Collecting the log:** `make hunt-log`, run after each play session (X4 rewrites `debuglog.txt` at each launch). It adds new hunts to `data/hunts.csv`, skips hunts already recorded (keyed by mission and game time), and rebuilds `data/hunts-summary.md`. The data is what we tune the wing roll and the pay with.
+- **T12** ([#17](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/17)): prove that a diff patch on SWI's `md/kuertee_emergent_missions.xml` applies.
+- **Log events** ([ADR 0001](docs/adr/0001-one-schema-for-log-events.md), [#18](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/18)): one TypeScript schema in `tools/log/` defines every event; the MD library `extension/swibh/md/swibh_log.xml` and the extractors' parser are generated from it. Every line is `[swibh] {"v","type","t","wall","hunt"?,"data"}`: money in ct, game time as `player.age`, wall time as local `player.systemtime` ([ADR 0002](docs/adr/0002-wall-clock-stamp-on-log-events.md)), ids rather than free text. The logger records facts; extractors judge.
+- **v1 events** ([#19](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/19)), for the stock SWI hunt; later features add fields under a new `v`:
+  - `session.start` on game start and load, so reloads show;
+  - `hunt.accept`: offering faction, wharf, difficulty, target and size class, offered pay, the wing, sanction tier. Stashed here because EM loses them by the end. Sets the **hunt key** `<mission N>-<target idcode>-<accept t>`;
+  - `hunt.sanction` and `hunt.kill` as they happen ([research/wing-split-facts.md](research/wing-split-facts.md));
+  - `hunt.end` for success, failure or abort (all pass `Mission_Hunt_Resolve`, EM 5630-5721): failed step, paid split before and after the cap, target's kills, player's engagements, relation changes, the fleet's repair prices;
+  - `player.loss` for every player ship destroyed, hunt or not: value (hull, upgrades, drones), killer, and each active hunt with whether its wing made the kill.
+- **Later:** wing-roll inputs and the loyal-wingman bonus with feature 2; `hunt.offer` board scan ([#21](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/21)).
+- **Collecting the log** ([#20](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/20)): `make hunt-log`, run after each play session (X4 rewrites `debuglog.txt` at each launch). It adds new hunts to `data/hunts.csv`, skips hunts already recorded (by hunt key), and rebuilds `data/hunts-summary.md`. It attributes losses to hunts, reports net = paid - losses - repairs, and lists **open hunts** apart from the stats. The data is what we tune the wing roll and the pay with. The #14 logbook extractor keeps reading saves.
 
 ### 2. The wing roll
 
 This applies on **every** hunt whose target leads a wing, with or without a sanction.
 
 - **When:** once per hunt, the first time the target comes into range. It's triggered by range, not by comms.
-- **The roll:** each wingman rolls on its own. The bail chance comes from:
+- **The roll:** each wingman rolls on its own. The desertion chance comes from:
   - the wingman pilot's morale;
   - the player's combat ships near the target, weighted by class, against the target's wing. This borrows Head Hunter's way of counting ships ([research/headhunter-wings.md](research/headhunter-wings.md)).
 
   The roll and its inputs are logged.
-- **Bailers:** stop firing, fly to another sector and carry on with their normal orders there. They stay in the universe and can be met again. They stay neutral, so shooting one anyway costs the usual relation.
-- **Loyal wingmen:** made hostile to the player individually, with relation behaviour disabled (as Head Hunter does with its hunters), so attacking and killing them costs nothing with their faction. Each one *killed* adds 50% of a new reward roll for its own class to the hunt's pay. Survivors, and those who bail mid-fight, pay nothing.
+- **Deserters:** stop firing, fly to another sector and carry on with their normal orders there. They stay in the universe and can be met again. They stay neutral, so shooting one anyway costs the usual relation.
+- **Loyal wingmen:** made hostile to the player individually, with relation behaviour disabled (as Head Hunter does with its hunters), so attacking and killing them costs nothing with their faction. Each one *killed* adds 50% of a new reward roll for its own class to the hunt's pay. Survivors, and those who desert mid-fight, pay nothing.
 - **Mechanics** ([research/wing-split-facts.md](research/wing-split-facts.md)):
   - Removing the commander isn't enough, because an escort's order re-attaches it to its leader. Each wingman needs new orders.
   - Escorts of escorts follow their own leader.
