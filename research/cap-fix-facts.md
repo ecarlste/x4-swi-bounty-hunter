@@ -41,7 +41,7 @@ Four `run_actions ref="CapRewardBasedOnMissionTarget"` calls, all in EM. No othe
 - Extension diffs are applied when the files are loaded, so the patched library is what runs. `run_actions` runs the library's current actions each time it is called. That includes a hunt that was accepted before the patch: Resolve calls it only at payout.
 - Vanilla and SWI both patch library actions this way: `ego_dlc_boron/md/factionlogic_stations.xml:4` (`library[@name='Manage_Stations']/actions/...`) and `ego_dlc_boron/md/factionlogic_economy.xml:4`; SWI's `ext/md/gm_buildstation.xml:37–44` patches `library[@name='Start']/.../actions`. [read]
 - The patch only needs to replace the actions or the `set_value` lines inside the library. It adds no new cue or variable, so it needs no `<patch>` and no version bump. The patch extension must declare `<dependency id="SW Interworlds"/>` (SWI's content id, with a space) so it loads after SWI. SWI declares `<dependency version="800"/>`. [read]
-- Confidence: **high**. T12 (2026-11-02) confirmed a diff from our extension reaches SWI's EM script on a new game, but only by path: `extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml` inside our extension (a same-named file in our own `md/` is ignored). The existing-save half is still to run.
+- Confidence: **high**. T12 (2026-11-02) confirmed a diff from our extension reaches SWI's EM script on a new game, but only by path: `extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml` inside our extension (a same-named file in our own `md/` is ignored). It also applies to an existing save: save_007, made without the extension, ran the patched library after loading.
 
 ## 5. A Pirate's Life
 

@@ -4,7 +4,8 @@
 
      - UniverseGenerated answers whether event_universe_generated fires when the extension is added
        to an existing save (it's not a repeating cue, so it logs at most once per save).
-     - GameLoaded logs every load and calls EM's patched cap library on the player's ship, so an older
+     - GameLoaded logs every load and calls EM's patched cap library on the player's ship (or, on
+       foot, any ship in the galaxy), so an older
        save loaded with the extension shows the "[swibh-test] HOOK T12 CapRewardBasedOnMissionTarget" line:
        the diff applies to an existing save. The library only computes and returns; nothing changes.
 
@@ -26,14 +27,19 @@
       </conditions>
       <actions>
         <debug_text text="'[swibh-test] HOOK H13 event_game_loaded: gamestart %s, player.age %s, EM kEMissions %s'.[player.module, player.age, @md.kuertee_emergent_missions.kEMissions.state]" filter="general"/>
-        <do_if value="@player.occupiedship.exists">
+        <!-- The library only needs a ship to read class and size from -->
+        <set_value name="$Ship" exact="@player.occupiedship"/>
+        <do_if value="not @$Ship.exists">
+          <find_ship name="$Ship" space="player.galaxy"/>
+        </do_if>
+        <do_if value="@$Ship.exists">
           <run_actions ref="md.kuertee_emergent_missions.CapRewardBasedOnMissionTarget" result="$Capped">
             <param name="Cue_Mission" value="this"/>
-            <param name="MissionTarget" value="player.occupiedship"/>
+            <param name="MissionTarget" value="$Ship"/>
           </run_actions>
         </do_if>
         <do_else>
-          <debug_text text="'[swibh-test] HOOK H13 event_game_loaded: the player is on foot, so EM\'s cap library wasn\'t called; load a save made in a ship'" filter="general"/>
+          <debug_text text="'[swibh-test] HOOK H13 event_game_loaded: no ship found, so EM\'s cap library wasn\'t called'" filter="general"/>
         </do_else>
       </actions>
     </cue>

@@ -58,8 +58,7 @@
 
 .PARAMETER Manual
     T12's existing-save half: install the test extension without its autostart, start X4 in the
-    test profile and wait for you to load an older save (one made without the extension, in a
-    ship), let it run a few seconds, and quit. Then prints the "[swibh]" lines and whether EM's
+    test profile and wait for you to load an older save (one made without the extension), let it run a few seconds, and quit. Then prints the "[swibh]" lines and whether EM's
     patched library ran after the load. Writes no reports.
 
 .EXAMPLE
@@ -208,7 +207,7 @@ function Get-ExistingSaveResult($Run) {
     }
     $patched = @($lines[$loadAt..($lines.Count - 1)] | Where-Object { $_ -like 'T12 CapRewardBasedOnMissionTarget*' }).Count -gt 0
     $detail = if ($patched) { 'the patched EM cap library ran after the save loaded: the diff applies to an existing save' }
-              else { 'a save loaded, but no HOOK T12 CapRewardBasedOnMissionTarget line followed (on foot, or the diff did not apply)' }
+              else { 'a save loaded, but no HOOK T12 CapRewardBasedOnMissionTarget line followed (no ship found, or the diff did not apply)' }
     [pscustomobject]@{ Passed = $patched; Detail = "$detail; $universe" }
 }
 
@@ -456,7 +455,7 @@ try {
     Write-Host "Starting $GameExe $arguments; results go to $LogPath"
     $game = Start-Process -FilePath $GameExe -ArgumentList $arguments -WorkingDirectory $X4Path -PassThru
     if ($Manual) {
-        Write-Host "Load a save made without the test extension (in a ship), wait until it has loaded, then quit X4."
+        Write-Host "Open Load Game, load a save made without the test extension, wait until it has loaded, then quit X4."
         Write-Host "Saves are read from $profileDir\save: copy one in first if the test profile has none."
         $game.WaitForExit()
         $ending = 'manual'

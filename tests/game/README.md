@@ -41,7 +41,7 @@ Status: **runs in game** (2026-11-02): `make game-test` passes 4 of 4 in about 1
 make game-test ARGS=-Manual
 ```
 
-It installs the test extension without the autostart and starts X4 in the test profile. Load a save made without the extension, in a ship (copy one into `Documents\Egosoft\X4\90000201\save\` first), wait until it has loaded, then quit. The runner prints the `HOOK` lines and `EXISTING SAVE PASS` when EM's patched cap library ran after the load (H13's load hook calls it on the player's ship), and whether `event_universe_generated` fired. It writes no report. Saves made in the test profile while the extension is on don't depend on it (`save="false"`).
+It installs the test extension without the autostart and starts X4 in the test profile. Load a save made without the extension (copy one into `Documents\Egosoft\X4\90000201\save\` first), wait until it has loaded, then quit. The first time a profile loads a save, X4 shows "Modified game detected" (mods turn off online features): tick "Do not show again" and press OK, or the load waits behind it. The runner prints the `HOOK` lines and `EXISTING SAVE PASS` when EM's patched cap library ran after the load (H13's load hook calls it on the player's ship, or any ship when on foot), and whether `event_universe_generated` fired. It writes no report. Saves made in the test profile while the extension is on don't depend on it (`save="false"`).
 
 ## Setting up the test profile (once)
 
