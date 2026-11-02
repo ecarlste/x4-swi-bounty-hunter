@@ -572,10 +572,11 @@
             </do_if>
           </actions>
           <cues>
-            <!-- Both ships have a hit (or 60 s passed): the TIE has done its job -->
+            <!-- Both ships have a hit in this fight's engagement (or 60 s passed): the TIE has done
+                 its job. $Ships keeps the last engagement's stats after it closes, hence $Start -->
             <cue name="Engagement_Hits" checkinterval="1s">
               <conditions>
-                <check_value value="not @$Enemy.exists or player.age gt $Begun + 60s or (@Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0 and @Engagement.$Engagements.$Ships.{Engagement.$Wingman}.$hitsDealt gt 0)"/>
+                <check_value value="not @$Enemy.exists or player.age gt $Begun + 60s or (Engagement.$Engagements.$Open and Engagement.$Engagements.$Start ge $Begun and @Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0 and @Engagement.$Engagements.$Ships.{Engagement.$Wingman}.$hitsDealt gt 0)"/>
               </conditions>
               <actions>
                 <set_value name="$HitsAt" exact="player.age"/>

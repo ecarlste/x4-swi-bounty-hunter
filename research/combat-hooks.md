@@ -148,3 +148,7 @@ Same three ships for 40 s, every combat event on them counted, the first 60 logg
 - **`lastattacker`** names the attacker (the TIE) and stays set: the attacker for damage events, which carry none.
 - **The fight was sparse:** after t 50.2 nothing hit anything until the end at 76; the TIE's shield stayed 100%, so the wingman on defence never fired. Shields recharged to 100% within about 6 s.
 - `engagement` this run had the hunt key on fight 1 (the list fix works) and failed only on hit counts.
+
+### Game test, 2026-11-02 (fourth run, damage events)
+
+With the wingman ordered to attack the TIE and both orders re-checked every 2 s, `combat_signals` saw both directions in 40 s: 15 damage events on the TIE (6 shield, 9 hull, so the wingman got through its shield), 1 on the player's ship, and 3 `event_object_attacked` on the TIE for 3 `event_object_attacked_object` by the X-wing (about one per attack run). `engagement` fight 1 passed: one engagement of 2.7 s in which the player's ship took 4 hits (600 damage) and the wingman dealt 1 (150). Fight 2 failed on a test bug (its check read fight 1's leftover `$Ships`), fixed after the run. Tests ran in 1 min 7 s.
