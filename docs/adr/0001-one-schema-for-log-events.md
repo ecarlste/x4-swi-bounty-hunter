@@ -1,6 +1,6 @@
 # One TypeScript schema for log events; the MD side is generated
 
-Date: 2026-11-02. Status: accepted.
+Date: 2026-11-02. Status: accepted; the envelope is amended by [ADR 0002](0002-wall-clock-stamp-on-log-events.md) (`wall`).
 
 ## Context
 
