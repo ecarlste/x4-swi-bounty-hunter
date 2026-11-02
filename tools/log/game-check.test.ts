@@ -8,7 +8,7 @@ const ref = (idcode: string, owner: string) =>
   `{"idcode":"${idcode}","macro":"tie_fighter_macro","name":"TIE","owner":"${owner}"}`;
 const player = `{"class":"ship_s","idcode":"PLR-001","macro":"fortitude_macro","name":"Fortitude","owner":"player"}`;
 const stats = (idcode: string, isPlayer: boolean, hitsTaken: number, hitsDealt: number) =>
-  `{"class":"ship_s","destroyed":false,"hitsDealt":${hitsDealt},"hitsTaken":${hitsTaken},"idcode":"${idcode}",` +
+  `{"class":"ship_s","damageDealt":${hitsDealt * 150},"damageTaken":${hitsTaken * 150},"destroyed":false,"hitsDealt":${hitsDealt},"hitsTaken":${hitsTaken},"idcode":"${idcode}",` +
   `"kills":0,"macro":"t65b_xwing_macro","name":"Wing","player":${isPlayer},"sectors":["sws_clustercoruscant_sector001_macro"]}`;
 const huntPart = (hunt?: string) => (hunt ? `"hunt":"${hunt}",` : "");
 const start = (t: number, hunt?: string) =>

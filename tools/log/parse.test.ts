@@ -100,7 +100,7 @@ test("bad and truncated lines are reported by line number and skipped", async ()
 });
 
 const wingShip = (idcode: string, player: boolean, hitsTaken: number, hitsDealt: number) =>
-  `{"class":"ship_s","destroyed":false,"hitsDealt":${hitsDealt},"hitsTaken":${hitsTaken},"idcode":"${idcode}",` +
+  `{"class":"ship_s","damageDealt":${hitsDealt * 150},"damageTaken":${hitsTaken * 150},"destroyed":false,"hitsDealt":${hitsDealt},"hitsTaken":${hitsTaken},"idcode":"${idcode}",` +
   `"kills":0,"macro":"t65b_xwing_macro","name":"Wing","player":${player},"sectors":["sws_clustercoruscant_sector001_macro"]}`;
 const foe = (idcode: string) =>
   `{"idcode":"${idcode}","killed":true,"macro":"tie_fighter_macro","name":"TIE","owner":"galempire"}`;
@@ -138,10 +138,10 @@ test("an engagement carries the hunt key only when the target's wing took part",
   const end = log.events[1];
   assert.ok(end.type === "engagement.end");
   assert.deepEqual(
-    end.data.ships.map((s) => [s.idcode, s.player, s.hitsTaken, s.hitsDealt]),
+    end.data.ships.map((s) => [s.idcode, s.player, s.hitsTaken, s.hitsDealt, s.damageTaken, s.damageDealt]),
     [
-      ["PLR-001", true, 12, 0],
-      ["XWG-002", false, 3, 40],
+      ["PLR-001", true, 12, 0, 1800, 0],
+      ["XWG-002", false, 3, 40, 450, 6000],
     ],
   );
 });

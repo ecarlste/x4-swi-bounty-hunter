@@ -145,9 +145,14 @@ export const ActiveHunt = defineShape("ActiveHunt", {
   sameSector: bool(),
 });
 
-// From table[$idcode, $macro, $class, $name, $player, $hitsTaken, $hitsDealt, $kills,
-// $sectors, $destroyed]: one ship of the player's wing that took part in an engagement.
-// Its ids are kept from its first hit, since it may be destroyed before the end
+// From table[$idcode, $macro, $class, $name, $player, $hitsTaken, $hitsDealt, $damageTaken,
+// $damageDealt, $kills, $sectors, $destroyed]: one ship of the player's wing that took part in
+// an engagement. Its ids are kept from its first hit, since it may be destroyed before the end.
+// Hits and damage come from event_object_shield_damaged / _hull_damaged, one per projectile
+// (research/combat-hooks.md); the attack events fire only once per attack. Those damage events
+// carry no attacker or kill method, so while an engagement is open, hazard, boost and collision
+// damage on a wing ship count as hits taken too; a hit dealt is credited to the opponent's
+// lastattacker. A projectile that drains the shield and reaches the hull may count twice
 export const WingShip = defineShape("WingShip", {
   idcode: id(),
   macro: id(),
@@ -157,6 +162,9 @@ export const WingShip = defineShape("WingShip", {
   player: bool(),
   hitsTaken: int(),
   hitsDealt: int(),
+  // Shield plus hull points lost to those hits, and dealt by this ship
+  damageTaken: number(),
+  damageDealt: number(),
   // Opponents it destroyed: the killer of an opponent's event_object_destroyed
   kills: int(),
   // Macro ids of the sectors it was hit or hit something in, in order

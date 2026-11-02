@@ -201,6 +201,8 @@
       <actions>
         <set_value name="$Json" exact="''"/>
         <set_value name="$Json" exact="$Json + '{&quot;class&quot;:' + '&quot;%s&quot;'.[$In.$class]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;damageDealt&quot;:' + '%s'.[($In.$damageDealt)f]"/>
+        <set_value name="$Json" exact="$Json + ',&quot;damageTaken&quot;:' + '%s'.[($In.$damageTaken)f]"/>
         <set_value name="$Json" exact="$Json + ',&quot;destroyed&quot;:' + (if $In.$destroyed then 'true' else 'false')"/>
         <set_value name="$Json" exact="$Json + ',&quot;hitsDealt&quot;:' + '%s'.[($In.$hitsDealt)i]"/>
         <set_value name="$Json" exact="$Json + ',&quot;hitsTaken&quot;:' + '%s'.[($In.$hitsTaken)i]"/>
