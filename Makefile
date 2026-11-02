@@ -1,4 +1,4 @@
-.PHONY: setup check check-xml check-lua check-xsd check-runner check-tools log-xml game-test help
+.PHONY: setup check check-xml check-lua check-xsd check-runner check-tools log-xml hunt-log game-test help
 
 # Runs Windows PowerShell through WSL interop; override to run it another way
 POWERSHELL ?= powershell.exe -NoProfile -ExecutionPolicy Bypass -File
@@ -11,6 +11,7 @@ help:
 	@echo "  make setup       - npm install, create test.config, and turn on the git hooks in .githooks"
 	@echo "  make check       - Offline checks, no game: XML, test list, macro/faction/ware ids, Lua, 8.00 XSDs, runner, TypeScript tools"
 	@echo "  make log-xml     - Regenerate extension/swibh/md/swibh_log.xml from the log schema (tools/log/schema.ts)"
+	@echo "  make hunt-log LOG=<debuglog.txt> - Add a play session's hunts to data/hunts.csv, rebuild data/hunts-summary.md"
 	@echo "  make game-test   - Install the test extension, run the in-game tests in X4 8.00 + SWI, remove it (Windows)"
 	@echo "  make help        - Show this help message"
 	@echo ""
@@ -58,6 +59,11 @@ check-tools:
 # The MD library for log events, generated from the log schema (ADR 0001); commit the result
 log-xml:
 	@node tools/log/generate.ts && echo "Wrote extension/swibh/md/swibh_log.xml"
+
+# After each play session, on a copy of debuglog.txt (X4 rewrites it at each launch); commit data/
+hunt-log:
+	@if [ -z "$(LOG)" ]; then echo "Usage: make hunt-log LOG=<copy of debuglog.txt>"; exit 2; fi
+	@node tools/hunt-log.ts "$(LOG)"
 
 # The runner installs the test extension itself (and removes it afterwards), so there's no separate deploy
 game-test:
