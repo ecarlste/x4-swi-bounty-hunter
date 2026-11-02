@@ -8,6 +8,10 @@
      <macro name="..."> in a catalog's maps/ files, or one in the unpacked game's libraries
      (character macros); ship macros also print their class;
    - factions and wares: an id in the unpacked game's or SWI's libraries/factions.xml, wares.xml.
+4. Every MD diff (an md/*.xml with a <diff> root) targets a script that exists, and each sel matches
+   exactly one node there (X4 skips an operation whose sel matches nothing). X4 patches by path:
+   md/<name> patches the game's md/<name>; extensions/<folder>/md/<name> patches that extension's
+   (starwarsmod_m1 is SWI, unpacked at SWI_UNPACKED/ext; a DLC folder sits next to X4_UNPACKED).
 
 Reads the game's and SWI's files as data only. Paths come from test.config (or the environment):
 X4_PATH (the 8.00 install), X4_UNPACKED (unpacked vanilla 8.00, the folder with libraries/md.xsd;
@@ -23,6 +27,7 @@ import re
 import subprocess
 import sys
 import xml.dom.minidom
+import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXTENSION = os.path.join(ROOT, 'tests', 'game', 'swibh_tests')
@@ -181,6 +186,58 @@ def library_ids(dirs, filename, element):
     return ids
 
 
+SWI_FOLDER = 'starwarsmod_m1'
+
+
+def md_diff_target(rel, unpacked, swi):
+    """The unpacked MD script the diff at <rel> (relative to the extension) patches, or None.
+    An MD diff in our own md/ only reaches the game's scripts: 8.00 loads a diff named after
+    another extension's script as a new script and ignores its <diff> root (T12, 2026-11-02)."""
+    parts = rel.replace(os.sep, '/').split('/')
+    if len(parts) == 2 and unpacked:
+        base = unpacked
+    elif len(parts) == 4 and parts[0] == 'extensions':
+        if parts[1] == SWI_FOLDER:
+            base = os.path.join(swi, 'ext') if swi else None
+        else:
+            base = os.path.join(os.path.dirname(unpacked), parts[1]) if unpacked else None
+    else:
+        return None
+    path = os.path.join(base, 'md', parts[-1]) if base else None
+    return path if path and os.path.exists(path) else None
+
+
+def check_md_diffs(unpacked, swi):
+    notes, bad = [], []
+    for f in extension_files('*.xml'):
+        if os.path.basename(os.path.dirname(f)) != 'md':
+            continue
+        diff = ET.parse(f).getroot()
+        if diff.tag != 'diff':
+            continue
+        rel = os.path.relpath(f, EXTENSION)
+        target = md_diff_target(rel, unpacked, swi)
+        if not target:
+            if swi or unpacked:
+                bad.append('%s: no script at this path to patch (an MD diff in md/ only patches the game\'s own scripts; '
+                           'another extension\'s goes in extensions/<its folder>/md/)' % rel)
+            else:
+                notes.append('%s not checked: SWI_UNPACKED and X4_UNPACKED not found' % rel)
+            continue
+        root = ET.parse(target).getroot()
+        for op in diff:
+            sel = op.get('sel', '')
+            # ElementTree's XPath subset, from the root: /<roottag>/a/b[@x='y'] -> a/b[@x='y']
+            m = re.match(r'^/([A-Za-z_][\w.-]*)/(.+)$', sel)
+            if not m or m.group(1) != root.tag or re.search(r'/@|\(\)|//', m.group(2)):
+                bad.append('%s: <%s sel="%s">: not a simple element path this check can follow' % (rel, op.tag, sel))
+                continue
+            count = len(root.findall(m.group(2)))
+            line = '%s: <%s sel="%s"> matches %d node%s in %s' % (rel, op.tag, sel, count, '' if count == 1 else 's', target)
+            (notes if count == 1 else bad).append(line)
+    return notes, bad
+
+
 def check_ids(kind, names, unpacked, swi):
     dirs = []
     if unpacked and os.path.isdir(unpacked):
@@ -217,6 +274,7 @@ def main(argv):
         ('Macros', check_macros(refs['macro'], install, unpacked)),
         ('Factions', check_ids('faction', refs['faction'], unpacked, swi)),
         ('Wares', check_ids('ware', refs['ware'], unpacked, swi)),
+        ('MD diffs', check_md_diffs(unpacked, swi)),
     ):
         print('%s: %s' % (title, 'FAIL' if bad else 'ok'))
         for line in notes:

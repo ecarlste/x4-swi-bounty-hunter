@@ -1,6 +1,6 @@
 # Automated in-game tests
 
-Status: **runs in game** (2026-10-31): `make game-test` passes 3 of 3 in about 1 min 40 s (8.00 HF4 + SWI 0.90). The "Unverified" list below predates the first runs.
+Status: **runs in game** (2026-11-02): `make game-test` passes 4 of 4 in about 1 min 40 s (8.00 HF4 + SWI 0.90), T12's diff on EM included. The "Unverified" list below predates the first runs.
 
 `make game-test` plays short scripted scenarios in the real game (X4 8.00 HF4 NoSteam + SWI 0.90) and reports PASS/FAIL, with no clicks. It's a copy of [A Pirate's Life's harness](https://github.com/ecarlste/x4-pirates-life-mod/blob/main/docs/research/automated-game-testing.md), adapted for the 8.00 NoSteam copy and SWI. Dev only: never loaded in a recorded episode.
 
@@ -19,6 +19,8 @@ Status: **runs in game** (2026-10-31): `make game-test` passes 3 of 3 in about 1
 | `swibh_tests/libraries/gamestarts.xml` | Adds the `swibh_test` gamestart (below) |
 | `swibh_tests/ui.xml`, `ui/swibh_tests_autostart.lua` | The autostart |
 | `swibh_tests/md/swibh_tests.xml` | The harness and the tests |
+| `swibh_tests/extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml` | T12's diff on SWI's Emergent Missions script (H12): two `HOOK T12` log lines, no behaviour change |
+| `swibh_tests/md/swibh_hooks.xml` | H13: `HOOK H13` lines on `event_universe_generated` and on every load; on load it also calls EM's patched cap library |
 | `../../tools/run-game-tests.ps1` | The runner |
 | `../../tools/check_game_tests.py`, `../../tools/validate-xml.ps1`, `../GameTests.Check.ps1` | Offline checks (`make check`) |
 | `../../test.config` | Paths and test profile id (copy `test.config.example`) |
@@ -30,6 +32,16 @@ Status: **runs in game** (2026-10-31): `make game-test` passes 3 of 3 in about 1
 - **Why this galaxy:** it's the leanest SWI map: one cluster, one sector, one empty zone, so it builds far quicker than `swi_galaxy_macro`. Emergent Missions doesn't care which galaxy: its start cues (`kEMissions`, `UserSettings`) run on `md.Setup.GameStart` for any gamestart that isn't a Timelines scenario (`kuertee_emergent_missions.xml` 135-222), and its libraries can be called from any script.
 - **Why god and jobs off:** T01 spawns its own targets and calls EM's library directly, so it needs no stations or traffic. Without them every run starts the same, and no NPC fight puts pilots into EM's tracker by chance. The cost: vanilla and SWI setup cues that look for stations will log errors; the runner ignores errors that don't mention `swibh` (as A Pirate's Life's does). A test that needs a live universe (EM's tracker, named hunters, T15) needs its own gamestart on `swi_galaxy_macro` with jobs on.
 - **Player:** the Bankrupt Bounty Hunter start's character (`character_player_pirate_gamestart1_macro`, vanilla Tides of Avarice) and ship (SWI `fortitude_macro`, the BHG loadout), 10,000 Cr, SETA in the inventory.
+
+### T12 on an existing save
+
+`make game-test` proves the diff on a new game. For the existing-save half (needed before a release):
+
+```
+make game-test ARGS=-Manual
+```
+
+It installs the test extension without the autostart and starts X4 in the test profile. Load a save made without the extension (copy one into `Documents\Egosoft\X4\90000201\save\` first), wait until it has loaded, then quit. The first time a profile loads a save, X4 shows "Modified game detected" (mods turn off online features): tick "Do not show again" and press OK, or the load waits behind it. The runner prints the `HOOK` lines and `EXISTING SAVE PASS` when EM's patched cap library ran after the load (H13's load hook calls it on the player's ship, or any ship when on foot), and whether `event_universe_generated` fired. It writes no report. Saves made in the test profile while the extension is on don't depend on it (`save="false"`).
 
 ## Setting up the test profile (once)
 
@@ -96,6 +108,9 @@ Every harness line in `debuglog.txt` starts with `[swibh-test]`.
 | `VERDICT <test>: …` | The test's answer to its test plan question (copied into "Verdicts") |
 | `PASS <test>: …` / `FAIL <test>: …` | A result and its detail |
 | `DONE passed=<n> failed=<n>` | All tests ran; MD quits the game 2 s later |
+| `HOOK <text>` | A line from the test extension's hooks outside its tests: `HOOK T12 kEMissions …` and `HOOK T12 CapRewardBasedOnMissionTarget …` from the diff on EM, `HOOK H13 …` from `md/swibh_hooks.xml`. Listed under "Measured" as `hook` |
+
+Plain `[swibh]` lines are the `swibh` extension's JSON log events ([ADR 0001](../../docs/adr/0001-one-schema-for-log-events.md)), never the harness's.
 
 A run fails if a test fails, fewer than `<n>` results arrive, `DONE` never comes (game exited or timed out), or the log has errors mentioning `swibh` (signature warnings excluded). Errors in EM's `CapRewardBasedOnMissionTarget` are listed in the report separately: they are T01 data, not a harness failure.
 
@@ -105,6 +120,7 @@ A run fails if a test fails, fewer than `<n>` results arrive, `DONE` never comes
 | --- | --- | --- |
 | `smoke` | The run is on `swibh_test`, SWI is loaded (`faction.galempire` and `ware.tie_fighter` exist), and Emergent Missions ran its start cue in SWI mode (`md.kuertee_emergent_missions.kEMissions` complete, `$IsSWIExists` true) | All of these hold |
 | `t01_pay_cap` | [T01](../../test-plan.md#t01-lxl-search-and-destroy-pay-cap)'s question: does SWI's cap shrink an L/XL hunt reward to a few credits? | Both targets were spawned and measured, and the numbers were logged. The cap's answer is in the `VERDICT` line, not the PASS |
+| `t12_diff_patch` | [T12](../../test-plan.md#t12-our-diff-patch-on-swis-em-file-applies): does a diff from our extension apply to SWI's EM script? Judged by the runner, not MD: added after `DONE` | Both `HOOK T12` lines are in the log (kEMissions runs at game start, the library runs in the T01 tests) and no error names `kuertee_emergent_missions`. The detail also gives H13's line |
 | `t01_knw904` | The real KNW-904 contract: its target's class and `size`, and what the cap pays for its reward | `mc40a_macro` was spawned and measured, and EM's library returned both cases. The pay is in the `VERDICT` line |
 
 **How T01 works.** It spawns an L target (`hapan_nova_macro`, SWI's Hapan Nova-class Battle Cruiser, the ship in the 2026-10-31 offers, owner `hapes`) and an XL target (`isd_2_macro`, Imperial Star Destroyer II, owner `galempire`), 30 km away, with no loadout, crew or pilot. Two seconds later, for each, it logs macro, owner, class, `isclass.ship_l/xl` and `size`, then calls EM's own library the way `Mission_Hunt_Resolve` does (EM 5684-5694):
@@ -122,7 +138,7 @@ and computes the pay with EM's own expression, `(($Capped.$RewardForTarget)f + (
 
 **`t01_knw904`** spawns `mc40a_macro` (MC40A Light Cruiser, owner `newrepublic`, the KNW-904 contract's target, [save check](../../research/save-check-knw-904.md)) and calls the same library with the offer's numbers: `RewardForTarget` 35,835 Cr, and `RewardForPlayerKills` 1,141,130 × 1.25 Cr (100% damage, player kill) or 114,113 Cr (10% damage, another ship's kill).
 
-`smoke`, `t01_pay_cap` and `t01_knw904` are listed in `$Tests` in `md/swibh_tests.xml`. To add a test: a root cue named after it that fires on `event_cue_signalled`, sets up its scenario, and signals `Report` once with `table[$name, $ok, $detail]`; then add it to `$Tests`, and clean up what it spawned. `make check` fails if `$Tests` and the root cues don't match.
+`smoke`, `t01_pay_cap` and `t01_knw904` are listed in `$Tests` in `md/swibh_tests.xml`. To add a test: a root cue named after it that fires on `event_cue_signalled`, sets up its scenario, and signals `Report` once with `table[$name, $ok, $detail]`; then add it to `$Tests`, and clean up what it spawned. `make check` fails if `$Tests` and the root cues don't match. A diff on a game script goes in `md/` under its file name; a diff on another extension's script goes in `extensions/<its folder>/md/` (8.00 patches those by path: a diff in our `md/` named after SWI's script is loaded as a new script and ignored). `make check` checks each `sel` matches exactly one node in SWI's (or the game's) unpacked copy, and validates it against `diff.xsd`.
 
 ## Unverified
 
