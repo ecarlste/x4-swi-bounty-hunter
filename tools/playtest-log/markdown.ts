@@ -2,14 +2,14 @@
 import type { PlaytestLog } from "./logbook.ts";
 
 // 22081000 ct -> "220,810.00 Cr"
-const cr = (ct: number) =>
+export const cr = (ct: number) =>
   `${(ct / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr`;
 
 // 19520.052 -> "19,520.052"
-const gameTime = (seconds: number) => seconds.toLocaleString("en-US", { maximumFractionDigits: 3 });
+export const gameTime = (seconds: number) => seconds.toLocaleString("en-US", { maximumFractionDigits: 3 });
 
 // 7200 -> "2:00:00"
-function duration(seconds: number): string {
+export function duration(seconds: number): string {
   const s = Math.round(seconds);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
@@ -18,7 +18,7 @@ function duration(seconds: number): string {
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 // A table without the columns no row fills, or "None." with no rows.
-function table(headers: string[], rows: (string | undefined)[][]): string {
+export function table(headers: string[], rows: (string | undefined)[][]): string {
   if (!rows.length) return "None.";
   const kept = headers.map((_, i) => i).filter((i) => rows.some((row) => row[i]));
   const line = (cells: string[]) => `| ${cells.join(" | ")} |`;

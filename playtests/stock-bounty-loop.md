@@ -60,6 +60,7 @@ Background: how a hunt works is in [bounty-research.md](../bounty-research.md#a-
 
 - [ ] Write the time you stop, in real time and game time, and your balance at the start and end.
 - [ ] Fill the money and relation columns from the end save's logbook with the [playtest logbook extractor](../tests/game/README.md#playtest-logbook-extractor). Copy the end save to a scratch folder first (never run it in the save folder), then run `node tools/playtest-log.ts <scratch folder>/save_NNN.xml.gz --since <game time you started>`. Paste its hunt rows (paid, ending, offering faction), other income and relation changes into the Results below, and its pacing summary under Verdict. Aborted hunts leave no logbook entry: add those by hand.
+- [ ] If the `swibh` extension was installed, copy `debuglog.txt` out and run `make hunt-log LOG=<copy>` ([hunt log](../tests/game/README.md#hunt-log-make-hunt-log)). Paste the net and pay per game hour from `data/hunts-summary.md` under Verdict, and commit `data/`. With stock SWI only, there are no log events: skip this.
 - [ ] Ship upgrades you could afford, and when.
 - [ ] Answer the three questions in "Verdict" below.
 - [ ] Tell Claude the saves to check, and anything still to confirm.
