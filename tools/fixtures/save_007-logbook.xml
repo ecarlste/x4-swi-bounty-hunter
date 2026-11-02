@@ -1,0 +1,44 @@
+<log time="0" type="init" owner="87" ware="advancedcomposites" v="403"/>
+<log time="0" type="init" owner="87" ware="advancedelectronics" v="6166"/>
+<stat id="visitor_ships_destroyed" value="0"/>
+<stat id="savegames_loaded" value="6"/>
+<stat id="trade_score" value="504"/>
+<stat id="trade_rank" value="8"/>
+<stat id="fight_score" value="29"/>
+<stat id="fight_rank" value="8"/>
+</stats>
+<log>
+<entry time="60.5577" category="news" title="News update: " text="Hutt Cartel mounting defence in Lannik"/>
+<entry time="315.875" category="news" title="News update: " text="Hutt Cartel mounting defence in Rorak"/>
+<entry time="681.243" category="missions" title="Escort TFD Intermediates Trader Action-IV" text="Escort TFD Intermediates Trader Action-IV: trades completed: 2, sectors traversed: 4, time in escort: 5 min / 7 min (69%). Escort reward: 31,006.98 Cr." money="3100698"/>
+<entry time="699.584" category="missions" title="Yuuzhan Vong Raid Protection" text="Mission accepted." entity="Ty Lanner" faction="{999840,507110}"/>
+<entry time="1480.875" title="Reputation gained: +5" text="Reason: Mission Completed[\012]Current reputation: 4" faction="{999840,507110}"/>
+<entry time="1480.875" category="missions" title="Yuuzhan Vong Raid Protection" text="Mission completed." entity="Ty Lanner" money="10804500"/>
+<entry time="1513.593" title="Reputation gained: +1" text="Reason: Destroyed Enemy[\012]Current reputation: 5" faction="{999840,507110}"/>
+<entry time="1513.593" title="Rewarded for station defence" interact="showonmap" component="[0x19e2f]" faction="{999840,507110}" money="1000000"/>
+<entry time="2212.84" category="missions" title="All That Remains" text="Mission accepted." entity="Le t'Sht" faction="{999840,507110}"/>
+<entry time="2935.963" category="news" title="Galactic News" text="Boonta Changed Owner From Unknown. New Owner: Independent Commerce Guild" faction="Boonta"/>
+<entry time="2943.188" category="missions" title="Rescue civilians: HTP Pharmaceutical Goods Factory I" text="Engagement reward: 0.00 Cr. Total reward: 17,219.78 Cr." money="1721978"/>
+<entry time="4343.819" title="Reputation gained: +4" text="Reason: Mission Completed[\012]Current reputation: 9" faction="{999840,507110}"/>
+<entry time="4343.819" category="missions" title="All That Remains" text="Mission completed." entity="Le t'Sht" money="33025000"/>
+<entry time="4359.698" category="missions" title="Mine Disposal Required" text="Mission accepted." entity="Branda Samdi" faction="{999840,507110}"/>
+<entry time="4455.128" title="Discount unlocked" text="Known Associate[\012]Level: Very Small[\012]Offered by: Hutt Cartel"/>
+<entry time="4455.128" title="Reputation gained: +1" text="Reason: Destroyed Enemy[\012]Current reputation: 10" faction="{999840,507110}"/>
+<entry time="4455.128" title="Rewarded for station defence" interact="showonmap" component="[0x8f03c]" faction="{999840,507110}" money="50000"/>
+<entry time="4493.932" title="Reputation gained" text="Reason: Mission Completed[\012]Current reputation: 10" faction="{999840,507110}"/>
+<entry time="4493.932" category="missions" title="Mine Disposal Required" text="Mission completed." entity="Branda Samdi" money="4039000"/>
+<entry time="15925.92" title="Reputation gained: +6" text="Reason: Mission Completed[\012]Current reputation: 1" faction="{999840,512110}"/>
+<entry time="15925.92" category="missions" title="Rescue civilians: BLS Pirate Scrapyard" text="Rescue reward: 188,490.00 Cr. Engagement reward: 0.00 Cr. Total reward: 523,562.72 Cr." money="52356272"/>
+<entry time="18442.913" category="upkeep" title="N-1 Modified Starfighter (HJE-131) is under attack." text="Location: Chardaan[\012]Commander: Fortitude-class (RCD-681)[\012]Attacked by: NRL Star Fighter E-wing (NHJ-691)" interact="showonmap" component="[0x55410]" highlighted="1"/>
+<entry time="18455.135" title="Reputation lost: -3" text="Reason: Unauthorised Kill[\012]Current reputation: -3" faction="{999840,502110}"/>
+<entry time="18470.094" title="Reputation lost: -2" text="Reason: Unauthorised Kill[\012]Current reputation: -5" faction="{999840,502110}"/>
+<entry time="18474.75" title="Reputation lost: -2" text="Reason: Unauthorised Kill[\012]Current reputation: -7" faction="{999840,502110}"/>
+<entry time="18720.196" title="Reputation lost: -2" text="Reason: Unauthorised Kill[\012]Current reputation: -9" faction="{999840,502110}"/>
+<entry time="19323.644" category="alerts" title="Detected abondoned ship" text="Satellite detected ship abandoned in sector Chardaan" interact="showonmap" component="[0x21aceb1]"/>
+<entry time="19520.052" title="Reputation gained: +5" text="Reason: Mission Completed[\012]Current reputation: -1" faction="{999840,504110}"/>
+<entry time="19520.052" category="missions" title="Search and destroy: NRL Patrol B-wing (AEL-112)" text="Reward for NRL Patrol B-wing (AEL-112) kills: 124,785.00 Cr. Your Engagements: 1 x S ship (kills: 1). Reward for NRL Patrol B-wing (AEL-112) destruction: 96,025.00 Cr. Total reward: 220,810.00 Cr." money="22081000"/>
+</log>
+<messages>
+<entry time="60.0148" id="1" title="Coruscant Financial Bureau: Rating Update" text="(cut)"/>
+</messages>
+<ref id="67971" string="Search for then destroy NRL Patrol B-wing (AEL-112).[\012][\012]NRL Patrol B-wing (AEL-112)'s kills are: 1 x M ship[\012]Operation results:[\012]1 killed / 1 x B-wing A/SF-01: [\033]#FF00FF00#your kills: 1, your damage: 100[\033]X / 100: 48,012.50 Cr.[\012][\012]Reward for NRL Patrol B-wing (AEL-112) kills: 124,785.00 Cr.[\012]Reward for NRL Patrol B-wing (AEL-112) destruction: 96,025.00 Cr.[\012]Total reward: 220,810.00 Cr.[\012]"/>

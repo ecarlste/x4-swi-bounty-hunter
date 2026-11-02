@@ -45,7 +45,7 @@ By hand instead: launch `X4_nonsteam.exe -personalfolderid 90000201` once, quit,
 ## Running
 
 ```
-make check                               # offline: XML, test list, ids, Lua, 8.00 XSDs, runner (no game)
+make check                               # offline: XML, test list, ids, Lua, 8.00 XSDs, runner, TypeScript tools (no game)
 make game-test                           # or: .\tools\run-game-tests.ps1 (PowerShell)
 make game-test ARGS="-KeepExtension"     # leave the extension installed, e.g. to start swibh_test by hand
 ```
@@ -54,7 +54,34 @@ Close X4 first. A run takes as long as X4 takes to load SWI plus a few seconds o
 
 **If a run is killed** (PowerShell closed mid-run), `extensions\swibh_tests` may stay in the game folder: delete it before playing, or the main menu of any profile with SWI on will start the test game.
 
-`make check` needs the unpacked vanilla 8.00 game files (`X4_UNPACKED`, the folder with `libraries\md.xsd`) and SWI's unpacked reference (`SWI_UNPACKED`). It installs nothing: XSD validation uses the .NET validator in Windows PowerShell.
+`make check` needs the unpacked vanilla 8.00 game files (`X4_UNPACKED`, the folder with `libraries\md.xsd`) and SWI's unpacked reference (`SWI_UNPACKED`). XSD validation uses the .NET validator in Windows PowerShell. The TypeScript check (`make check-tools`: `tsc` and `node --test` on `tools/**/*.test.ts`) needs `npm install` once (`make setup` runs it).
+
+## Playtest logbook extractor
+
+After a playtest, `tools/playtest-log.ts` reads the end save's logbook and prints the money and relation columns of the results sheet in `playtests/stock-bounty-loop.md` as markdown:
+
+```
+cp <X4 save folder>/save_NNN.xml.gz <scratch folder>/
+node tools/playtest-log.ts <scratch folder>/save_NNN.xml.gz --since <game time at the session start>
+```
+
+Saves are untrusted data: copy the save out first; the tool only reads it, streams it line by line (flat memory, about 130 MB peak and 6 s on save_007's 800 MB) and stops at the end of the logbook. `--since` keeps only entries after that game time, to leave out earlier play in the same save. Plain `.xml` saves work too.
+
+It prints four sections:
+
+- **Hunt log:** one row per Search and Destroy hunt that ended: game time, target, offering faction, ending, paid, its kills and destruction parts, engagements, and the logbook's words for a hunt that paid nothing. Columns no row fills are left out.
+- **Other income:** every other logbook entry with a reward (vanilla missions, "Rewarded for station defence").
+- **Relation changes:** every "Reputation gained/lost" entry, with SWI's faction names (the logbook writes text ids such as `{999840,504110}`).
+- **Pacing:** hunts ended, game time from the first to the last, hunts per game hour, total paid.
+
+What it reads, and what it can't:
+
+- A hunt's ending comes from EM's debrief text (`Mission_Hunt_GetMissionTexts` in SWI's `ext/md/kuertee_emergent_missions.xml`): a payout is success; "You failed to find/confirm/damage …" or "… is still operational" with "Total reward: 0.00 Cr." is failure; "Mission aborted." is abort. EM writes no logbook entry when a hunt is aborted and cleaned up, so an abort may not show at all: note aborts by hand.
+- The offering faction is the faction of the "Reputation gained/lost" entry written at the same game time as the hunt's entry; the hunt entry itself has none.
+- Not in the logbook, so still by hand: board offers, L/XL offers, the real-time split, sanctions, and the ticker's "Payment received" lines (loot sales).
+- The faction names are SWI 0.90's (`tools/playtest-log/logbook.ts`); an unknown text id prints as is.
+
+Tests: `tools/playtest-log/*.test.ts`, against `tools/fixtures/save_007-logbook.xml`, a cut of save_007 ("Bankrupt Bounty Hunter Test 1") with the logbook and a few lines either side.
 
 ## Log markers
 

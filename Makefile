@@ -1,4 +1,4 @@
-.PHONY: setup check check-xml check-lua check-xsd check-runner game-test help
+.PHONY: setup check check-xml check-lua check-xsd check-runner check-tools game-test help
 
 # Runs Windows PowerShell through WSL interop; override to run it another way
 POWERSHELL ?= powershell.exe -NoProfile -ExecutionPolicy Bypass -File
@@ -9,7 +9,7 @@ help:
 	@echo ""
 	@echo "Available commands:"
 	@echo "  make setup       - Create test.config from test.config.example"
-	@echo "  make check       - Offline checks, no game: XML, test list, macro/faction/ware ids, Lua, 8.00 XSDs, runner"
+	@echo "  make check       - Offline checks, no game: XML, test list, macro/faction/ware ids, Lua, 8.00 XSDs, runner, TypeScript tools"
 	@echo "  make game-test   - Install the test extension, run the in-game tests in X4 8.00 + SWI, remove it (Windows)"
 	@echo "  make help        - Show this help message"
 	@echo ""
@@ -17,6 +17,7 @@ help:
 	@echo "Extra runner options: make game-test ARGS=\"-KeepExtension -TimeoutSeconds 1800\""
 
 setup:
+	@npm install --no-fund --no-audit
 	@if [ -f test.config ]; then \
 		echo "test.config already exists"; \
 		echo "Edit it to update your X4 paths and test profile id"; \
@@ -26,7 +27,7 @@ setup:
 		echo "Please edit test.config with your X4 8.00 path and test profile id"; \
 	fi
 
-check: check-xml check-lua check-xsd check-runner
+check: check-xml check-lua check-xsd check-runner check-tools
 
 # Well-formed XML, test list, and every macro, faction and ware named exists in 8.00 or SWI
 check-xml:
@@ -43,6 +44,11 @@ check-xsd:
 # The runner's log parsing and reports against sample log lines
 check-runner:
 	@$(POWERSHELL) "$$(wslpath -w tests/GameTests.Check.ps1)"
+
+# The TypeScript tools (tools/*.ts) type check, and their tests pass. Needs npm install (make setup)
+check-tools:
+	@npx --no-install tsc && echo "TypeScript: ok"
+	@node --test --test-reporter=dot 'tools/**/*.test.ts'
 
 # The runner installs the test extension itself (and removes it afterwards), so there's no separate deploy
 game-test:

@@ -7,3 +7,6 @@ tests/game/report.md
 
 # Python bytecode
 __pycache__/
+
+# Node tooling
+node_modules/
