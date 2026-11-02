@@ -1,6 +1,6 @@
-# No Disintegrations (Okay, Maybe a Few): design
+# No Disintegrations - SWI Bounty Hunting: design
 
-Status: **agreed in the grilling session of 2026-11-01.** "No Disintegrations (Okay, Maybe a Few)" is a working title; the name gets its own brainstorming session later.
+Status: **agreed in the grilling session of 2026-11-01.** The display name "No Disintegrations - SWI Bounty Hunting" was decided on 2026-11-02 ([#12](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/12)). It's used in `content.xml`, on the Nexus page, and in wiki and showcase titles. It's separate from the series and channel names. The repo name, the `swibh` id and folder, and the `[swibh]` log prefix stay as they are. Before release, check that no Nexus mod already uses the name.
 
 [Back to the concept](concept.md)
 
@@ -58,7 +58,6 @@ Patch `CapRewardBasedOnMissionTarget` so that `$rewardCap_mult` stays 0, which s
 - **Full immunity's price, and what the sanction is for.**
 - **Hunters hunting the player,** paid by factions that dislike the player.
 - **Grilling:** which Head Hunter features the series wants.
-- **A brainstorming session on the name.**
 
 ## Proof
 

@@ -84,6 +84,10 @@ _Avoid_: Bookmark, chapter, timestamp
 
 ## Releases
 
+**Display name**:
+"No Disintegrations - SWI Bounty Hunting": the extension's name for players, in `content.xml`, on Nexus and in showcase titles. It can change; the internal id `swibh` never does.
+_Avoid_: Mod name (ambiguous with `swibh`), series name
+
 **Pre-release**:
 A testing build of the extension for us and a few testers; it may need a new game.
 _Avoid_: Beta, alpha
