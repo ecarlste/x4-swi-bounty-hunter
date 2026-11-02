@@ -27,7 +27,7 @@ Read this first in a new session, then the docs it links. Update it or delete it
 
 The extension's design was agreed on 2026-11-01: see [design.md](design.md). Build order:
 
-1. **T12 and per-hunt logging.** Prove that a diff patch on SWI's `md/kuertee_emergent_missions.xml` applies, using `make game-test`. Then build `extension/swibh/`, `make install`, the `[swibh-hunt]` log line and `make hunt-log` (in TypeScript).
+1. **T12 and log events** (designed 2026-11-02: design.md feature 1, [ADR 0001](docs/adr/0001-one-schema-for-log-events.md)). Issues: T12 [#17](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/17) and the log schema, generator and parser [#18](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/18) are done. That unblocks hunt and loss events plus game test [#19](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/19) and `make hunt-log` [#20](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/20). Board scan [#21](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/21) comes later, and edit markers [#22](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/22) are triaged. **T12 (passed 2026-11-02, new game and existing save):** a diff on SWI's EM script applies when it sits at `extensions/starwarsmod_m1/md/` in our extension, matched by path. A same-named file in our own `md/` is ignored. `event_universe_generated` fires when the extension is added to a save. Results are in test-plan.md T12.
 2. **The wing roll** and its automated split test.
 3. **Remove the L/XL cap**, then rerun the T01 tests expecting the full offer amount, plus an automated T02.
 4. **More automated tests:** T10, T11, T17 and T19 (see test-plan.md).
