@@ -16,6 +16,7 @@ help:
 	@echo ""
 	@echo "First run: make game-test ARGS=-PrepareProfile  (creates the test profile with SWI switched on)"
 	@echo "Extra runner options: make game-test ARGS=\"-KeepExtension -TimeoutSeconds 1800\""
+	@echo "T12 on an existing save: make game-test ARGS=-Manual  (load an older save, then quit X4)"
 
 setup:
 	@npm install --no-fund --no-audit
@@ -30,7 +31,7 @@ setup:
 
 check: check-xml check-lua check-xsd check-runner check-tools
 
-# Well-formed XML, test list, and every macro, faction and ware named exists in 8.00 or SWI
+# Well-formed XML, test list, every macro, faction and ware named exists in 8.00 or SWI, and MD diff sels match
 check-xml:
 	@$(PYTHON) tools/check_game_tests.py
 

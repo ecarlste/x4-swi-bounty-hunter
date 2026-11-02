@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- H13 (test-plan.md T12): hooks that run in any game with the test extension on, not only the
+     swibh_test gamestart. They log "[swibh-test] HOOK H13 ..." lines, which the runner copies into the report.
+
+     - UniverseGenerated answers whether event_universe_generated fires when the extension is added
+       to an existing save (it's not a repeating cue, so it logs at most once per save).
+     - GameLoaded logs every load and calls EM's patched cap library on the player's ship, so an older
+       save loaded with the extension shows the "[swibh-test] HOOK T12 CapRewardBasedOnMissionTarget" line:
+       the diff applies to an existing save. The library only computes and returns; nothing changes.
+
+     For the existing-save run: make game-test ARGS=-Manual (tests/game/README.md). -->
+<mdscript name="SWIBH_Hooks" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="UniverseGenerated">
+      <conditions>
+        <event_universe_generated/>
+      </conditions>
+      <actions>
+        <debug_text text="'[swibh-test] HOOK H13 event_universe_generated: gamestart %s, player.age %s'.[player.module, player.age]" filter="general"/>
+      </actions>
+    </cue>
+
+    <cue name="GameLoaded" instantiate="true">
+      <conditions>
+        <event_game_loaded/>
+      </conditions>
+      <actions>
+        <debug_text text="'[swibh-test] HOOK H13 event_game_loaded: gamestart %s, player.age %s, EM kEMissions %s'.[player.module, player.age, @md.kuertee_emergent_missions.kEMissions.state]" filter="general"/>
+        <do_if value="@player.occupiedship.exists">
+          <run_actions ref="md.kuertee_emergent_missions.CapRewardBasedOnMissionTarget" result="$Capped">
+            <param name="Cue_Mission" value="this"/>
+            <param name="MissionTarget" value="player.occupiedship"/>
+          </run_actions>
+        </do_if>
+        <do_else>
+          <debug_text text="'[swibh-test] HOOK H13 event_game_loaded: the player is on foot, so EM\'s cap library wasn\'t called; load a save made in a ship'" filter="general"/>
+        </do_else>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>

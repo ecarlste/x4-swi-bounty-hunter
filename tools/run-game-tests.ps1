@@ -56,8 +56,17 @@
     Leave the test extension installed afterwards (X4 then starts the tests on every launch, in
     every profile where SWI is on).
 
+.PARAMETER Manual
+    T12's existing-save half: install the test extension without its autostart, start X4 in the
+    test profile and wait for you to load an older save (one made without the extension, in a
+    ship), let it run a few seconds, and quit. Then prints the "[swibh]" lines and whether EM's
+    patched library ran after the load. Writes no reports.
+
 .EXAMPLE
     .\tools\run-game-tests.ps1 -PrepareProfile
+
+.EXAMPLE
+    .\tools\run-game-tests.ps1 -Manual
 #>
 [CmdletBinding()]
 param(
@@ -71,7 +80,8 @@ param(
     [int] $LaunchTimeoutSeconds = 60,
     [double] $PollSeconds = 2,
     [switch] $PrepareProfile,
-    [switch] $KeepExtension
+    [switch] $KeepExtension,
+    [switch] $Manual
 )
 
 $ErrorActionPreference = 'Stop'
@@ -85,12 +95,13 @@ $Marker = '[swibh-test]'
 # extension and an error, apart from our own markers and the harmless "unsigned file" warnings.
 # Errors that name EM's cap library are collected separately: they are T01's data, not harness bugs.
 function Read-GameTestLog([string[]] $Lines) {
-    $run = [pscustomobject]@{ Started = $false; Expected = 0; Done = $false; Results = @(); Info = @(); Verdicts = @(); Errors = @(); CapErrors = @(); GameVersion = ''; MenuReady = $false; Autostarted = $false }
+    $run = [pscustomobject]@{ Started = $false; Expected = 0; Done = $false; Results = @(); Info = @(); Verdicts = @(); Hooks = @(); Errors = @(); CapErrors = @(); GameVersion = ''; MenuReady = $false; Autostarted = $false }
     $results = New-Object System.Collections.ArrayList
     $info = New-Object System.Collections.ArrayList
     $verdicts = New-Object System.Collections.ArrayList
     $errors = New-Object System.Collections.ArrayList
     $capErrors = New-Object System.Collections.ArrayList
+    $hooks = New-Object System.Collections.ArrayList
     $lastError = ''
     foreach ($line in $Lines) {
         # X4 follows each script error with "* Expression: ..." and "* Action: ..." lines, which
@@ -123,6 +134,13 @@ function Read-GameTestLog([string[]] $Lines) {
         elseif ($line -match '\[swibh-test\] VERDICT ([^:\s]+):? ?(.*)$') {
             [void] $verdicts.Add([pscustomobject]@{ Name = $Matches[1]; Text = $Matches[2].Trim() })
         }
+        elseif ($line -match '\[swibh-test\] HOOK (.*)$') {
+            # Lines from the test extension's hooks outside its own tests: the diff on EM (H12) and
+            # md/swibh_hooks.xml (H13). Get-T12Result and Get-ExistingSaveResult judge them
+            $text = $Matches[1].Trim()
+            [void] $hooks.Add($text)
+            [void] $info.Add([pscustomobject]@{ Name = 'hook'; Text = $text })
+        }
         elseif ($line -match '\[swibh-test\] DONE' -and $run.Started) {
             $run.Done = $true
         }
@@ -138,6 +156,7 @@ function Read-GameTestLog([string[]] $Lines) {
     $run.Results = @($results)
     $run.Info = @($info)
     $run.Verdicts = @($verdicts)
+    $run.Hooks = @($hooks)
     $run.Errors = @($errors)
     $run.CapErrors = @($capErrors)
     $run
@@ -160,6 +179,37 @@ function Get-RunProblems($Run, [string] $Ending) {
     if ($failed.Count) { $problems += "$($failed.Count) failed: $(($failed | ForEach-Object { $_.Name }) -join ', ')" }
     if ($Run.Errors.Count) { $problems += "$($Run.Errors.Count) errors from the test extension in debuglog.txt" }
     $problems
+}
+
+# T12 on a new game, judged by the runner rather than MD: our diff on SWI's
+# md/kuertee_emergent_missions.xml applied if both its lines ran (kEMissions at game start, the cap
+# library in the T01 tests) and no error names the file. Call it once the run is done
+function Get-T12Result($Run) {
+    $missing = @()
+    if (-not @($Run.Hooks | Where-Object { $_ -like 'T12 kEMissions*' }).Count) { $missing += 'no HOOK T12 kEMissions line' }
+    if (-not @($Run.Hooks | Where-Object { $_ -like 'T12 CapRewardBasedOnMissionTarget*' }).Count) { $missing += 'no HOOK T12 CapRewardBasedOnMissionTarget line' }
+    $patchErrors = @($Run.Errors | Where-Object { $_ -match 'kuertee_emergent_missions' })
+    if ($patchErrors.Count) { $missing += "$($patchErrors.Count) errors naming kuertee_emergent_missions" }
+    $h13 = @($Run.Hooks | Where-Object { $_ -like 'H13 *' }) | Select-Object -First 1
+    $detail = if ($missing.Count) { $missing -join '; ' } else { 'the diff on EM ran in kEMissions and CapRewardBasedOnMissionTarget' }
+    [pscustomobject]@{ Name = 't12_diff_patch'; Passed = (-not $missing.Count); Detail = "$detail; H13: $(if ($h13) { $h13 } else { 'no line' })" }
+}
+
+# -Manual's verdict (T12's existing-save half): after an older save loaded (H13's
+# event_game_loaded line), EM's patched cap library ran (the hook calls it), so our diff applies to
+# a loaded save. Also says whether event_universe_generated fired, H13's own question
+function Get-ExistingSaveResult($Run) {
+    $lines = @($Run.Hooks)
+    $loadAt = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -like 'H13 event_game_loaded*') { $loadAt = $i; break } }
+    $universe = if (@($lines | Where-Object { $_ -like 'H13 event_universe_generated*' }).Count) { 'event_universe_generated fired' } else { 'event_universe_generated did not fire' }
+    if ($loadAt -lt 0) {
+        return [pscustomobject]@{ Passed = $false; Detail = "no save was loaded (no HOOK H13 event_game_loaded line); $universe" }
+    }
+    $patched = @($lines[$loadAt..($lines.Count - 1)] | Where-Object { $_ -like 'T12 CapRewardBasedOnMissionTarget*' }).Count -gt 0
+    $detail = if ($patched) { 'the patched EM cap library ran after the save loaded: the diff applies to an existing save' }
+              else { 'a save loaded, but no HOOK T12 CapRewardBasedOnMissionTarget line followed (on foot, or the diff did not apply)' }
+    [pscustomobject]@{ Passed = $patched; Detail = "$detail; $universe" }
 }
 
 function ConvertTo-JUnitXml($Run, [string[]] $Problems) {
@@ -396,15 +446,25 @@ $seen = @{}
 try {
     if (Test-Path $extension) { Remove-Item $extension -Recurse -Force }
     Copy-Item (Join-Path $root "tests/game/$TestExtensionId") $extension -Recurse
+    if ($Manual) {
+        # Without the autostart the main menu stays, so a save can be loaded
+        Remove-Item (Join-Path $extension 'ui.xml'), (Join-Path $extension 'ui') -Recurse -Force
+    }
     # A stale log would report the previous run; keep it out of the way instead
     if (Test-Path $LogPath) { Move-Item $LogPath (Join-Path (Split-Path $LogPath -Parent) 'debuglog.previous.txt') -Force }
 
     Write-Host "Starting $GameExe $arguments; results go to $LogPath"
     $game = Start-Process -FilePath $GameExe -ArgumentList $arguments -WorkingDirectory $X4Path -PassThru
+    if ($Manual) {
+        Write-Host "Load a save made without the test extension (in a ship), wait until it has loaded, then quit X4."
+        Write-Host "Saves are read from $profileDir\save: copy one in first if the test profile has none."
+        $game.WaitForExit()
+        $ending = 'manual'
+    }
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $launchDeadline = (Get-Date).AddSeconds($LaunchTimeoutSeconds)
     $reported = 0
-    while ($true) {
+    while (-not $Manual) {
         Start-Sleep -Milliseconds ([int] ($PollSeconds * 1000))
         $run = Read-GameTestLog (Read-SharedFile $LogPath)
         for ($i = $reported; $i -lt $run.Results.Count; $i++) {
@@ -441,6 +501,18 @@ finally {
 }
 
 $run = Read-GameTestLog (Read-SharedFile $LogPath)
+if ($Manual) {
+    foreach ($h in $run.Hooks) { Write-Host "  HOOK $h" }
+    foreach ($e in $run.Errors) { Write-Host "  log error: $e" }
+    $result = Get-ExistingSaveResult $run
+    Write-Host "EXISTING SAVE $(if ($result.Passed) { 'PASS' } else { 'FAIL' }): $($result.Detail)"
+    exit $(if ($result.Passed -and -not $run.Errors.Count) { 0 } else { 1 })
+}
+if ($run.Done) {
+    $t12 = Get-T12Result $run
+    $run.Results = @($run.Results) + $t12
+    Write-Host ("  {0} {1}: {2}" -f $(if ($t12.Passed) { 'PASS' } else { 'FAIL' }), $t12.Name, $t12.Detail)
+}
 $problems = @(Get-RunProblems $run $ending)
 New-Item -ItemType Directory -Force -Path (Split-Path $ReportPath -Parent) | Out-Null
 [IO.File]::WriteAllText($ReportPath, (ConvertTo-JUnitXml $run $problems))

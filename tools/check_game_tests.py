@@ -8,6 +8,8 @@
      <macro name="..."> in a catalog's maps/ files, or one in the unpacked game's libraries
      (character macros); ship macros also print their class;
    - factions and wares: an id in the unpacked game's or SWI's libraries/factions.xml, wares.xml.
+4. Every MD diff (md/*.xml with a <diff> root) targets a script in SWI's or the game's unpacked md/,
+   and each sel matches exactly one node there (X4 skips an operation whose sel matches nothing).
 
 Reads the game's and SWI's files as data only. Paths come from test.config (or the environment):
 X4_PATH (the 8.00 install), X4_UNPACKED (unpacked vanilla 8.00, the folder with libraries/md.xsd;
@@ -23,6 +25,7 @@ import re
 import subprocess
 import sys
 import xml.dom.minidom
+import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXTENSION = os.path.join(ROOT, 'tests', 'game', 'swibh_tests')
@@ -181,6 +184,45 @@ def library_ids(dirs, filename, element):
     return ids
 
 
+def md_diff_target(name, unpacked, swi):
+    """The unpacked MD script an MD diff named <name> patches: SWI's first, then the game's."""
+    for base in ([os.path.join(swi, 'ext')] if swi else []) + ([unpacked] if unpacked else []):
+        path = os.path.join(base, 'md', name)
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def check_md_diffs(unpacked, swi):
+    notes, bad = [], []
+    for f in extension_files('*.xml'):
+        if os.path.basename(os.path.dirname(f)) != 'md':
+            continue
+        diff = ET.parse(f).getroot()
+        if diff.tag != 'diff':
+            continue
+        rel = os.path.relpath(f, EXTENSION)
+        target = md_diff_target(os.path.basename(f), unpacked, swi)
+        if not target:
+            if swi or unpacked:
+                bad.append('%s: no md/%s in SWI or the game to patch' % (rel, os.path.basename(f)))
+            else:
+                notes.append('%s not checked: SWI_UNPACKED and X4_UNPACKED not found' % rel)
+            continue
+        root = ET.parse(target).getroot()
+        for op in diff:
+            sel = op.get('sel', '')
+            # ElementTree's XPath subset, from the root: /<roottag>/a/b[@x='y'] -> a/b[@x='y']
+            m = re.match(r'^/([A-Za-z_][\w.-]*)/(.+)$', sel)
+            if not m or m.group(1) != root.tag or re.search(r'/@|\(\)|//', m.group(2)):
+                bad.append('%s: <%s sel="%s">: not a simple element path this check can follow' % (rel, op.tag, sel))
+                continue
+            count = len(root.findall(m.group(2)))
+            line = '%s: <%s sel="%s"> matches %d node%s in %s' % (rel, op.tag, sel, count, '' if count == 1 else 's', target)
+            (notes if count == 1 else bad).append(line)
+    return notes, bad
+
+
 def check_ids(kind, names, unpacked, swi):
     dirs = []
     if unpacked and os.path.isdir(unpacked):
@@ -217,6 +259,7 @@ def main(argv):
         ('Macros', check_macros(refs['macro'], install, unpacked)),
         ('Factions', check_ids('faction', refs['faction'], unpacked, swi)),
         ('Wares', check_ids('ware', refs['ware'], unpacked, swi)),
+        ('MD diffs', check_md_diffs(unpacked, swi)),
     ):
         print('%s: %s' % (title, 'FAIL' if bad else 'ok'))
         for line in notes:

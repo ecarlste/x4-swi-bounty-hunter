@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- H12 / T12 (test-plan.md): a diff on SWI's Emergent Missions script, md/kuertee_emergent_missions.xml
+     in SWI's ext_01.cat. It proves a diff from our extension applies to SWI's EM file, the route the
+     cap fix and the hunt log hooks take. Only logs: no behaviour changes.
+
+     X4 matches an MD diff to its script by file name; content.xml's dependency on SW Interworlds
+     loads this after SWI. The runner (tools/run-game-tests.ps1) passes t12_diff_patch when both
+     "[swibh-test] HOOK T12" lines are in debuglog.txt and no error names this file. `make check` checks each
+     sel matches one node in SWI's unpacked EM file. -->
+<diff>
+  <!-- First action of EM's start cue (EM 215): runs on md.Setup.GameStart in any non-scenario game -->
+  <add sel="/mdscript/cues/cue[@name='kEMissions']/actions" pos="prepend">
+    <debug_text text="'[swibh-test] HOOK T12 kEMissions: patched by swibh_tests (%s)'.[event.name]" filter="general"/>
+  </add>
+  <!-- The cap library (EM 7340-7377), just before it returns: the target, $TotalReward, and
+       $CapReward, which is only set for L ($rewardCap_mult 5) and XL (2) targets -->
+  <add sel="/mdscript/cues/cue[@name='kEMissions']/cues/library[@name='CapRewardBasedOnMissionTarget']/actions/return" pos="before">
+    <debug_text text="'[swibh-test] HOOK T12 CapRewardBasedOnMissionTarget: target %s, class %s, size %s, mult %s, TotalReward %s, CapReward %s'.[@$MissionTarget.macro.id, @$MissionTarget.class, @$MissionTarget.size, $rewardCap_mult, $TotalReward, (if $rewardCap_mult then @$CapReward else null)]" filter="general"/>
+  </add>
+</diff>
