@@ -3,7 +3,9 @@
      in SWI's ext_01.cat. It proves a diff from our extension applies to SWI's EM file, the route the
      cap fix and the hunt log hooks take. Only logs: no behaviour changes.
 
-     X4 matches an MD diff to its script by file name; content.xml's dependency on SW Interworlds
+     It sits at extensions/starwarsmod_m1/md/, SWI's folder: X4 8.00 patches another extension's
+     file by path. A diff in our own md/ named after EM's script is loaded as a new script and its
+     <diff> root ignored (the first T12 run, 2026-11-02). content.xml's dependency on SW Interworlds
      loads this after SWI. The runner (tools/run-game-tests.ps1) passes t12_diff_patch when both
      "[swibh-test] HOOK T12" lines are in debuglog.txt and no error names this file. `make check` checks each
      sel matches one node in SWI's unpacked EM file. -->

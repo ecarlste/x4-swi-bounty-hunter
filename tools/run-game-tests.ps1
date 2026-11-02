@@ -532,4 +532,4 @@ if ($problems.Count) {
     Write-Host "Report: $MarkdownPath"
     exit 1
 }
-Write-Host "Game tests passed ($passed of $($run.Expected)). Report: $MarkdownPath"
+Write-Host "Game tests passed ($passed of $($run.Results.Count)). Report: $MarkdownPath"

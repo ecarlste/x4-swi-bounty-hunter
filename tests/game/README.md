@@ -1,6 +1,6 @@
 # Automated in-game tests
 
-Status: **runs in game** (2026-10-31): `make game-test` passes 3 of 3 in about 1 min 40 s (8.00 HF4 + SWI 0.90). The "Unverified" list below predates the first runs.
+Status: **runs in game** (2026-11-02): `make game-test` passes 4 of 4 in about 1 min 40 s (8.00 HF4 + SWI 0.90), T12's diff on EM included. The "Unverified" list below predates the first runs.
 
 `make game-test` plays short scripted scenarios in the real game (X4 8.00 HF4 NoSteam + SWI 0.90) and reports PASS/FAIL, with no clicks. It's a copy of [A Pirate's Life's harness](https://github.com/ecarlste/x4-pirates-life-mod/blob/main/docs/research/automated-game-testing.md), adapted for the 8.00 NoSteam copy and SWI. Dev only: never loaded in a recorded episode.
 
@@ -19,7 +19,7 @@ Status: **runs in game** (2026-10-31): `make game-test` passes 3 of 3 in about 1
 | `swibh_tests/libraries/gamestarts.xml` | Adds the `swibh_test` gamestart (below) |
 | `swibh_tests/ui.xml`, `ui/swibh_tests_autostart.lua` | The autostart |
 | `swibh_tests/md/swibh_tests.xml` | The harness and the tests |
-| `swibh_tests/md/kuertee_emergent_missions.xml` | T12's diff on SWI's Emergent Missions script (H12): two `HOOK T12` log lines, no behaviour change |
+| `swibh_tests/extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml` | T12's diff on SWI's Emergent Missions script (H12): two `HOOK T12` log lines, no behaviour change |
 | `swibh_tests/md/swibh_hooks.xml` | H13: `HOOK H13` lines on `event_universe_generated` and on every load; on load it also calls EM's patched cap library |
 | `../../tools/run-game-tests.ps1` | The runner |
 | `../../tools/check_game_tests.py`, `../../tools/validate-xml.ps1`, `../GameTests.Check.ps1` | Offline checks (`make check`) |
@@ -138,7 +138,7 @@ and computes the pay with EM's own expression, `(($Capped.$RewardForTarget)f + (
 
 **`t01_knw904`** spawns `mc40a_macro` (MC40A Light Cruiser, owner `newrepublic`, the KNW-904 contract's target, [save check](../../research/save-check-knw-904.md)) and calls the same library with the offer's numbers: `RewardForTarget` 35,835 Cr, and `RewardForPlayerKills` 1,141,130 × 1.25 Cr (100% damage, player kill) or 114,113 Cr (10% damage, another ship's kill).
 
-`smoke`, `t01_pay_cap` and `t01_knw904` are listed in `$Tests` in `md/swibh_tests.xml`. To add a test: a root cue named after it that fires on `event_cue_signalled`, sets up its scenario, and signals `Report` once with `table[$name, $ok, $detail]`; then add it to `$Tests`, and clean up what it spawned. `make check` fails if `$Tests` and the root cues don't match. A diff on another script goes in `md/` under that script's file name; `make check` checks each `sel` matches exactly one node in SWI's (or the game's) unpacked copy, and validates it against `diff.xsd`.
+`smoke`, `t01_pay_cap` and `t01_knw904` are listed in `$Tests` in `md/swibh_tests.xml`. To add a test: a root cue named after it that fires on `event_cue_signalled`, sets up its scenario, and signals `Report` once with `table[$name, $ok, $detail]`; then add it to `$Tests`, and clean up what it spawned. `make check` fails if `$Tests` and the root cues don't match. A diff on a game script goes in `md/` under its file name; a diff on another extension's script goes in `extensions/<its folder>/md/` (8.00 patches those by path: a diff in our `md/` named after SWI's script is loaded as a new script and ignored). `make check` checks each `sel` matches exactly one node in SWI's (or the game's) unpacked copy, and validates it against `diff.xsd`.
 
 ## Unverified
 

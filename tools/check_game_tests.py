@@ -8,8 +8,10 @@
      <macro name="..."> in a catalog's maps/ files, or one in the unpacked game's libraries
      (character macros); ship macros also print their class;
    - factions and wares: an id in the unpacked game's or SWI's libraries/factions.xml, wares.xml.
-4. Every MD diff (md/*.xml with a <diff> root) targets a script in SWI's or the game's unpacked md/,
-   and each sel matches exactly one node there (X4 skips an operation whose sel matches nothing).
+4. Every MD diff (an md/*.xml with a <diff> root) targets a script that exists, and each sel matches
+   exactly one node there (X4 skips an operation whose sel matches nothing). X4 patches by path:
+   md/<name> patches the game's md/<name>; extensions/<folder>/md/<name> patches that extension's
+   (starwarsmod_m1 is SWI, unpacked at SWI_UNPACKED/ext; a DLC folder sits next to X4_UNPACKED).
 
 Reads the game's and SWI's files as data only. Paths come from test.config (or the environment):
 X4_PATH (the 8.00 install), X4_UNPACKED (unpacked vanilla 8.00, the folder with libraries/md.xsd;
@@ -184,13 +186,25 @@ def library_ids(dirs, filename, element):
     return ids
 
 
-def md_diff_target(name, unpacked, swi):
-    """The unpacked MD script an MD diff named <name> patches: SWI's first, then the game's."""
-    for base in ([os.path.join(swi, 'ext')] if swi else []) + ([unpacked] if unpacked else []):
-        path = os.path.join(base, 'md', name)
-        if os.path.exists(path):
-            return path
-    return None
+SWI_FOLDER = 'starwarsmod_m1'
+
+
+def md_diff_target(rel, unpacked, swi):
+    """The unpacked MD script the diff at <rel> (relative to the extension) patches, or None.
+    An MD diff in our own md/ only reaches the game's scripts: 8.00 loads a diff named after
+    another extension's script as a new script and ignores its <diff> root (T12, 2026-11-02)."""
+    parts = rel.replace(os.sep, '/').split('/')
+    if len(parts) == 2 and unpacked:
+        base = unpacked
+    elif len(parts) == 4 and parts[0] == 'extensions':
+        if parts[1] == SWI_FOLDER:
+            base = os.path.join(swi, 'ext') if swi else None
+        else:
+            base = os.path.join(os.path.dirname(unpacked), parts[1]) if unpacked else None
+    else:
+        return None
+    path = os.path.join(base, 'md', parts[-1]) if base else None
+    return path if path and os.path.exists(path) else None
 
 
 def check_md_diffs(unpacked, swi):
@@ -202,10 +216,11 @@ def check_md_diffs(unpacked, swi):
         if diff.tag != 'diff':
             continue
         rel = os.path.relpath(f, EXTENSION)
-        target = md_diff_target(os.path.basename(f), unpacked, swi)
+        target = md_diff_target(rel, unpacked, swi)
         if not target:
             if swi or unpacked:
-                bad.append('%s: no md/%s in SWI or the game to patch' % (rel, os.path.basename(f)))
+                bad.append('%s: no script at this path to patch (an MD diff in md/ only patches the game\'s own scripts; '
+                           'another extension\'s goes in extensions/<its folder>/md/)' % rel)
             else:
                 notes.append('%s not checked: SWI_UNPACKED and X4_UNPACKED not found' % rel)
             continue

@@ -4,8 +4,9 @@
 
 .DESCRIPTION
     Uses .NET's XSD validator (Windows PowerShell 5.1 has it built in, so nothing to install):
-    - md/*.xml against libraries/md.xsd (which includes common.xsd), or diff.xsd for a diff on
-      another extension's script (a <diff> root);
+    - md/*.xml against libraries/md.xsd (which includes common.xsd), or diff.xsd for a diff on a
+      game script (a <diff> root);
+    - extensions/*/md/*.xml, diffs on another extension's scripts, against libraries/diff.xsd;
     - aiscripts/*.xml against libraries/aiscripts.xsd;
     - each <gamestart> that libraries/gamestarts.xml adds, inside a <gamestarts> root, against
       libraries/gamestarts.xsd;
@@ -107,6 +108,16 @@ foreach ($check in $checks) {
             Write-Result "$($check.Folder)/$($file.Name) (diff.xsd)" (Test-Xml $text $diffSchemas)
         }
         else { Write-Result "$($check.Folder)/$($file.Name) ($($check.Xsd))" (Test-Xml $text $schemas) }
+    }
+}
+
+$extensionDiffs = @(Get-ChildItem (Join-Path $ExtensionDir 'extensions') -Recurse -Filter *.xml -ErrorAction SilentlyContinue |
+    Where-Object { $_.Directory.Name -eq 'md' })
+if ($extensionDiffs.Count) {
+    if (-not $diffSchemas) { $diffSchemas = New-SchemaSet 'diff.xsd' }
+    foreach ($file in $extensionDiffs) {
+        $name = $file.FullName.Substring($ExtensionDir.Length).TrimStart('\', '/') -replace '\\', '/'
+        Write-Result "$name (diff.xsd)" (Test-Xml ([IO.File]::ReadAllText($file.FullName)) $diffSchemas)
     }
 }
 
