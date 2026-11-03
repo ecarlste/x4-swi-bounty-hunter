@@ -25,7 +25,9 @@
        $Ships      wing ship -> its WingShip table (log schema), for ships with a hit
        $Foes       opponent -> its Opponent table; $FoeOrder is the first 20, $FoesSeen counts all
        $LastClosed table[$reason, $hunt, $ships, $opponentsSeen] of the last engagement closed
-       $Hunts      the active hunts, as table[$hunt, $target, $wing] (a hunt key is no table key) -->
+       $Hunts      the active hunts, as table[$hunt, $target, $wing] (a hunt key is no table key)
+       $ShieldDown object -> the time a projectile took its shield to 0, so the same projectile's
+                   hull damage (both events fire for it) counts as damage but not as another hit -->
 <mdscript name="SWIBH_Engagement" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
   <cues>
     <cue name="Engagements">
@@ -42,6 +44,7 @@
         <set_value name="$FoesSeen" exact="0"/>
         <set_value name="$LastClosed" exact="null"/>
         <set_value name="$Hunts" exact="[]"/>
+        <set_value name="$ShieldDown" exact="table[]"/>
         <create_group groupname="$LeadGroup"/>
         <create_group groupname="$Wing"/>
         <create_group groupname="$FoeGroup"/>
@@ -71,8 +74,10 @@
         </cue>
 
         <!-- Per projectile, while open: a wing ship's shield or hull damaged. These events carry
-             no attacker or kill method, so hazard and collision damage count too; only friendly
-             fire (the ship's last attacker player-owned) is left out -->
+             no attacker or kill method, so a hit counts only while the ship's last attacker is an
+             opponent of this engagement (recorded by Hit, which leaves out collisions and area
+             damage) that attacked within the quiet gap: hazard damage between fights doesn't count,
+             nor friendly fire -->
         <cue name="HitTaken" instantiate="true" namespace="this">
           <conditions>
             <check_any>
@@ -81,7 +86,7 @@
               <event_object_hull_damaged group="Engagements.$LeadGroup"/>
               <event_object_hull_damaged group="Engagements.$Wing"/>
             </check_any>
-            <check_value value="Engagements.$Open and not @event.object.lastattacker.isplayerowned"/>
+            <check_value value="Engagements.$Open and @event.object.lastattacker and Engagements.$Foes.{event.object.lastattacker}? and player.age - event.object.lastattacktime le Engagements.$QuietGap"/>
           </conditions>
           <actions>
             <do_if value="not Engagements.$Ships.{event.object}?">
@@ -90,7 +95,14 @@
               </run_actions>
             </do_if>
             <set_value name="$Entry" exact="Engagements.$Ships.{event.object}"/>
-            <set_value name="$Entry.$hitsTaken" operation="add"/>
+            <run_actions ref="IsNewHit" result="$New">
+              <param name="Object" value="event.object"/>
+              <param name="Shield" value="event.name == 'event_object_shield_damaged'"/>
+              <param name="Left" value="event.param2"/>
+            </run_actions>
+            <do_if value="$New">
+              <set_value name="$Entry.$hitsTaken" operation="add"/>
+            </do_if>
             <set_value name="$Entry.$damageTaken" exact="$Entry.$damageTaken + (event.param3)f"/>
             <set_value name="Engagements.$LastHit" exact="player.age"/>
           </actions>
@@ -110,7 +122,7 @@
           <actions>
             <set_value name="$By" exact="event.object.lastattacker"/>
             <set_value name="$Known" exact="Engagements.$Ships.{$By}?"/>
-            <do_if value="not $Known and ($By == Engagements.$Lead or ($By.isclass.ship and not $By.isunit and @$By.toplevelcommander == Engagements.$Lead))">
+            <do_if value="not $Known and ($By == Engagements.$Lead or ($By.isclass.ship and not $By.isunit and not @$By.dock.container.isclass.ship and @$By.toplevelcommander == Engagements.$Lead))">
               <run_actions ref="AddShip">
                 <param name="Ship" value="$By"/>
               </run_actions>
@@ -118,7 +130,14 @@
             </do_if>
             <do_if value="$Known">
               <set_value name="$Entry" exact="Engagements.$Ships.{$By}"/>
-              <set_value name="$Entry.$hitsDealt" operation="add"/>
+              <run_actions ref="IsNewHit" result="$New">
+                <param name="Object" value="event.object"/>
+                <param name="Shield" value="event.name == 'event_object_shield_damaged'"/>
+                <param name="Left" value="event.param2"/>
+              </run_actions>
+              <do_if value="$New">
+                <set_value name="$Entry.$hitsDealt" operation="add"/>
+              </do_if>
               <set_value name="$Entry.$damageDealt" exact="$Entry.$damageDealt + (event.param3)f"/>
               <set_value name="Engagements.$LastHit" exact="player.age"/>
             </do_if>
@@ -262,6 +281,26 @@
       </actions>
     </library>
 
+    <!-- For the damage cues: whether a shield (Shield true) or hull damage event on Object, with
+         Left the shield or hull left, is a new hit. A projectile that takes the shield to 0 and goes
+         on into the hull fires both events in the same frame; its hull event is not a new hit -->
+    <library name="IsNewHit" purpose="run_actions">
+      <params>
+        <param name="Object"/>
+        <param name="Shield"/>
+        <param name="Left"/>
+      </params>
+      <actions>
+        <do_if value="$Shield">
+          <do_if value="$Left le 0">
+            <set_value name="Engagements.$ShieldDown.{$Object}" exact="player.age"/>
+          </do_if>
+          <return value="true"/>
+        </do_if>
+        <return value="@Engagements.$ShieldDown.{$Object} != player.age"/>
+      </actions>
+    </library>
+
     <!-- One attack (the attack events fire once per attack, not per projectile): Ship is the wing
          ship, Foe the other object, Taken whether Ship was attacked. Opens an engagement if none is,
          and records both sides; the damage cues count the hits -->
@@ -280,6 +319,7 @@
           <set_value name="Engagements.$Foes" exact="table[]"/>
           <set_value name="Engagements.$FoeOrder" exact="[]"/>
           <set_value name="Engagements.$FoesSeen" exact="0"/>
+          <set_value name="Engagements.$ShieldDown" exact="table[]"/>
           <clear_group group="Engagements.$FoeGroup"/>
           <set_value name="$SWIBH_Opened" exact="true"/>
         </do_if>

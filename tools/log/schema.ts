@@ -150,9 +150,11 @@ export const ActiveHunt = defineShape("ActiveHunt", {
 // an engagement. Its ids are kept from its first hit, since it may be destroyed before the end.
 // Hits and damage come from event_object_shield_damaged / _hull_damaged, one per projectile
 // (research/combat-hooks.md); the attack events fire only once per attack. Those damage events
-// carry no attacker or kill method, so while an engagement is open, hazard, boost and collision
-// damage on a wing ship count as hits taken too; a hit dealt is credited to the opponent's
-// lastattacker. A projectile that drains the shield and reaches the hull may count twice
+// carry no attacker or kill method, so a hit taken counts only while the ship's lastattacker is an
+// opponent of the engagement that attacked within the quiet gap (hazard damage outside a fight
+// doesn't count, inside one it can), and a hit dealt is credited to the opponent's lastattacker.
+// A projectile that takes the shield to 0 and goes on into the hull is one hit: its damage counts
+// on both
 export const WingShip = defineShape("WingShip", {
   idcode: id(),
   macro: id(),
@@ -265,7 +267,9 @@ export const events = {
 
   // The engagement is over: no hit for the quiet gap (20 s by default), or the player's ship
   // was lost or changed, or a save was loaded while it was open. Carries the hunt key when the
-  // target's wing took part at any point
+  // target's wing took part at any point. reason "load" closes the engagement the loaded save had
+  // open; one open in the session the player left gets no end line (nothing runs before a load),
+  // so a reader ends an engagement.start with no end at the next session.start
   "engagement.end": defineEvent("optional", {
     // t of the matching engagement.start
     start: number(),

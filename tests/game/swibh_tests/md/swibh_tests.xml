@@ -480,7 +480,7 @@
 
     <!-- Engagement (#23): the swibh extension's engagement log events (extension/swibh/md/
          swibh_engagement.xml, installed into this extension by the runner). Gives the player a
-         wingman (t65b_xwing_macro, assigned on defence) and makes galempire hostile, then fights twice:
+         wingman (t65b_xwing_macro, a subordinate on defence, though KeepTurn's orders decide what it does) and makes galempire hostile, then fights twice:
            1. a TIE Advanced (tie_advanced_macro, shielded and about an even match for the X-wing) registered as a hunt's target (HuntStarted), so the
               engagement must carry the hunt key swibh-test-hunt;
            2. another TIE Advanced that's in no hunt, so it must not.
