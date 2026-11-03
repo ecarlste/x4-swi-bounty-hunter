@@ -203,3 +203,32 @@ From wing-split-facts.md (not re-derived): `$ship.commander`, `.subordinates` (d
 4. Else, same `$k.trueowner` as `$c.$MissionTarget.trueowner` (stashed at accept) → `byFaction`; otherwise `other`. Faction alone is weak (any patrol of that faction matches) [inferred].
 
 Suggested line: `{"ev":"loss","t":<age>,"ship":idcode,"macro":id,"class":…,"value":ct,"repair":ct?,"method":…,"killer":idcode|null,"killerOwner":factionId,"isPlayerShip":bool,"hunts":[{"id":MissionId,"rel":"target|wing|faction|other"}]}`. Cue: `<cue name="Loss" instantiate="true"><conditions><event_player_owned_destroyed/><check_value value="event.param.isclass.ship and …"/></conditions>` [inferred; XML **unverified** until `make check`].
+
+## #19 implementation status
+
+Built 2026-11-02 ([#19](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/19)): `extension/swibh/` (`content.xml`, `md/swibh_hunt.xml`, and the diff `extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml`). The diff only adds four `run_actions` calls; `swibh_hunt.xml` reads EM's hunt cue and changes nothing in EM. `make check` shows each `sel` matches one node in SWI 0.90's EM, and both files are valid against 8.00's `md.xsd`/`diff.xsd`.
+
+| Hook | `sel` (under `Mission_Hunt/cues/`) | Writes |
+|---|---|---|
+| `Accept` | `Mission_Hunt_CreateMission/actions/reset_cue[@cue='this']`, before | `hunt.accept`; the stash; starts the per-hunt `Watch` (`hunt.kill`, `event_object_destroyed` on target + wing) |
+| `PreCap` | `Mission_Hunt_Resolve/actions/do_else[2]/do_if[@value='$Result == $Result_success'][2]/do_if[@value='kEMissions.$IsSWIExists']`, before | stashes the pay before the cap |
+| `Resolve` | `Mission_Hunt_Resolve/actions/reset_cue[@cue='this']`, before | `hunt.end` (success, fail, abort) |
+| `CleanUp` | `Mission_Hunt_CleanUp/actions`, prepend | stashes the ending from the step flags; `hunt.end` 1 s later if Resolve wrote none |
+
+Not on EM: `hunt.sanction` listens to `event_cue_signalled cue="md.kuertee_professions.SanctionAttack"` (no diff on RAP), cost from the hunt cue's `$kProfs_sanctionCost_*`; `player.loss` on `event_player_owned_destroyed` (vanilla's class filters, ships only, no kill-method filter), `activeHunts` from our own open-hunt table rather than `$missions_active`; `session.start` on `md.Setup.GameStart` and `event_game_loaded`.
+
+Decisions in the code:
+- **Accept hook in `Mission_Hunt_CreateMission`, not `Mission_Hunt_Accept`** (the issue names the latter): the mission only exists from there, and it runs once. So the hunt key's accept t is the mission's creation (the same frame in SWI mode, 6344), and an accept whose contact NPC fails (6369-6383) writes no `hunt.accept`.
+- **Exactly one `hunt.end`:** the stash (`Hunts.$Open`, by hunt key) lives in our script, not on EM's cue, which CleanUp2 cancels. `Resolve` and the late check (`LateEnd`, 1 s after CleanUp) both write through `End`, which closes the hunt, so whichever runs first wins. This covers the ordering risk either way: if Resolve runs after CleanUp, its full data wins; if CleanUp2 cancels it, the late check writes `failed` with the step from EM's flags. Offers never accepted have no record, so CleanUp ignores them.
+- **Wing:** the top ship commander above the target (a station isn't one) and all ships under it, minus the target.
+- **Target's kills:** from the live pilot at the end, else as read when the target died (the `Watch`), else null.
+- **Repairs:** `player.occupiedship`, else the ship the player flew at accept (Resolve on success runs when the player talks to the contact, usually on foot), and its `allsubordinates`.
+- **Relations:** only EM's mission-completed notoriety (`$RewardNotoriety`). The game's relation losses for the kill aren't logged in v1.
+- **Engagements (#23):** `Accept` calls `md.SWIBH_Engagement.HuntStarted` with the hunt key and target, and `End` calls `HuntEnded`, so the player's fights with the target's wing carry the hunt key. `HuntStarted` takes its own wing (every ship under the target's top commander), so it can count a drone our `hunt.accept` wing leaves out.
+- **Game test setup:** the runner copies `extension/swibh/md/*.xml` into the test extension (#23's approach) rather than installing `swibh`, so the test doesn't load swibh's `content.xml` or the diff on EM. A real `swibh` install left in the game while `make game-test` runs would load every swibh script twice.
+
+Gaps, still open (no in-game answer yet; `make game-test` with `hunt_log` needs the user's OK, and its fake hunts bypass EM, so these need a playtest):
+- Whether Resolve runs on a timeout or a kill by others. Either way one `hunt.end` is written, so the log doesn't depend on the answer. To answer it in a playtest: after a timeout, look for EM's failure text in the logbook (Resolve writes it, section 1).
+- Whether `event_player_owned_destroyed` fires for the piloted ship, and whether `player.occupiedship` still names it in that handler: `piloted` is `$Lost == @player.occupiedship`, so it is always false if X4 clears the seat first. If the event doesn't fire, a player death shows no `player.loss`. Not handled yet: the issue's "also listen for player death" waits on the playtest answer.
+- How `player.age`, `level.medium` and floats print; whether `{` and `"` survive `debug_text`; long-line truncation. The first `make game-test` with `hunt_log` answers these (`make game-test`'s log check fails on any parse error).
+- Not covered at all: `reset emissions` (no CleanUp, so a hunt stays open in our table and in `activeHunts`), a target that is captured, and a hunt whose contact NPC fails (no mission, so no `hunt.accept`).

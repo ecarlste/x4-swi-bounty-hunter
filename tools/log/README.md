@@ -12,7 +12,10 @@ The `swibh` extension writes one `[swibh] {json}` line to `debuglog.txt` per **l
 | [md.ts](md.ts) | Builds the MD library [extension/swibh/md/swibh_log.xml](../../extension/swibh/md/swibh_log.xml) from the schema |
 | [generate.ts](generate.ts) | Writes that file (`make log-xml`) or checks it's current (`--check`) |
 | [parse.ts](parse.ts) | The parser extractors import: `readLog(lines)` gives typed events, errors by line number, events by **hunt key**, and **open hunts**. `parseLine(text)` checks one line, for an extractor that judges replays itself (`tools/hunt-log` undoes reloaded branches before it drops repeated lines, so it can't use `readLog`'s early drop) |
-| [game-check.ts](game-check.ts) | Reads the engagement game test's events from a `debuglog.txt` (run by `make game-test`) |
+| [game-check.ts](game-check.ts) | Reads the engagement game test's events from a `debuglog.txt` (run by `make game-test`), and runs the `hunt_log` check |
+| [game-check-hunt.ts](game-check-hunt.ts) | Checks the `hunt_log` game test's events against what it sets up |
+
+The MD that writes the hunt and loss events is [extension/swibh/md/swibh_hunt.xml](../../extension/swibh/md/swibh_hunt.xml), called from the diff on SWI's Emergent Missions script.
 
 ## Writing an event from MD
 
