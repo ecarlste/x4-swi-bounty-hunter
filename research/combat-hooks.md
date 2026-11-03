@@ -184,3 +184,7 @@ The offline `game-check.ts` failed the same log with "found 3 paired": `combat_s
 Run 10's pass didn't repeat. In fight 1 the TIE Advanced again made one pass, at the wingman only: 0.17 s, 4 hits (1,804 damage) on the wingman, nothing on or from the player's ship, then silence until the timeout. Fight 2 passed its stats for the fourth run in a row (4.7 s, the player's ship took 6 hits (2,706), the wingman dealt 1 (160)). The new `begins at t 76.1` marker was logged; the offline check didn't run because the in-game test failed first. So far, max skill doesn't make the first fight reliable [inferred from two runs]: in fight 1 the TIE seems to pick the wingman, and in fight 2 the player's ship.
 
 The test now takes turns, per the user's suggestion: the wingman is warped 1.5 km to the side of the TIE's spawn and holds (`Wait` with `holdfire` and `noattackresponse`) while the TIE attacks the player's ship; once the player's ship has taken a hit, the TIE holds the same way and the wingman attacks it. The fight timeout went from 60 s to 90 s, for the TIE's approach.
+
+### Game test, 2026-11-02 (twelfth run, turns)
+
+Fight 2 passed with turns: 7.0 s, the player's ship took 1 hit (451 damage), then the wingman dealt 1 (160), ending quiet with no hunt key. Fight 1 never fought: `KeepTurn` read `$Enemy.order.id` on a just-spawned TIE that had no order yet (`Property lookup failed`), which aborted the library before any order was given. The lookups are now `@`-guarded, as `KeepFighting`'s were.

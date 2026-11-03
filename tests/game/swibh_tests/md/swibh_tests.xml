@@ -733,12 +733,12 @@
       <actions>
         <do_if value="@$Enemy.isoperational and @$Wingman.isoperational">
           <do_if value="$Turn == 'enemy'">
-            <do_if value="$Enemy.order.id != 'Attack'">
+            <do_if value="@$Enemy.order.id != 'Attack'">
               <create_order object="$Enemy" id="'Attack'" immediate="true">
                 <param name="primarytarget" value="player.occupiedship"/>
               </create_order>
             </do_if>
-            <do_if value="$Wingman.order.id != 'Wait'">
+            <do_if value="@$Wingman.order.id != 'Wait'">
               <create_order object="$Wingman" id="'Wait'" immediate="true">
                 <param name="holdfire" value="true"/>
                 <param name="noattackresponse" value="true"/>
@@ -746,13 +746,13 @@
             </do_if>
           </do_if>
           <do_else>
-            <do_if value="$Enemy.order.id != 'Wait'">
+            <do_if value="@$Enemy.order.id != 'Wait'">
               <create_order object="$Enemy" id="'Wait'" immediate="true">
                 <param name="holdfire" value="true"/>
                 <param name="noattackresponse" value="true"/>
               </create_order>
             </do_if>
-            <do_if value="$Wingman.order.id != 'Attack'">
+            <do_if value="@$Wingman.order.id != 'Attack'">
               <create_order object="$Wingman" id="'Attack'" immediate="true">
                 <param name="primarytarget" value="$Enemy"/>
               </create_order>
