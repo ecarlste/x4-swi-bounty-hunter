@@ -2,29 +2,35 @@
 // engagement game test (#23, the Engagement cue in tests/game/swibh_tests/md/swibh_tests.xml)
 // fights a hunt's target, then a ship in no hunt, with the player's ship and one wingman.
 // Usage: node tools/log/game-check.ts <debuglog.txt>; prints each problem and exits 1 if any.
-import { createReadStream } from "node:fs";
-import { createInterface } from "node:readline";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { readLog, type Log } from "./parse.ts";
+import { readLog } from "./parse.ts";
 import type { LogEventOf } from "./schema.ts";
 
 // The hunt key the game test registers for its first fight's target
 export const TEST_HUNT = "swibh-test-hunt";
 // What each fight's engagement should carry, in order
 const EXPECTED: (string | undefined)[] = [TEST_HUNT, undefined];
+// The Engagement cue's first line; engagements that started before it (combat_signals') are skipped
+const BEGINS = /\[swibh-test\] INFO engagement: begins at t ([\d.]+)/;
 
-// The problems with the engagement game test's log events; empty when it passed
-export function checkEngagementTest(log: Log): string[] {
+// The problems with the engagement game test's log events in a debuglog's lines; empty when it passed
+export async function checkEngagementTest(lines: string[]): Promise<string[]> {
+  const log = await readLog(lines);
   const problems = log.errors.map(({ line, error }) => `line ${line}: ${error}`);
+  const begins = lines.map((line) => BEGINS.exec(line)).find((match) => match);
+  const since = begins ? Number(begins[1]) : 0;
   const ended: LogEventOf<"engagement.end">[] = [];
   let open: LogEventOf<"engagement.start"> | null = null;
   // A start with no end after it, or an end whose start t isn't the open start's
   let unpaired = 0;
   for (const event of log.events) {
     if (event.type === "engagement.start") {
+      if (event.t < since) continue;
       if (open) unpaired++;
       open = event;
     } else if (event.type === "engagement.end") {
+      if (event.data.start < since) continue;
       if (open && event.data.start === open.t) ended.push(event);
       else unpaired++;
       open = null;
@@ -53,8 +59,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("usage: node tools/log/game-check.ts <debuglog.txt>");
     process.exit(2);
   }
-  const lines = createInterface({ input: createReadStream(path), crlfDelay: Infinity });
-  const problems = checkEngagementTest(await readLog(lines));
+  const problems = await checkEngagementTest((await readFile(path, "utf8")).split(/\r?\n/));
   for (const problem of problems) console.log(`  FAIL engagement log: ${problem}`);
   if (problems.length) process.exit(1);
   console.log("  PASS engagement log: the parser read both engagements, with the hunt key only on the hunt target's");

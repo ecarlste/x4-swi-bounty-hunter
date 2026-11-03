@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { checkEngagementTest, TEST_HUNT } from "./game-check.ts";
-import { readLog } from "./parse.ts";
 
 const HUNT = TEST_HUNT;
 const ref = (idcode: string, owner: string) =>
@@ -19,7 +18,7 @@ const end = (begun: number, t: number, { hunt, reason = "quiet", ships }: { hunt
   `"opponents":[],"opponentsSeen":1,"reason":"${reason}",` +
   `"ships":[${(ships ?? [stats("PLR-001", true, 8, 0), stats("XWG-002", false, 1, 30)]).join(",")}],"start":${begun}}}`;
 
-const check = async (lines: string[]) => checkEngagementTest(await readLog(lines));
+const check = checkEngagementTest;
 
 test("a hunt engagement then a plain one, both with hits for the player and the wingman, pass", async () => {
   assert.deepEqual(await check([start(100, HUNT), end(100, 140, { hunt: HUNT }), start(150), end(150, 190)]), []);
@@ -49,4 +48,9 @@ test("an engagement.start without its end, or a bad engagement line, fails", asy
     "line 4: not valid JSON (truncated?)",
     "expected 2 engagements (start and end), found 1 paired and 1 unpaired",
   ]);
+});
+
+test("engagements that started before the engagement test began, such as combat_signals', are skipped", async () => {
+  const begins = "[General] 145 *** Context:md.SWIBH_Tests.Engagement: [swibh-test] INFO engagement: begins at t 145";
+  assert.deepEqual(await check([start(40), begins, end(40, 160), start(170, HUNT), end(170, 200, { hunt: HUNT }), start(210), end(210, 240)]), []);
 });

@@ -497,6 +497,8 @@
         <event_cue_signalled/>
       </conditions>
       <actions>
+        <!-- tools/log/game-check.ts skips engagements that started before this, such as combat_signals' -->
+        <debug_text text="'[swibh-test] INFO engagement: begins at t %s'.[player.age]" filter="general"/>
         <set_value name="$Engagements" exact="md.SWIBH_Engagement.Engagements"/>
         <set_value name="$Enemy" exact="null"/>
         <set_value name="$Problems" exact="''"/>

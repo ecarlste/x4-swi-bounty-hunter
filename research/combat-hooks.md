@@ -172,3 +172,9 @@ Fight 2 passed its stats: one engagement over 5.9 s, in which the player's ship 
 ### Game test, 2026-11-02 (ninth run, X-wing with SWI's loadout)
 
 The loadout error is gone, but the fights stayed short: fight 1's engagement lasted 0.97 s, with the wingman taking 2 hits (902 damage) and dealing 6 (960), and the player's ship never hit, so it failed. Fight 2 again passed its stats: 0.81 s, the player's ship took 6 hits (2,706) and the wingman dealt 2 (320). Each fight is one pass of under a second, then 30 s of nothing. With engines, the TIE Advanced still makes one attack run and breaks off, and it chooses its own target. In both runs, everything the hooks recorded matched the fight; what fails is the scenario.
+
+### Game test, 2026-11-02 (tenth run, max-skill pilots)
+
+With piloting and morale 15 for every pilot, the in-game `engagement` test passed for the first time. Fight 1 (hunt): 0.95 s, the player's ship took 2 hits (902 damage), the wingman dealt 1 (160). Fight 2 (no hunt): 18.5 s, the player's ship took 1 hit (150), the wingman dealt 2 (320). Both ended quiet, with the hunt key only on fight 1. Fight 2's 18.5 s engagement means more than one pass landed inside the 30 s gap. One good run doesn't prove skill made the difference [inferred].
+
+The offline `game-check.ts` failed the same log with "found 3 paired": `combat_signals`, which runs before it, opens a real engagement (no hunt key) with the same wing. The `Engagement` cue now logs `[swibh-test] INFO engagement: begins at t <age>`, and the check skips engagements that started before it.
