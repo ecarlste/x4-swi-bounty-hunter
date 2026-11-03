@@ -1,6 +1,6 @@
 // The hunt-log extractor's rules: turns the log events of a debug log into one row per
 // finished hunt, the hunts still open, and the losses outside any hunt.
-import { parseLine, type LineError } from "../log/parse.ts";
+import { hasHuntKey, parseLine, type LineError } from "../log/parse.ts";
 import { signed } from "../playtest-log/markdown.ts";
 import type { HuntEvent, HuntKey, LogEvent, LogEventOf } from "../log/schema.ts";
 
@@ -184,7 +184,7 @@ export async function readHunts(
   const add = (key: HuntKey, entry: Entry) => byHunt.set(key, [...(byHunt.get(key) ?? []), entry]);
   for (const entry of timeline(options.carried ?? [], logged)) {
     const { event } = entry;
-    if ("hunt" in event) {
+    if (hasHuntKey(event)) {
       add(event.hunt, entry);
     } else if (event.type === "player.loss") {
       const key = attributeLoss(event);

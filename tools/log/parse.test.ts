@@ -98,3 +98,56 @@ test("bad and truncated lines are reported by line number and skipped", async ()
     ],
   );
 });
+
+const wingShip = (idcode: string, player: boolean, hitsTaken: number, hitsDealt: number) =>
+  `{"class":"ship_s","damageDealt":${hitsDealt * 150},"damageTaken":${hitsTaken * 150},"destroyed":false,"hitsDealt":${hitsDealt},"hitsTaken":${hitsTaken},"idcode":"${idcode}",` +
+  `"kills":0,"macro":"t65b_xwing_macro","name":"Wing","player":${player},"sectors":["sws_clustercoruscant_sector001_macro"]}`;
+const foe = (idcode: string) =>
+  `{"idcode":"${idcode}","killed":true,"macro":"tie_fighter_macro","name":"TIE","owner":"galempire"}`;
+const ref = (idcode: string, owner: string) =>
+  `{"idcode":"${idcode}","macro":"tie_fighter_macro","name":"TIE","owner":"${owner}"}`;
+const engagementStart = (t: number, hunt?: string) =>
+  `[swibh] {"v":1,"type":"engagement.start","t":${t},${hunt ? `"hunt":"${hunt}",` : ""}"data":{` +
+  `"attacked":${ref("PLR-001", "player")},"attacker":${ref("TIE-001", "galempire")},"firstHit":"taken",` +
+  `"ship":${ship("PLR-001")},"wingmen":1}}`;
+const engagementEnd = (start: number, t: number, hunt?: string) =>
+  `[swibh] {"v":1,"type":"engagement.end","t":${t},${hunt ? `"hunt":"${hunt}",` : ""}"data":{` +
+  `"lastHit":${t - 20},"opponents":[${foe("TIE-001")}],"opponentsSeen":1,"reason":"quiet",` +
+  `"ships":[${wingShip("PLR-001", true, 12, 0)},${wingShip("XWG-002", false, 3, 40)}],"start":${start}}}`;
+
+test("an engagement carries the hunt key only when the target's wing took part", async () => {
+  const hunt = "kEM_Hunt_1-BCD-234-100";
+  const log = await readLog([
+    engagementStart(200, hunt),
+    engagementEnd(200, 260, hunt),
+    engagementStart(300),
+    engagementEnd(300, 350),
+  ]);
+
+  assert.deepEqual(log.errors, []);
+  assert.deepEqual(
+    log.events.map((event) => [event.type, "hunt" in event ? event.hunt : null]),
+    [
+      ["engagement.start", hunt],
+      ["engagement.end", hunt],
+      ["engagement.start", null],
+      ["engagement.end", null],
+    ],
+  );
+  assert.deepEqual(log.hunts.get(hunt)?.map((event) => event.type), ["engagement.start", "engagement.end"]);
+  const end = log.events[1];
+  assert.ok(end.type === "engagement.end");
+  assert.deepEqual(
+    end.data.ships.map((s) => [s.idcode, s.player, s.hitsTaken, s.hitsDealt, s.damageTaken, s.damageDealt]),
+    [
+      ["PLR-001", true, 12, 0, 1800, 0],
+      ["XWG-002", false, 3, 40, 450, 6000],
+    ],
+  );
+});
+
+test("a hunt event without its hunt key is an error", async () => {
+  const log = await readLog([kill.replace(`"hunt":"${huntKey}",`, "")]);
+
+  assert.deepEqual(log.errors.map(({ error }) => error), ["hunt.kill.hunt: missing"]);
+});

@@ -4,6 +4,7 @@ test.config
 # Game test reports written by make game-test
 tests/game/results.xml
 tests/game/report.md
+tests/game/debuglog.txt
 
 # Python bytecode
 __pycache__/

@@ -2,7 +2,7 @@
 //
 // One library per log event, Log_<Event> (hunt.accept -> Log_HuntAccept), with a named
 // param per data field (nullable ones default to null), plus a hunt param for events
-// that carry the hunt key. One
+// that carry the hunt key (defaulting to null, and left off the line, where it's optional). One
 // helper per named shape, Json_<Shape>, takes the shape's input as In and returns its
 // JSON, so a ship is written the same way everywhere. JSON object keys are written in
 // sorted order. MD has no JSON support, so every value is built as text here:
@@ -184,7 +184,7 @@ const shapeHelper = (shape: Shape) =>
 const eventEmitter = (type: EventType) => {
   const def = events[type];
   const params: Param[] = [
-    ...(def.hunt ? [{ name: "hunt" }] : []),
+    ...(def.hunt ? [{ name: "hunt", nullable: def.hunt === "optional" }] : []),
     ...Object.entries(def.data).map(([name, type]) => ({ name, nullable: type.kind === "nullable" })),
   ];
   return library(
@@ -194,7 +194,9 @@ const eventEmitter = (type: EventType) => {
     (w) => {
       const envelope = `{"v":${VERSION},"type":"${type}","t":`;
       w.line(`<set_value name="$Line" exact="${attr(`${lit(envelope)} + '%s'.[(player.age)f]`)}"/>`);
-      if (def.hunt) w.value(id(), "$hunt", ',"hunt":', 1);
+      const writeHunt = () => w.value(id(), "$hunt", ',"hunt":', 1);
+      if (def.hunt === "optional") w.nested(`<do_if value="${attr("$hunt != null")}">`, "</do_if>", writeHunt);
+      else if (def.hunt) writeHunt();
       w.object(def.data, (key) => `$${key}`, ',"data":', "}");
       w.line(`<debug_text text="${attr(`${lit(MARKER)} + $Line`)}" context="false" filter="general"/>`);
     },

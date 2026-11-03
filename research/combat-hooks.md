@@ -104,3 +104,102 @@ Extend the section 5 manager cue above rather than adding a second engagement:
 5. `engagement.end` adds `ships`: list of {ship (Ship ref), role 'player'|'wing', hitsIn, hitsOut, kills, destroyed}, capped ~12. Wing kills: `event_object_destroyed` on opponents with `event.param` (killer) in `$Wing` [inferred], since `event_player_killed_object` covers the player only.
 
 Unverified in game: hit rates for a 10-ship wing; turret hits on NPC ships firing `event_object_attacked_object`; whether `allsubordinates` includes docked ships and units; sub-subordinate add events reaching the player's ship.
+
+## What was built (#23, 2026-11-02)
+
+`extension/swibh/md/swibh_engagement.xml` follows the recommendations above, with these choices:
+
+- **Hooks, two kinds** (after the 2026-11-02 runs below): `event_object_attacked` and `event_object_attacked_object` fire once per attack and name both sides, so they open an engagement and record opponents (hunt matching too). They listen on two groups, `$LeadGroup` (the ship the player flies) and `$Wing` (its `allsubordinates` that are ships, operational, not units, and not docked in a ship: `@$s.dock.container.isclass.ship`). `event_object_shield_damaged` and `event_object_hull_damaged` fire once per projectile and carry the damage (param3): on the two wing groups they count `hitsTaken`/`damageTaken`, and on `$FoeGroup` they count `hitsDealt`/`damageDealt` for the opponent's `lastattacker` when that's the lead or a ship under it (getting an entry if it had none). Only while an engagement is open; each moves `$LastHit`, the quiet clock. Damage events alone never open one: they carry no attacker or kill method. A hit taken counts only while the ship's `lastattacker` is an opponent of the engagement (recorded by the attack events, which leave out collisions and area damage) and attacked within the quiet gap, so hazard damage between fights doesn't count. A hull event in the same frame as a shield event that took that object's shield to 0 is the same projectile: its damage counts, the hit doesn't (`IsNewHit`; that both events fire for one projectile is [**inferred**] from the event docs). A hit dealt by a ship docked in a ship gets it no entry. Gaps left: hazard damage during a fight still counts; `lastattacker` is set once per attack, so with several wing ships on one opponent a hit can go to the wrong one (code review, 2026-11-02). The player-only events (`event_player_attacked_object`, `event_player_ship_hit`) aren't needed.
+- **Filters:** `killmethod.collided` and `killmethod.hitbyareadamage` dropped; the other object must be defensible (no asteroids), not player-owned (no friendly fire) and not a wreck.
+- **The lead** is `player.occupiedship` unless that's null or a spacesuit; then it stays the last ship flown, so a fight goes on being tracked from the seat-less ship until the quiet gap ends it.
+- **Wing upkeep:** rebuilt on `event_object_subordinate_added/removed` on either group, on `event_control_entity_added/removed object="player.entity"`, and on every 2 s poll (always, so wingmen no event announces are picked up).
+- **Kills:** `event_object_destroyed` on a `$FoeGroup` of every opponent seen; `event.param` (the killer) gets the kill if it's a wing ship with a hit. A kill by a missile or drone may name something else as the killer [**unverified**].
+- **Hunt key:** the hunt hooks (#19) register each active hunt with `md.SWIBH_Engagement.HuntStarted` (`hunt`, `target`), which stashes the target's wing (its top commander and every ship under it, unless that's a station), and remove it with `HuntEnded`. An opponent in a stashed wing, or with the same top commander as the live target, makes the engagement a hunt engagement from then on. **#19 must call these**; until then only the game test does.
+- **Load:** `event_game_loaded` closes the engagement the loaded save had open (reason `load`). One open in the session the player left gets no end line, since nothing runs before a load: a reader ends an `engagement.start` with no end at the next `session.start` (schema.ts says so).
+- **End stamp:** `engagement.end` carries `lastHit` (`player.age` of the last hit). The line is written up to the quiet gap + 2 s later, so its wall time at the last hit is about `wall - (t - lastHit)`; that's off only if the game was paused or on SETA in those seconds.
+
+## Unknowns checked in game
+
+From `make game-test` (tests `combat_signals` and `engagement`, INFO lines; passing since the fourteenth run below) and the T20 playtest in [test-plan.md](../test-plan.md#t20-engagement-log-events-for-the-players-wing), which hasn't been run: the first four rows wait for it.
+
+| Unknown | Answer | Source |
+| --- | --- | --- |
+| Hit-event rate with ~10 wingmen in a big fight (and frame rate) | | T20 playtest (4) |
+| Turret hits and missiles fire `event_object_attacked(_object)` | | T20 playtest (5) |
+| Docked ships or units in `allsubordinates` (filtered either way) | | T20 playtest (6) |
+| 20 s is the right quiet gap | | T20 playtest (7) |
+| Which signal fires per hit | **`event_object_shield_damaged` / `_hull_damaged` and `event_player_ship_hit`**, one per bullet; `event_object_attacked(_object)` and `lastattacktime` only once per attack, not per hit (2026-11-02, third run) | `make game-test`, `combat_signals` |
+| Hits per second for one S fighter against the player's ship and one wingman | Too few to rate: the TIE made one pass at each ship (4 bullets, then 2) and the wingman never hit back in 40 s. The test needs a fight that lasts | `combat_signals` |
+
+### Game test, 2026-11-02 (second run)
+
+One TIE (`tie_fighter_macro`, Attack order on the player's `fortitude_macro`, min hull 30) against the player's ship and an X-wing wingman on defence, for 120 s per fight, twice. Quiet gap 10 s. Seen in `debuglog.txt`:
+
+- **Each fight logged three engagements of one "hit" each.** Fight 1: an attack event on the player's ship at t 43.6, on the wingman at 56.7, by the wingman on the TIE at 96.5, then nothing until the test destroyed the TIE at 158. Fight 2: the same pattern (164.6, 177.0, 210.7). Each event opened an engagement that the 10 s gap then closed. I first read this as the events being throttled while the ships kept fighting; the third run showed the fight itself was that sparse, and the attack events are per attack, not per hit (below).
+- The hooks themselves work: the lead and wing groups fill, both directions fire on both groups, and the parser reads the lines.
+- Bugs fixed after the run: MD libraries need `purpose="run_actions"` to be called with `run_actions` (first run: no wing ever built); a string such as `'swibh-test-hunt'` can't be a table key (`Failed to set table[].{'swibh-test-hunt'}`), so `$Hunts` is now a list; inside a cue instance its own name is the instance, so a test signalling its static cue needs `<cue>.static`.
+
+### Game test, 2026-11-02 (third run, `combat_signals`)
+
+Same three ships for 40 s, every combat event on them counted, the first 60 logged in full, and each ship's shield, hull, `lastattacktime` and `lastattacker` sampled every second. In 40 s: `event_object_attacked` 1 on the player's ship and 1 on the wingman, `event_object_attacked_object` 2 by the TIE, `event_object_shield_damaged` 4 on the player's ship and 2 on the wingman, `event_player_ship_hit` 4, nothing on the TIE.
+
+- **Per bullet:** `event_object_shield_damaged` (param = damaged component, param2 = new shield value, param3 = damage, 150 per TIE bullet) and `event_player_ship_hit` (param2 = attacker, param3 = projectile). The TIE's two bursts at t 43.91 and 44.21 gave 4 of each.
+- **Per attack, not per bullet:** `event_object_attacked` and `event_object_attacked_object` fired once, at the first bullet (t 43.91), and not for the burst 0.3 s later. Their killmethod was `hitbybullet`, and param3 of `_attacked_object` is `[attacked component, weapon]`.
+- **`lastattacktime` follows the attack events, not the bullets:** it stayed 43.91 after the 44.21 hits. So polling it can't measure quiet either. How long an attack lasts before the next one registers is still unknown: there were no later bullets to see.
+- **`lastattacker`** names the attacker (the TIE) and stays set: the attacker for damage events, which carry none.
+- **The fight was sparse:** after t 50.2 nothing hit anything until the end at 76; the TIE's shield stayed 100%, so the wingman on defence never fired. Shields recharged to 100% within about 6 s.
+- `engagement` this run had the hunt key on fight 1 (the list fix works) and failed only on hit counts.
+
+### Game test, 2026-11-02 (fourth run, damage events)
+
+With the wingman ordered to attack the TIE and both orders re-checked every 2 s, `combat_signals` saw both directions in 40 s: 15 damage events on the TIE (6 shield, 9 hull, so the wingman got through its shield), 1 on the player's ship, and 3 `event_object_attacked` on the TIE for 3 `event_object_attacked_object` by the X-wing (about one per attack run). `engagement` fight 1 passed: one engagement of 2.7 s in which the player's ship took 4 hits (600 damage) and the wingman dealt 1 (150). Fight 2 failed on a test bug (its check read fight 1's leftover `$Ships`), fixed after the run. Tests ran in 1 min 7 s.
+
+### Game test, 2026-11-02 (fifth run)
+
+`combat_signals` passed with hits both ways. `engagement` fight 2 passed (one engagement: the player's ship took 1 hit, 150 damage; the wingman dealt 1, 193; no hunt key). Fight 1 failed on scenario luck, not the hooks: the wingman dealt 12 hits (3,172 damage) in a 3.5 s engagement before the TIE had hit the player's ship, and the TIE never did within the 60 s. The test now holds the wingman's Attack order until the TIE has hit the player's ship in the open engagement.
+
+### Game test, 2026-11-02 (sixth run, Firespray)
+
+With `firespray_macro` (class `ship_m`, owner galempire, `<loadout><level exact="1.0"/>`) as the enemy, it never fired: in `combat_signals` the X-wing landed 236 damage events on it (145 shield, 91 hull, with 23 `event_object_attacked` for 23 `_attacked_object`, about one per attack run) and nothing hit the player's ship. In `engagement` no engagement opened, since the wingman waits for the enemy's first hit. Likely the level loadout gave it no weapons (galempire's loadout rules don't fit it [inferred]); SWI's `loadouts.xml` has no Firespray loadout. The TIE (`tie_fighter_macro`) did get weapons from the same level loadout, and with min hull 30 it never died in a run.
+
+### Game test, 2026-11-02 (seventh run, TIE Advanced)
+
+`tie_advanced_macro` (shielded, about even with the X-wing) does fire, but it went for the wingman rather than the player's ship: in `engagement` each fight logged one 0.07 s engagement in which the wingman took 4 hits (1,804 damage), then nothing. `combat_signals` saw only 11 damage events in 40 s. The AI fights in short passes with long silences whichever ship it is, so the test no longer scripts who hits first (the wingman hold is gone) and uses a 30 s quiet gap, so one fight's passes stay one engagement. Whether 20 s is right in real play is still the T20 playtest's question.
+
+### Game test, 2026-11-02 (eighth run, wingman without engines)
+
+Fight 2 passed its stats: one engagement over 5.9 s, in which the player's ship took 6 hits (2,706 damage) and the wingman dealt 2 (300), ending with reason quiet and no hunt key. Fight 1 never opened an engagement in its 60 s. The log shows why the fights have been sparse in every run: `Defensible::GenerateLoadout(): 't65b_xwing_macro' is mobile and has 4 engine slot(s) but there are no compatible items available!` A `<level>` loadout for a player-owned X-wing gets no engines (the player faction can't equip SWI's `engine_xwing_macro` [inferred]), so the wingman sat still and fired only when the enemy flew past. Both tests now create it with SWI's own loadout, `<loadout ref="sw_xwing_mc80start"/>` (4 `engine_xwing_macro`, 4 KX7 lasers, 2 guided missile launchers, a shield), as SWI's gamestarts do.
+
+### Game test, 2026-11-02 (ninth run, X-wing with SWI's loadout)
+
+The loadout error is gone, but the fights stayed short: fight 1's engagement lasted 0.97 s, with the wingman taking 2 hits (902 damage) and dealing 6 (960), and the player's ship never hit, so it failed. Fight 2 again passed its stats: 0.81 s, the player's ship took 6 hits (2,706) and the wingman dealt 2 (320). Each fight is one pass of under a second, then 30 s of nothing. With engines, the TIE Advanced still makes one attack run and breaks off, and it chooses its own target. In both runs, everything the hooks recorded matched the fight; what fails is the scenario.
+
+### Game test, 2026-11-02 (tenth run, max-skill pilots)
+
+With piloting and morale 15 for every pilot, the in-game `engagement` test passed for the first time. Fight 1 (hunt): 0.95 s, the player's ship took 2 hits (902 damage), the wingman dealt 1 (160). Fight 2 (no hunt): 18.5 s, the player's ship took 1 hit (150), the wingman dealt 2 (320). Both ended quiet, with the hunt key only on fight 1. Fight 2's 18.5 s engagement means more than one pass landed inside the 30 s gap. One good run doesn't prove skill made the difference [inferred].
+
+The offline `game-check.ts` failed the same log with "found 3 paired": `combat_signals`, which runs before it, opens a real engagement (no hunt key) with the same wing. The `Engagement` cue now logs `[swibh-test] INFO engagement: begins at t <age>`, and the check skips engagements that started before it.
+
+### Game test, 2026-11-02 (eleventh run, max-skill pilots again)
+
+Run 10's pass didn't repeat. In fight 1 the TIE Advanced again made one pass, at the wingman only: 0.17 s, 4 hits (1,804 damage) on the wingman, nothing on or from the player's ship, then silence until the timeout. Fight 2 passed its stats for the fourth run in a row (4.7 s, the player's ship took 6 hits (2,706), the wingman dealt 1 (160)). The new `begins at t 76.1` marker was logged; the offline check didn't run because the in-game test failed first. So far, max skill doesn't make the first fight reliable [inferred from two runs]: in fight 1 the TIE seems to pick the wingman, and in fight 2 the player's ship.
+
+The test now takes turns, per the user's suggestion: the wingman is warped 1.5 km to the side of the TIE's spawn and holds (`Wait` with `holdfire` and `noattackresponse`) while the TIE attacks the player's ship; once the player's ship has taken a hit, the TIE holds the same way and the wingman attacks it. The fight timeout went from 60 s to 90 s, for the TIE's approach.
+
+### Game test, 2026-11-02 (twelfth run, turns)
+
+Fight 2 passed with turns: 7.0 s, the player's ship took 1 hit (451 damage), then the wingman dealt 1 (160), ending quiet with no hunt key. Fight 1 never fought: `KeepTurn` read `$Enemy.order.id` on a just-spawned TIE that had no order yet (`Property lookup failed`), which aborted the library before any order was given. The lookups are now `@`-guarded, as `KeepFighting`'s were.
+
+### Game test, 2026-11-02 (thirteenth run, turns with guarded lookups)
+
+Fight 2 passed (8.2 s, the player's ship took 1 hit (150), then the wingman dealt 3 (480)). Fight 1 failed, and the `engagement.end` lines show why, which also explains the "fight 1 fails, fight 2 passes" pattern of earlier runs: `combat_signals`' engagement (start t 38) was still open when the `engagement` test began at t 76, and setting the 30 s gap stretched it. Fight 1's TIE (SRL-384) did attack the player's ship, but those hits went into that old engagement, which ended at t 114 and, since the hunt target had joined, carried the hunt key. The test only counts engagements that started after the fight began, so the wingman's turn never came, and at t 137 the TIE shot the holding wingman (4 hits, 1,804 damage), opening a new engagement with only that. `Engagement_Setup` now waits until no engagement is open (60 s at most) and sets the 30 s gap only then.
+
+Two findings from the same lines. First, an engagement keeps its start and grows across scenario changes, so a hunt can join an engagement opened before the hunt existed; the hunt key then covers hits from before the hunt (the hunt matching runs on each hit, by design). Second, `combat_signals`' TIE, removed with `destroy_object` by the test, is logged `"killed":true`: `FoeDestroyed` marks any destruction of a known opponent, not only a kill by the wing.
+
+### Game test, 2026-11-02 (fourteenth run, passing)
+
+With turns and the wait for `combat_signals`' engagement to close, every game test passed, and so did the offline log check (`PASS engagement log`). Fight 1 (hunt): 30.9 s, the player's ship took 2 hits (300 damage), the wingman dealt 12 (1,920), with the hunt key. Fight 2 (no hunt): 29.7 s, the player's ship took 2 hits (300), the wingman dealt 4 (640), no hunt key. Both ended quiet. With turns, a fight's engagement lasts about 30 s (one TIE pass, then the wingman's attack). The whole run took 4 min 45 s (tests 3 min 12 s).
+
+### Game test, 2026-11-02 (fifteenth run, after the code review's hit-count fixes)
+
+Every game test and the offline log check passed again, with no MD errors, after the hit-count changes (recent-opponent rule, one hit per projectile through the shield, no entry for docked ships). Fight 1 (hunt): 7.3 s, the player's ship took 1 hit (150), the wingman dealt 2 (320). Fight 2: 8.2 s, the player's ship took 2 hits (300), the wingman dealt 5 (800). Whether `IsNewHit` ever merged a shield-and-hull pair isn't visible in these lines (no shield ran out). Total run 4 min 8 s.

@@ -445,6 +445,9 @@ $seen = @{}
 try {
     if (Test-Path $extension) { Remove-Item $extension -Recurse -Force }
     Copy-Item (Join-Path $root "tests/game/$TestExtensionId") $extension -Recurse
+    # The swibh extension's MD (log libraries, engagements) rides along in the test extension, so
+    # its tests run against it without installing swibh itself; MD scripts go by name, not folder
+    Copy-Item (Join-Path $root 'extension/swibh/md/*.xml') (Join-Path $extension 'md')
     if ($Manual) {
         # Without the autostart the main menu stays, so a save can be loaded
         Remove-Item (Join-Path $extension 'ui.xml'), (Join-Path $extension 'ui') -Recurse -Force
@@ -500,6 +503,8 @@ finally {
 }
 
 $run = Read-GameTestLog (Read-SharedFile $LogPath)
+# A copy for the log checks that make game-test runs next (tools/log/game-check.ts)
+if (Test-Path $LogPath) { Copy-Item $LogPath (Join-Path $root 'tests/game/debuglog.txt') -Force }
 if ($Manual) {
     foreach ($h in $run.Hooks) { Write-Host "  HOOK $h" }
     foreach ($e in $run.Errors) { Write-Host "  log error: $e" }

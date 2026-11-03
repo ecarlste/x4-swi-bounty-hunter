@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engagements of the player's wing (#23, GLOSSARY.md "Engagement"; hooks in
+     research/combat-hooks.md): writes engagement.start on the first hit by or on a ship of the
+     wing, and engagement.end after a quiet gap, or when the player's ship is lost or changed, or a
+     save is loaded while one is open. Per ADR 0001 it records every engagement, however short.
+
+     The player's wing: the ship the player flies (the lead) plus every wingman under it at any
+     depth (allsubordinates), in any sector. Drones (units) and ships docked inside another ship are
+     left out. The lead stays the last ship flown while the player is on foot or in a spacesuit.
+
+     Two kinds of signal (research/combat-hooks.md, game test 2026-11-02): the attack events
+     (event_object_attacked, _attacked_object) fire once per attack and name both sides, so they
+     open an engagement and record opponents; the shield and hull damage events fire once per
+     projectile, so they count hits and damage and keep the quiet clock ($LastHit) running.
+     The hit cues only update running state; the 2 s Poll rebuilds the wing and closes a quiet
+     engagement, whose end is stamped at the last hit in data.lastHit (the line's own t is when the
+     gap ran out). Log lines go through the generated md.SWIBH_Log libraries only.
+
+     Hunt engagements: the hunt hooks (#19) call HuntStarted and HuntEnded, so an engagement with a
+     hunt's target, or a ship of its wing, carries that hunt key. The game test calls them too.
+
+     State lives on the root cue Engagements; read it as md.SWIBH_Engagement.Engagements.$<name>:
+       $QuietGap   the quiet gap that ends an engagement (20s; the game test shortens it)
+       $Open       an engagement is open; $Start, $LastHit, $Hunt describe it
+       $Ships      wing ship -> its WingShip table (log schema), for ships with a hit
+       $Foes       opponent -> its Opponent table; $FoeOrder is the first 20, $FoesSeen counts all
+       $LastClosed table[$reason, $hunt, $ships, $opponentsSeen] of the last engagement closed
+       $Hunts      the active hunts, as table[$hunt, $target, $wing] (a hunt key is no table key)
+       $ShieldDown object -> the time a projectile took its shield to 0, so the same projectile's
+                   hull damage (both events fire for it) counts as damage but not as another hit -->
+<mdscript name="SWIBH_Engagement" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="Engagements">
+      <actions>
+        <set_value name="$QuietGap" exact="20s"/>
+        <set_value name="$Open" exact="false"/>
+        <set_value name="$Lead" exact="null"/>
+        <set_value name="$Start" exact="0s"/>
+        <set_value name="$LastHit" exact="0s"/>
+        <set_value name="$Hunt" exact="null"/>
+        <set_value name="$Ships" exact="table[]"/>
+        <set_value name="$Foes" exact="table[]"/>
+        <set_value name="$FoeOrder" exact="[]"/>
+        <set_value name="$FoesSeen" exact="0"/>
+        <set_value name="$LastClosed" exact="null"/>
+        <set_value name="$Hunts" exact="[]"/>
+        <set_value name="$ShieldDown" exact="table[]"/>
+        <create_group groupname="$LeadGroup"/>
+        <create_group groupname="$Wing"/>
+        <create_group groupname="$FoeGroup"/>
+        <run_actions ref="UpdateWing"/>
+      </actions>
+      <cues>
+        <!-- An attack by or on the lead or a wingman (once per attack). Collisions and area damage don't
+             count, nor hits between player-owned objects, wrecks, or non-defensibles (asteroids) -->
+        <cue name="Hit" instantiate="true" namespace="this">
+          <conditions>
+            <check_any>
+              <event_object_attacked group="Engagements.$LeadGroup"/>
+              <event_object_attacked group="Engagements.$Wing"/>
+              <event_object_attacked_object group="Engagements.$LeadGroup"/>
+              <event_object_attacked_object group="Engagements.$Wing"/>
+            </check_any>
+            <check_value value="event.param2 != killmethod.collided and event.param2 != killmethod.hitbyareadamage"/>
+            <check_value value="@event.param.isclass.defensible and not event.param.isplayerowned and not event.param.iswreck"/>
+          </conditions>
+          <actions>
+            <run_actions ref="RecordHit">
+              <param name="Ship" value="event.object"/>
+              <param name="Foe" value="event.param"/>
+              <param name="Taken" value="event.name == 'event_object_attacked'"/>
+            </run_actions>
+          </actions>
+        </cue>
+
+        <!-- Per projectile, while open: a wing ship's shield or hull damaged. These events carry
+             no attacker or kill method, so a hit counts only while the ship's last attacker is an
+             opponent of this engagement (recorded by Hit, which leaves out collisions and area
+             damage) that attacked within the quiet gap: hazard damage between fights doesn't count,
+             nor friendly fire -->
+        <cue name="HitTaken" instantiate="true" namespace="this">
+          <conditions>
+            <check_any>
+              <event_object_shield_damaged group="Engagements.$LeadGroup"/>
+              <event_object_shield_damaged group="Engagements.$Wing"/>
+              <event_object_hull_damaged group="Engagements.$LeadGroup"/>
+              <event_object_hull_damaged group="Engagements.$Wing"/>
+            </check_any>
+            <check_value value="Engagements.$Open and @event.object.lastattacker and Engagements.$Foes.{event.object.lastattacker}? and player.age - event.object.lastattacktime le Engagements.$QuietGap"/>
+          </conditions>
+          <actions>
+            <do_if value="not Engagements.$Ships.{event.object}?">
+              <run_actions ref="AddShip">
+                <param name="Ship" value="event.object"/>
+              </run_actions>
+            </do_if>
+            <set_value name="$Entry" exact="Engagements.$Ships.{event.object}"/>
+            <run_actions ref="IsNewHit" result="$New">
+              <param name="Object" value="event.object"/>
+              <param name="Shield" value="event.name == 'event_object_shield_damaged'"/>
+              <param name="Left" value="event.param2"/>
+            </run_actions>
+            <do_if value="$New">
+              <set_value name="$Entry.$hitsTaken" operation="add"/>
+            </do_if>
+            <set_value name="$Entry.$damageTaken" exact="$Entry.$damageTaken + (event.param3)f"/>
+            <set_value name="Engagements.$LastHit" exact="player.age"/>
+          </actions>
+        </cue>
+
+        <!-- Per projectile, while open: an opponent's shield or hull damaged by a ship of the wing,
+             going by the opponent's last attacker (set once per attack, so with several attackers
+             a hit can go to the wrong one). A wing ship seen first here gets its entry now -->
+        <cue name="HitDealt" instantiate="true" namespace="this">
+          <conditions>
+            <check_any>
+              <event_object_shield_damaged group="Engagements.$FoeGroup"/>
+              <event_object_hull_damaged group="Engagements.$FoeGroup"/>
+            </check_any>
+            <check_value value="Engagements.$Open and @event.object.lastattacker.isplayerowned"/>
+          </conditions>
+          <actions>
+            <set_value name="$By" exact="event.object.lastattacker"/>
+            <set_value name="$Known" exact="Engagements.$Ships.{$By}?"/>
+            <do_if value="not $Known and ($By == Engagements.$Lead or ($By.isclass.ship and not $By.isunit and not @$By.dock.container.isclass.ship and @$By.toplevelcommander == Engagements.$Lead))">
+              <run_actions ref="AddShip">
+                <param name="Ship" value="$By"/>
+              </run_actions>
+              <set_value name="$Known" exact="true"/>
+            </do_if>
+            <do_if value="$Known">
+              <set_value name="$Entry" exact="Engagements.$Ships.{$By}"/>
+              <run_actions ref="IsNewHit" result="$New">
+                <param name="Object" value="event.object"/>
+                <param name="Shield" value="event.name == 'event_object_shield_damaged'"/>
+                <param name="Left" value="event.param2"/>
+              </run_actions>
+              <do_if value="$New">
+                <set_value name="$Entry.$hitsDealt" operation="add"/>
+              </do_if>
+              <set_value name="$Entry.$damageDealt" exact="$Entry.$damageDealt + (event.param3)f"/>
+              <set_value name="Engagements.$LastHit" exact="player.age"/>
+            </do_if>
+          </actions>
+        </cue>
+
+        <!-- Wing upkeep: a subordinate added or removed anywhere in the wing, or the player taking
+             or leaving control of something (which may be a new ship) -->
+        <cue name="WingChanged" instantiate="true" namespace="this">
+          <conditions>
+            <check_any>
+              <event_object_subordinate_added group="Engagements.$LeadGroup"/>
+              <event_object_subordinate_added group="Engagements.$Wing"/>
+              <event_object_subordinate_removed group="Engagements.$LeadGroup"/>
+              <event_object_subordinate_removed group="Engagements.$Wing"/>
+              <event_control_entity_added object="player.entity"/>
+              <event_control_entity_removed object="player.entity"/>
+            </check_any>
+          </conditions>
+          <actions>
+            <run_actions ref="UpdateWing"/>
+          </actions>
+        </cue>
+
+        <!-- Every 2 s: rebuild the wing (which also closes an open engagement on a ship change or
+             loss, and picks up wingmen no event announced, such as fighters launched from a
+             carrier), then close the engagement after the quiet gap -->
+        <cue name="Poll" instantiate="true" checkinterval="2s" namespace="this">
+          <conditions>
+            <check_value value="player.entity"/>
+          </conditions>
+          <actions>
+            <run_actions ref="UpdateWing"/>
+            <do_if value="Engagements.$Open and player.age - Engagements.$LastHit ge Engagements.$QuietGap">
+              <run_actions ref="Close">
+                <param name="Reason" value="'quiet'"/>
+              </run_actions>
+            </do_if>
+          </actions>
+        </cue>
+
+        <!-- A wing ship destroyed: marked in its stats. The lead's loss ends the engagement -->
+        <cue name="WingShipDestroyed" instantiate="true" namespace="this">
+          <conditions>
+            <check_any>
+              <event_object_destroyed group="Engagements.$LeadGroup"/>
+              <event_object_destroyed group="Engagements.$Wing"/>
+            </check_any>
+            <check_value value="Engagements.$Open"/>
+          </conditions>
+          <actions>
+            <do_if value="Engagements.$Ships.{event.object}?">
+              <set_value name="Engagements.$Ships.{event.object}.$destroyed" exact="true"/>
+            </do_if>
+            <do_if value="event.object == Engagements.$Lead">
+              <run_actions ref="Close">
+                <param name="Reason" value="'shipLost'"/>
+              </run_actions>
+            </do_if>
+          </actions>
+        </cue>
+
+        <!-- An opponent destroyed: marked killed, and a kill for the wing ship that made it -->
+        <cue name="FoeDestroyed" instantiate="true" namespace="this">
+          <conditions>
+            <event_object_destroyed group="Engagements.$FoeGroup"/>
+            <check_value value="Engagements.$Open"/>
+          </conditions>
+          <actions>
+            <do_if value="Engagements.$Foes.{event.object}?">
+              <set_value name="Engagements.$Foes.{event.object}.$killed" exact="true"/>
+            </do_if>
+            <do_if value="typeof event.param == datatype.component and Engagements.$Ships.{event.param}?">
+              <set_value name="Engagements.$Ships.{event.param}.$kills" operation="add"/>
+            </do_if>
+          </actions>
+        </cue>
+
+        <!-- A save loaded with an engagement open: its fight is gone, so it ends here -->
+        <cue name="Loaded" instantiate="true" namespace="this">
+          <conditions>
+            <event_game_loaded/>
+            <check_value value="Engagements.$Open"/>
+          </conditions>
+          <actions>
+            <run_actions ref="Close">
+              <param name="Reason" value="'load'"/>
+            </run_actions>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+
+    <!-- Makes the ship the player flies the lead (closing an open engagement when it's another
+         ship) and rebuilds the wing from it. On foot or in a spacesuit the lead stays as it was.
+         A lead gone while an engagement is open is a loss: this catches it when the groups were
+         rebuilt (on ejecting, say) before WingShipDestroyed saw it -->
+    <library name="UpdateWing" purpose="run_actions">
+      <actions>
+        <do_if value="Engagements.$Open and not @Engagements.$Lead.isoperational">
+          <run_actions ref="Close">
+            <param name="Reason" value="'shipLost'"/>
+          </run_actions>
+        </do_if>
+        <set_value name="$SWIBH_Flown" exact="player.occupiedship"/>
+        <do_if value="$SWIBH_Flown and not $SWIBH_Flown.isclass.spacesuit and $SWIBH_Flown != Engagements.$Lead">
+          <do_if value="Engagements.$Open">
+            <run_actions ref="Close">
+              <param name="Reason" value="'shipChange'"/>
+            </run_actions>
+          </do_if>
+          <set_value name="Engagements.$Lead" exact="$SWIBH_Flown"/>
+        </do_if>
+        <clear_group group="Engagements.$LeadGroup"/>
+        <clear_group group="Engagements.$Wing"/>
+        <do_if value="@Engagements.$Lead.isoperational">
+          <add_to_group groupname="Engagements.$LeadGroup" object="Engagements.$Lead"/>
+          <do_for_each name="$SWIBH_Sub" in="Engagements.$Lead.allsubordinates">
+            <do_if value="$SWIBH_Sub.isclass.ship and $SWIBH_Sub.isoperational and not $SWIBH_Sub.isunit and not @$SWIBH_Sub.dock.container.isclass.ship">
+              <add_to_group groupname="Engagements.$Wing" object="$SWIBH_Sub"/>
+            </do_if>
+          </do_for_each>
+        </do_if>
+      </actions>
+    </library>
+
+    <!-- A wing ship in the open engagement: its entry in $Ships (ids kept from now, since it may
+         not survive) if it has none, and its current sector added to the entry's sectors -->
+    <library name="AddShip" purpose="run_actions">
+      <params>
+        <param name="Ship"/>
+      </params>
+      <actions>
+        <do_if value="not Engagements.$Ships.{$Ship}?">
+          <set_value name="Engagements.$Ships.{$Ship}" exact="table[$idcode = $Ship.idcode, $macro = $Ship.macro.id, $class = $Ship.class, $name = $Ship.knownname, $player = ($Ship == Engagements.$Lead), $hitsTaken = 0, $hitsDealt = 0, $damageTaken = 0.0, $damageDealt = 0.0, $kills = 0, $sectors = [], $destroyed = false]"/>
+        </do_if>
+        <set_value name="$SWIBH_Sector" exact="@$Ship.sector.macro.id"/>
+        <do_if value="$SWIBH_Sector and not Engagements.$Ships.{$Ship}.$sectors.indexof.{$SWIBH_Sector}">
+          <append_to_list name="Engagements.$Ships.{$Ship}.$sectors" exact="$SWIBH_Sector"/>
+        </do_if>
+      </actions>
+    </library>
+
+    <!-- For the damage cues: whether a shield (Shield true) or hull damage event on Object, with
+         Left the shield or hull left, is a new hit. A projectile that takes the shield to 0 and goes
+         on into the hull fires both events in the same frame; its hull event is not a new hit -->
+    <library name="IsNewHit" purpose="run_actions">
+      <params>
+        <param name="Object"/>
+        <param name="Shield"/>
+        <param name="Left"/>
+      </params>
+      <actions>
+        <do_if value="$Shield">
+          <do_if value="$Left le 0">
+            <set_value name="Engagements.$ShieldDown.{$Object}" exact="player.age"/>
+          </do_if>
+          <return value="true"/>
+        </do_if>
+        <return value="@Engagements.$ShieldDown.{$Object} != player.age"/>
+      </actions>
+    </library>
+
+    <!-- One attack (the attack events fire once per attack, not per projectile): Ship is the wing
+         ship, Foe the other object, Taken whether Ship was attacked. Opens an engagement if none is,
+         and records both sides; the damage cues count the hits -->
+    <library name="RecordHit" purpose="run_actions">
+      <params>
+        <param name="Ship"/>
+        <param name="Foe"/>
+        <param name="Taken"/>
+      </params>
+      <actions>
+        <do_if value="not Engagements.$Open">
+          <set_value name="Engagements.$Open" exact="true"/>
+          <set_value name="Engagements.$Start" exact="player.age"/>
+          <set_value name="Engagements.$Hunt" exact="null"/>
+          <set_value name="Engagements.$Ships" exact="table[]"/>
+          <set_value name="Engagements.$Foes" exact="table[]"/>
+          <set_value name="Engagements.$FoeOrder" exact="[]"/>
+          <set_value name="Engagements.$FoesSeen" exact="0"/>
+          <set_value name="Engagements.$ShieldDown" exact="table[]"/>
+          <clear_group group="Engagements.$FoeGroup"/>
+          <set_value name="$SWIBH_Opened" exact="true"/>
+        </do_if>
+        <do_else>
+          <set_value name="$SWIBH_Opened" exact="false"/>
+        </do_else>
+        <set_value name="Engagements.$LastHit" exact="player.age"/>
+
+        <!-- The wing ship's entry and its sector. Hits themselves are counted by the damage cues:
+             an attack event comes once per attack, not per projectile -->
+        <run_actions ref="AddShip">
+          <param name="Ship" value="$Ship"/>
+        </run_actions>
+
+        <!-- The opponent, first time seen: its ids, and whether it's in an active hunt's wing -->
+        <do_if value="not Engagements.$Foes.{$Foe}?">
+          <set_value name="$SWIBH_Foe" exact="table[$idcode = @$Foe.idcode, $macro = $Foe.macro.id, $owner = $Foe.owner.id, $name = $Foe.knownname, $killed = false]"/>
+          <set_value name="Engagements.$Foes.{$Foe}" exact="$SWIBH_Foe"/>
+          <set_value name="Engagements.$FoesSeen" operation="add"/>
+          <do_if value="Engagements.$FoeOrder.count lt 20">
+            <append_to_list name="Engagements.$FoeOrder" exact="$SWIBH_Foe"/>
+          </do_if>
+          <add_to_group groupname="Engagements.$FoeGroup" object="$Foe"/>
+          <do_if value="Engagements.$Hunt == null">
+            <set_value name="$SWIBH_FoeTop" exact="if @$Foe.commander then $Foe.toplevelcommander else $Foe"/>
+            <do_for_each name="$SWIBH_Hunt" in="Engagements.$Hunts">
+              <set_value name="$SWIBH_InWing" exact="$SWIBH_Hunt.$wing.indexof.{$Foe} gt 0"/>
+              <!-- Escorts added after the hunt started: the same top commander as the live target -->
+              <do_if value="not $SWIBH_InWing and @$SWIBH_Hunt.$target.isoperational">
+                <set_value name="$SWIBH_TargetTop" exact="if @$SWIBH_Hunt.$target.commander then $SWIBH_Hunt.$target.toplevelcommander else $SWIBH_Hunt.$target"/>
+                <set_value name="$SWIBH_InWing" exact="$SWIBH_FoeTop == $SWIBH_TargetTop and not $SWIBH_TargetTop.isclass.station"/>
+              </do_if>
+              <do_if value="$SWIBH_InWing">
+                <set_value name="Engagements.$Hunt" exact="$SWIBH_Hunt.$hunt"/>
+                <break/>
+              </do_if>
+            </do_for_each>
+          </do_if>
+        </do_if>
+
+        <do_if value="$SWIBH_Opened">
+          <run_actions ref="md.SWIBH_Log.Log_EngagementStart">
+            <param name="hunt" value="Engagements.$Hunt"/>
+            <param name="ship" value="Engagements.$Lead"/>
+            <param name="wingmen" value="Engagements.$Wing.count"/>
+            <param name="firstHit" value="if $Taken then 'taken' else 'dealt'"/>
+            <param name="attacker" value="if $Taken then $Foe else $Ship"/>
+            <param name="attacked" value="if $Taken then $Ship else $Foe"/>
+          </run_actions>
+        </do_if>
+      </actions>
+    </library>
+
+    <!-- Writes engagement.end for the open engagement with this Reason and closes it -->
+    <library name="Close" purpose="run_actions">
+      <params>
+        <param name="Reason"/>
+      </params>
+      <actions>
+        <set_value name="$SWIBH_ShipList" exact="[]"/>
+        <do_for_each name="$SWIBH_Ship" valuename="$SWIBH_Stats" in="Engagements.$Ships">
+          <append_to_list name="$SWIBH_ShipList" exact="$SWIBH_Stats"/>
+        </do_for_each>
+        <run_actions ref="md.SWIBH_Log.Log_EngagementEnd">
+          <param name="hunt" value="Engagements.$Hunt"/>
+          <param name="start" value="Engagements.$Start"/>
+          <param name="lastHit" value="Engagements.$LastHit"/>
+          <param name="reason" value="$Reason"/>
+          <param name="ships" value="$SWIBH_ShipList"/>
+          <param name="opponents" value="Engagements.$FoeOrder"/>
+          <param name="opponentsSeen" value="Engagements.$FoesSeen"/>
+        </run_actions>
+        <set_value name="Engagements.$LastClosed" exact="table[$reason = $Reason, $hunt = Engagements.$Hunt, $ships = $SWIBH_ShipList, $opponentsSeen = Engagements.$FoesSeen]"/>
+        <set_value name="Engagements.$Open" exact="false"/>
+        <clear_group group="Engagements.$FoeGroup"/>
+      </actions>
+    </library>
+
+    <!-- For the hunt hooks (#19): hunt is the hunt key, target the hunt's target. Its wing is taken
+         now (the target's top commander and every ship under it, unless that's a station), so an
+         escort still counts once the target is dead -->
+    <library name="HuntStarted" purpose="run_actions">
+      <params>
+        <param name="hunt"/>
+        <param name="target"/>
+      </params>
+      <actions>
+        <set_value name="$SWIBH_Top" exact="if @$target.commander then $target.toplevelcommander else $target"/>
+        <set_value name="$SWIBH_HuntWing" exact="[$target]"/>
+        <do_if value="$SWIBH_Top != $target and not $SWIBH_Top.isclass.station">
+          <set_value name="$SWIBH_HuntWing" exact="[$SWIBH_Top]"/>
+        </do_if>
+        <do_if value="not $SWIBH_Top.isclass.station">
+          <do_for_each name="$SWIBH_Sub" in="$SWIBH_Top.allsubordinates">
+            <append_to_list name="$SWIBH_HuntWing" exact="$SWIBH_Sub"/>
+          </do_for_each>
+        </do_if>
+        <run_actions ref="md.SWIBH_Engagement.HuntEnded">
+          <param name="hunt" value="$hunt"/>
+        </run_actions>
+        <append_to_list name="md.SWIBH_Engagement.Engagements.$Hunts" exact="table[$hunt = $hunt, $target = $target, $wing = $SWIBH_HuntWing]"/>
+      </actions>
+    </library>
+
+    <!-- For the hunt hooks (#19): the hunt ended, so its wing no longer makes a hunt engagement -->
+    <library name="HuntEnded" purpose="run_actions">
+      <params>
+        <param name="hunt"/>
+      </params>
+      <actions>
+        <do_all exact="md.SWIBH_Engagement.Engagements.$Hunts.count" counter="$SWIBH_I" reverse="true">
+          <do_if value="md.SWIBH_Engagement.Engagements.$Hunts.{$SWIBH_I}.$hunt == $hunt">
+            <remove_value name="md.SWIBH_Engagement.Engagements.$Hunts.{$SWIBH_I}"/>
+          </do_if>
+        </do_all>
+      </actions>
+    </library>
+  </cues>
+</mdscript>

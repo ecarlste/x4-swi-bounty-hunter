@@ -28,7 +28,11 @@ export type Fields = Record<string, FieldType>;
 
 export type Shape<F extends Fields = Fields> = { name: string; fields: F };
 
-export type EventDef<H extends boolean = boolean, F extends Fields = Fields> = { hunt: H; data: F };
+// Whether an event's line carries the hunt key: always, never, or only when the event
+// belongs to a hunt (an engagement the target's wing took part in)
+export type HuntKeyRule = boolean | "optional";
+
+export type EventDef<H extends HuntKeyRule = HuntKeyRule, F extends Fields = Fields> = { hunt: H; data: F };
 
 // Integer, written with ($x)i
 export const int = () => ({ kind: "int" }) as const;
@@ -50,7 +54,7 @@ export const nullable = <T extends FieldType>(of: T) => ({ kind: "nullable", of 
 export const from = <T extends FieldType>(expr: string, type: T): T & { from: string } => ({ ...type, from: expr });
 
 const defineShape = <F extends Fields>(name: string, fields: F): Shape<F> => ({ name, fields });
-const defineEvent = <const H extends boolean, F extends Fields>(hunt: H, data: F): EventDef<H, F> => ({ hunt, data });
+const defineEvent = <const H extends HuntKeyRule, F extends Fields>(hunt: H, data: F): EventDef<H, F> => ({ hunt, data });
 
 // The size classes a ship's .class prints as
 const shipClass = oneOf("ship_xs", "ship_s", "ship_m", "ship_l", "ship_xl");
@@ -141,7 +145,49 @@ export const ActiveHunt = defineShape("ActiveHunt", {
   sameSector: bool(),
 });
 
-// ---- v1 events. hunt: true means the line carries the hunt key
+// From table[$idcode, $macro, $class, $name, $player, $hitsTaken, $hitsDealt, $damageTaken,
+// $damageDealt, $kills, $sectors, $destroyed]: one ship of the player's wing that took part in
+// an engagement. Its ids are kept from its first hit, since it may be destroyed before the end.
+// Hits and damage come from event_object_shield_damaged / _hull_damaged, one per projectile
+// (research/combat-hooks.md); the attack events fire only once per attack. Those damage events
+// carry no attacker or kill method, so a hit taken counts only while the ship's lastattacker is an
+// opponent of the engagement that attacked within the quiet gap (hazard damage outside a fight
+// doesn't count, inside one it can), and a hit dealt is credited to the opponent's lastattacker.
+// A projectile that takes the shield to 0 and goes on into the hull is one hit: its damage counts
+// on both
+export const WingShip = defineShape("WingShip", {
+  idcode: id(),
+  macro: id(),
+  class: shipClass,
+  name: name(),
+  // It was the ship the player flew
+  player: bool(),
+  hitsTaken: int(),
+  hitsDealt: int(),
+  // Shield plus hull points lost to those hits, and dealt by this ship
+  damageTaken: number(),
+  damageDealt: number(),
+  // Opponents it destroyed: the killer of an opponent's event_object_destroyed
+  kills: int(),
+  // Macro ids of the sectors it was hit or hit something in, in order
+  sectors: list(id()),
+  destroyed: bool(),
+});
+
+// From table[$idcode, $macro, $owner, $name, $killed]: a ship or object that hit, or was
+// hit by, the player's wing. Kept from its first hit, since most are destroyed by the end
+export const Opponent = defineShape("Opponent", {
+  // null for objects without one
+  idcode: nullable(id()),
+  macro: id(),
+  // Faction id
+  owner: id(),
+  name: name(),
+  // Destroyed during the engagement, by anyone
+  killed: bool(),
+});
+
+// ---- v1 events. hunt: true means the line carries the hunt key, "optional" that it may
 
 export const events = {
   // On game start and on every load, so reloads show in the log
@@ -204,6 +250,39 @@ export const events = {
     piloted: bool(),
     activeHunts: list(shape(ActiveHunt)),
   }),
+
+  // The first hit by or on a ship of the player's wing (collisions and area damage aside)
+  // after a quiet gap. Carries the hunt key when that hit involves an active hunt's
+  // target or its wing (a hunt engagement)
+  "engagement.start": defineEvent("optional", {
+    // The ship the player flies, the wing's lead
+    ship: shape(Ship),
+    // Wingmen in the wing at the first hit, the lead not counted
+    wingmen: int(),
+    // Whether the first hit was dealt or taken by the wing
+    firstHit: oneOf("dealt", "taken"),
+    attacker: shape(Ref),
+    attacked: shape(Ref),
+  }),
+
+  // The engagement is over: no hit for the quiet gap (20 s by default), or the player's ship
+  // was lost or changed, or a save was loaded while it was open. Carries the hunt key when the
+  // target's wing took part at any point. reason "load" closes the engagement the loaded save had
+  // open; one open in the session the player left gets no end line (nothing runs before a load),
+  // so a reader ends an engagement.start with no end at the next session.start
+  "engagement.end": defineEvent("optional", {
+    // t of the matching engagement.start
+    start: number(),
+    // player.age of the last hit. The line itself is written up to a quiet gap later, so its
+    // wall time at the last hit is about wall - (t - lastHit)
+    lastHit: number(),
+    reason: oneOf("quiet", "shipLost", "shipChange", "load"),
+    // Every ship of the player's wing with at least one hit, the player's ship included
+    ships: list(shape(WingShip)),
+    // The first 20 opponents seen, so a big fight can't make the line too long
+    opponents: list(shape(Opponent)),
+    opponentsSeen: int(),
+  }),
 };
 
 export const VERSION = 1;
@@ -238,9 +317,11 @@ export type LogEventOf<K extends EventType> = {
   type: K;
   t: number;
   data: InferFields<Events[K]["data"]>;
-} & (Events[K]["hunt"] extends true ? { hunt: HuntKey } : {});
+} & (Events[K]["hunt"] extends true ? { hunt: HuntKey } : Events[K]["hunt"] extends false ? {} : { hunt?: HuntKey });
 
 export type LogEvent = { [K in EventType]: LogEventOf<K> }[EventType];
-export type HuntEvent = Extract<LogEvent, { hunt: HuntKey }>;
+// The events that can carry a hunt key, once they're known to
+type HuntEventType = { [K in EventType]: Events[K]["hunt"] extends false ? never : K }[EventType];
+export type HuntEvent = { [K in HuntEventType]: LogEventOf<K> & { hunt: HuntKey } }[HuntEventType];
 // <mission id>-<target idcode>-<accept t>, set at hunt.accept; SWI's mission id isn't unique on its own
 export type HuntKey = string;
