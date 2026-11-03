@@ -68,6 +68,36 @@ _Avoid_: Fight, battle, combat (when the logged span is meant)
 A TypeScript tool that reads a data source (the debug log through the log parser, or a save's logbook) and writes a report, such as `make hunt-log`.
 _Avoid_: Parser (that's the shared module extractors use)
 
+## Story
+
+**Stage**:
+One of the series arc's three parts (Broke, Making a name, Big game), each set by the largest target size the player takes on.
+_Avoid_: Act, chapter, season
+
+**Spine beat**:
+A fixed story moment the series plays toward, such as the debt paid or the first target of a new size taken to paid. It lands when the game gets there, never on a schedule.
+_Avoid_: Plot point, milestone
+
+**Character**:
+A named person in the story: Bobby, Shaddo, the nemesis, or a viewer-written pilot of one of the player's wingmen.
+_Avoid_: Wingman (that's the ship the character flies), NPC, crew member
+
+**Author**:
+The viewer who wrote a character's story.
+_Avoid_: Submitter, owner
+
+**Author score**:
+An author's running total for the whole series: a point per like on their story, plus a point per like on each feedback comment they leave on others' stories. The highest score decides which character is promoted to a bigger ship.
+_Avoid_: Karma, points (alone)
+
+**Dream ship**:
+The ship and loadout a character's author picks from a fixed list: the goal of that character's thread.
+_Avoid_: Wishlist ship
+
+**Death counter**:
+The on-screen count of true game overs, the only reloads in the series.
+_Avoid_: Reload count
+
 ## Recording
 
 **Session**:
