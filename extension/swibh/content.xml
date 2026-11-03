@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The SWI Bounty Hunter extension (design.md). Today it only writes log events (ADR 0001):
+     md/swibh_log.xml is generated from tools/log/schema.ts, md/swibh_hunt.xml hooks the hunt and
+     the player's losses, and extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml is the diff
+     on SWI's Emergent Missions script that calls it (X4 8.00 patches another extension's file by
+     path, T12). It depends on SWI so it loads after it. -->
+<content id="swibh" name="No Disintegrations - SWI Bounty Hunting" description="Logs Search and Destroy hunts and the player's losses to debuglog.txt for the SWI Bounty Hunter playthrough." author="Erik S. Carlsten" version="1" date="2026-11-02" save="false" enabled="true">
+  <dependency version="800"/>
+  <dependency id="SW Interworlds" name="SW Interworlds"/>
+</content>

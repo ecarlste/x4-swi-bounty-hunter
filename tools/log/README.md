@@ -12,7 +12,10 @@ The `swibh` extension writes one `[swibh] {json}` line to `debuglog.txt` per **l
 | [md.ts](md.ts) | Builds the MD library [extension/swibh/md/swibh_log.xml](../../extension/swibh/md/swibh_log.xml) from the schema |
 | [generate.ts](generate.ts) | Writes that file (`make log-xml`) or checks it's current (`--check`) |
 | [parse.ts](parse.ts) | The parser extractors import: `readLog(lines)` gives typed events, errors by line number, events by **hunt key**, and **open hunts**. `parseLine(text)` checks one line, for an extractor that judges replays itself (`tools/hunt-log` undoes reloaded branches before it drops repeated lines, so it can't use `readLog`'s early drop) |
-| [game-check.ts](game-check.ts) | Reads the engagement game test's events from a `debuglog.txt` (run by `make game-test`) |
+| [game-check.ts](game-check.ts) | Reads the engagement game test's events from a `debuglog.txt` (run by `make game-test`), and runs the `hunt_log` check |
+| [game-check-hunt.ts](game-check-hunt.ts) | Checks the `hunt_log` game test's events against what it sets up |
+
+The MD that writes the hunt and loss events is [extension/swibh/md/swibh_hunt.xml](../../extension/swibh/md/swibh_hunt.xml), called from the diff on SWI's Emergent Missions script.
 
 ## Writing an event from MD
 
@@ -48,10 +51,9 @@ Call the generated library; never write a `[swibh]` line by hand:
 - Steps played again after a reload get a new `t`, so they aren't dropped: a hunt can then show two `hunt.end`, or stay open. Telling those apart (by the `session.start` lines between them) is the extractor's job.
 - Open hunts are hunt keys with a `hunt.accept` and no `hunt.end`. Which hunt a `player.loss` counts against is left to the extractor (the event lists `activeHunts`).
 
-## Not yet seen in game
+## Seen in game
 
-The MD is valid against 8.00's `md.xsd`, but these are **unverified** until the first game test reads a real `debuglog.txt` ([research/hunt-logging-hooks.md](../../research/hunt-logging-hooks.md), "Emitting JSON from MD"):
+The `hunt_log` game test (2026-11-03) reads a real `debuglog.txt` with the parser: `'%s'.[(player.age)f]` prints a plain decimal, `{` and `"` survive `debug_text` unchanged, and a 789-character line isn't cut ([research/hunt-logging-hooks.md](../../research/hunt-logging-hooks.md#19-implementation-status)). A string table key needs a leading `$` (`{'$' + $Key}`). Still **unverified**:
 
-- How `'%s'.[(player.age)f]` prints (a plain decimal is expected), and that `{` and `"` survive `debug_text` unchanged.
 - That `'\''` is a single quote, `'\\'` a backslash and `'\n'` a newline in MD strings, as `Json_Name`'s cleanup assumes.
-- How long a line can be before it's cut; a big wing makes `hunt.accept` long.
+- How long a line can be before it's cut, past 789 characters; a big wing makes `hunt.accept` long.

@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hunt and loss log events (design.md feature 1, #19). Writes every event through the generated
+     md.SWIBH_Log libraries (ADR 0001), never a [swibh] line by hand. Facts and EM line numbers:
+     research/hunt-logging-hooks.md (EM = SWI 0.90 ext/md/kuertee_emergent_missions.xml).
+
+     EM calls in through four libraries, from the diff in
+     extensions/starwarsmod_m1/md/kuertee_emergent_missions.xml. Each takes EM's hunt cue
+     ($Cue_Mission) and only reads it:
+       Accept   Mission_Hunt_CreateMission, before its reset_cue: hunt.accept, and the stash
+       PreCap   Mission_Hunt_Resolve, just before the L/XL cap: the pay before the cap
+       Resolve  Mission_Hunt_Resolve, before its reset_cue: hunt.end (success, fail, abort)
+       CleanUp  Mission_Hunt_CleanUp: hunt.end 1 s later if Resolve never wrote one
+
+     Why CleanUp too: a timeout or a kill by others signals ObjectiveComplete and CleanUp in one
+     block (EM 6294-6295, 6322-6323), and CleanUp2 cancels the hunt cue, which may cancel Resolve
+     before it runs. So each accepted hunt gets exactly one hunt.end: whichever of Resolve and
+     the late check comes first writes it and closes the hunt; the other finds it closed.
+
+     The stash lives here, not on EM's cue, because EM's cue is cancelled at cleanup:
+       Hunts.$Open       '$' + hunt key -> the hunt's record (table, fields below). MD rejects a
+                         string table key without a leading $, and a hunt key has none
+       Hunts.$ByMission  EM's hunt cue -> hunt key
+     A record: $key (the hunt key), $cue (EM's), $target, $faction (offering), $wing (ships), $playerShip (the player's
+     ship at accept), $preCap (money, set by PreCap), $targetKills (set when the target dies),
+     $fallback (set by CleanUp), $watch (the Watch instance). -->
+<mdscript name="SWIBH_Hunt" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="Hunts" namespace="this" version="1">
+      <actions>
+        <set_value name="$Open" exact="table[]"/>
+        <set_value name="$ByMission" exact="table[]"/>
+      </actions>
+      <cues>
+        <!-- One per accepted hunt: hunt.kill for each death of its target or wing. Cancelled at hunt.end -->
+        <cue name="Watch" namespace="this" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$Key" exact="event.param"/>
+            <set_value name="$Record" exact="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
+            <set_value name="$Record.$watch" exact="this"/>
+            <create_group groupname="$Watched"/>
+            <add_to_group groupname="$Watched" object="$Record.$target"/>
+            <do_for_each name="$Ship" in="$Record.$wing">
+              <do_if value="$Ship.exists">
+                <add_to_group groupname="$Watched" object="$Ship"/>
+              </do_if>
+            </do_for_each>
+          </actions>
+          <cues>
+            <!-- object = destroyed, param = killer (may be a turret), param2 = kill method. The victim
+                 is still readable here (vanilla notifications.xml 125, 558) -->
+            <cue name="Watch_Kill" instantiate="true">
+              <conditions>
+                <event_object_destroyed group="$Watched"/>
+              </conditions>
+              <actions>
+                <set_value name="$Victim" exact="event.object"/>
+                <set_value name="$IsTarget" exact="$Victim == $Record.$target"/>
+                <do_if value="$IsTarget">
+                  <!-- The pilot, which holds EM's kill record, goes with the target -->
+                  <run_actions ref="md.SWIBH_Hunt.TargetKills" result="$Kills">
+                    <param name="Target" value="$Victim"/>
+                    <param name="Faction" value="$Record.$faction"/>
+                  </run_actions>
+                  <set_value name="$Record.$targetKills" exact="$Kills"/>
+                </do_if>
+                <run_actions ref="md.SWIBH_Log.Log_HuntKill">
+                  <param name="hunt" value="$Key"/>
+                  <param name="victim" value="$Victim"/>
+                  <param name="role" value="if $IsTarget then 'target' else 'escort'"/>
+                  <param name="byPlayer" value="@event.param.isplayerowned == true"/>
+                </run_actions>
+              </actions>
+            </cue>
+          </cues>
+        </cue>
+
+        <!-- A hunt EM cleaned up without Resolve writing hunt.end (see the top) -->
+        <cue name="LateEnd" namespace="this" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$Key" exact="event.param"/>
+          </actions>
+          <cues>
+            <cue name="LateEnd_Check">
+              <delay exact="1s"/>
+              <actions>
+                <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
+                <do_if value="$Record">
+                  <run_actions ref="md.SWIBH_Hunt.End">
+                    <param name="Key" value="$Key"/>
+                    <param name="Result" value="$Record.$fallback.$result"/>
+                    <param name="FailedStep" value="$Record.$fallback.$failedStep"/>
+                  </run_actions>
+                </do_if>
+                <cancel_cue cue="namespace"/>
+              </actions>
+            </cue>
+          </cues>
+        </cue>
+
+        <!-- RAP sells the sanction (kuertee_professions.xml 3426-3467): param $ship (the target) and
+             $sanctionType ('partial' or 'full'). The cost is on EM's hunt cue (RAP 3135-3144) -->
+        <cue name="Sanction" namespace="this" instantiate="true">
+          <conditions>
+            <event_cue_signalled cue="md.kuertee_professions.SanctionAttack"/>
+          </conditions>
+          <actions>
+            <set_value name="$Ship" exact="event.param.$ship"/>
+            <set_value name="$Tier" exact="event.param.$sanctionType"/>
+            <do_for_each name="$Slot" valuename="$Record" in="md.SWIBH_Hunt.Hunts.$Open">
+              <set_value name="$Key" exact="$Record.$key"/>
+              <do_if value="$Record.$target == $Ship and ($Tier == 'partial' or $Tier == 'full')">
+                <set_value name="$Cost" exact="if $Tier == 'full' then @$Record.$cue.$kProfs_sanctionCost_full else @$Record.$cue.$kProfs_sanctionCost_partial"/>
+                <run_actions ref="md.SWIBH_Log.Log_HuntSanction">
+                  <param name="hunt" value="$Key"/>
+                  <param name="tier" value="$Tier"/>
+                  <param name="cost" value="($Cost)f * 1ct"/>
+                </run_actions>
+              </do_if>
+            </do_for_each>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+
+    <!-- On a new game and on every load, so reloads show in the log. The save marker is made once
+         and kept in the save, so every session loaded from one save shares it -->
+    <cue name="SessionStart" namespace="this" instantiate="true">
+      <conditions>
+        <check_any>
+          <event_cue_signalled cue="md.Setup.GameStart"/>
+          <event_game_loaded/>
+        </check_any>
+      </conditions>
+      <actions>
+        <do_if value="not @static.$SaveMarker">
+          <set_value name="static.$SaveMarker" exact="'s' + player.systemtime.{'%Y%m%d%H%M%S'}"/>
+        </do_if>
+        <run_actions ref="md.SWIBH_Log.Log_SessionStart">
+          <param name="saveMarker" value="static.$SaveMarker"/>
+          <param name="gameVersion" value="'%s'.[player.gameversion]"/>
+          <!-- SWI's version can't be read from MD -->
+          <param name="swiVersion" value="null"/>
+        </run_actions>
+      </actions>
+    </cue>
+
+    <!-- Every player-owned ship destroyed, hunt or not: param = the ship, param2 = killer, param3 =
+         kill method. Vanilla's own filters (notifications.xml 116-121), ships only. The kill method
+         isn't filtered: a ship removed by a script is still a loss -->
+    <cue name="PlayerLoss" namespace="this" instantiate="true">
+      <conditions>
+        <event_player_owned_destroyed/>
+        <check_value value="event.param.isclass.ship and not event.param.isclass.ship_xs and not event.param.ismasstraffic and not event.param.isunit and not event.param.isdeployable"/>
+      </conditions>
+      <actions>
+        <set_value name="$Lost" exact="event.param"/>
+        <!-- A turret's ship rather than the turret (notifications.xml 196-197) -->
+        <set_value name="$Killer" exact="if @event.param2.isclass.defensible then event.param2 else @event.param2.defensible"/>
+        <set_value name="$Hunts" exact="[]"/>
+        <do_for_each name="$Slot" valuename="$Record" in="md.SWIBH_Hunt.Hunts.$Open">
+          <set_value name="$Key" exact="$Record.$key"/>
+          <set_value name="$ByWing" exact="false"/>
+          <do_if value="$Killer">
+            <set_value name="$ByWing" exact="$Killer == $Record.$target or $Record.$wing.indexof.{$Killer} gt 0"/>
+          </do_if>
+          <set_value name="$SameSector" exact="false"/>
+          <do_if value="@$Record.$target.sector">
+            <set_value name="$SameSector" exact="$Record.$target.sector == @$Lost.sector"/>
+          </do_if>
+          <append_to_list name="$Hunts" exact="table[$hunt = $Key, $byHuntWing = $ByWing, $sameSector = $SameSector]"/>
+        </do_for_each>
+        <run_actions ref="md.SWIBH_Log.Log_PlayerLoss">
+          <param name="lost" value="$Lost"/>
+          <param name="value" value="$Lost.value"/>
+          <param name="killer" value="$Killer"/>
+          <param name="piloted" value="$Lost == @player.occupiedship"/>
+          <param name="activeHunts" value="$Hunts"/>
+        </run_actions>
+      </actions>
+    </cue>
+
+    <!-- ===== Called from the diff on EM. Cue_Mission is EM's hunt cue ===== -->
+
+    <!-- Mission_Hunt_CreateMission, after the mission is created (EM 5588-5628). Builds the hunt
+         key, stashes what EM loses by the end, writes hunt.accept and starts the Watch -->
+    <library name="Accept" purpose="run_actions">
+      <params>
+        <param name="Cue_Mission"/>
+      </params>
+      <actions>
+        <set_value name="$Target" exact="$Cue_Mission.$MissionTarget"/>
+        <set_value name="$Key" exact="'%s-%s-%s'.[$Cue_Mission.$MissionId, $Target.idcode, (player.age)f]"/>
+        <!-- The target's wing (GLOSSARY): the top ship commander above the target (a station
+             commander isn't part of it), and every wingman under that ship, without the target.
+             Drones and ships docked inside another ship are never wingmen -->
+        <set_value name="$Leader" exact="$Target"/>
+        <do_while value="@$Leader.commander.isclass.ship">
+          <set_value name="$Leader" exact="$Leader.commander"/>
+        </do_while>
+        <set_value name="$Wing" exact="[]"/>
+        <do_if value="$Leader != $Target">
+          <append_to_list name="$Wing" exact="$Leader"/>
+        </do_if>
+        <do_for_each name="$Ship" in="$Leader.allsubordinates">
+          <do_if value="$Ship != $Target and $Ship.isclass.ship and not $Ship.isunit and not $Ship.isdeployable and not @$Ship.dock.container.isclass.ship">
+            <append_to_list name="$Wing" exact="$Ship"/>
+          </do_if>
+        </do_for_each>
+        <!-- RAP keeps sanctions by idcode (kuertee_professions.xml 6729-6730) -->
+        <set_value name="$Sanction" exact="'none'"/>
+        <do_if value="@md.kuertee_professions.Sanctions.$sanctionedKillIds.indexof.{$Target.idcode}">
+          <set_value name="$Sanction" exact="'full'"/>
+        </do_if>
+        <do_elseif value="@md.kuertee_professions.Sanctions.$sanctionedAttackIds.indexof.{$Target.idcode}">
+          <set_value name="$Sanction" exact="'partial'"/>
+        </do_elseif>
+        <set_value name="$SizeClass" exact="if $Target.isclass.ship_xl then 'xl' else (if $Target.isclass.ship_l then 'l' else (if $Target.isclass.ship_m then 'm' else 's'))"/>
+
+        <set_value name="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}" exact="table[
+          $key = $Key,
+          $cue = $Cue_Mission,
+          $target = $Target,
+          $faction = $Cue_Mission.$Faction,
+          $wing = $Wing,
+          $playerShip = @player.occupiedship,
+          $preCap = null,
+          $targetKills = null,
+          $fallback = null,
+          $watch = null
+        ]"/>
+        <set_value name="md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}" exact="$Key"/>
+
+        <run_actions ref="md.SWIBH_Log.Log_HuntAccept">
+          <param name="hunt" value="$Key"/>
+          <param name="missionId" value="$Cue_Mission.$MissionId"/>
+          <param name="faction" value="$Cue_Mission.$Faction"/>
+          <param name="wharf" value="$Cue_Mission.$MissionOffer_Station"/>
+          <param name="difficulty" value="$Cue_Mission.$Difficulty"/>
+          <param name="target" value="$Target"/>
+          <param name="sizeClass" value="$SizeClass"/>
+          <!-- Overwritten at the Destroy step (EM 5897), so only readable now -->
+          <param name="offered" value="table[
+            $kill = ($Cue_Mission.$BaseRewardData.$reward_forTargetKills)f * 1ct,
+            $upTo = ($Cue_Mission.$BaseRewardData.$reward_forTarget)f * 1ct
+          ]"/>
+          <param name="wing" value="$Wing"/>
+          <param name="sanction" value="$Sanction"/>
+        </run_actions>
+        <signal_cue_instantly cue="md.SWIBH_Hunt.Watch" param="$Key"/>
+        <!-- So the player's fights with the target's wing carry the hunt key (swibh_engagement.xml) -->
+        <run_actions ref="md.SWIBH_Engagement.HuntStarted">
+          <param name="hunt" value="$Key"/>
+          <param name="target" value="$Target"/>
+        </run_actions>
+      </actions>
+    </library>
+
+    <!-- Mission_Hunt_Resolve's success branch, just before CapRewardBasedOnMissionTarget (EM 5683),
+         which overwrites both parts (5689-5690) -->
+    <library name="PreCap" purpose="run_actions">
+      <params>
+        <param name="Cue_Mission"/>
+      </params>
+      <actions>
+        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + @md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}}"/>
+        <do_if value="$Record">
+          <set_value name="$Record.$preCap" exact="(($Cue_Mission.$BaseRewardData.$reward_forTargetKills)f + ($Cue_Mission.$PlayerDamageAndKillsData.$reward)f) * 1ct"/>
+        </do_if>
+      </actions>
+    </library>
+
+    <!-- Mission_Hunt_Resolve, last action before its reset_cue (EM 5719): success, fail and abort
+         all pass here. $Result is 'success', 'fail' or 'aborted' (EM 5357-5359); EM computes the
+         pay, the player's engagements and the notoriety only on success -->
+    <library name="Resolve" purpose="run_actions">
+      <params>
+        <param name="Cue_Mission"/>
+      </params>
+      <actions>
+        <set_value name="$Key" exact="@md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}"/>
+        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
+        <do_if value="$Record">
+          <run_actions ref="md.SWIBH_Hunt.Outcome" result="$Outcome">
+            <param name="Cue_Mission" value="$Cue_Mission"/>
+          </run_actions>
+          <set_value name="$Payout" exact="null"/>
+          <set_value name="$Engagements" exact="null"/>
+          <set_value name="$Relations" exact="[]"/>
+          <do_if value="$Outcome.$result == 'success'">
+            <!-- After the cap: the kills part and the damage part (EM 5689-5694) -->
+            <set_value name="$Kill" exact="($Cue_Mission.$BaseRewardData.$reward_forTargetKills)f * 1ct"/>
+            <set_value name="$Destruction" exact="($Cue_Mission.$PlayerDamageAndKillsData.$reward)f * 1ct"/>
+            <set_value name="$Payout" exact="table[
+              $kill = $Kill,
+              $destruction = $Destruction,
+              $total = ($Cue_Mission.$RewardCr)f * 1ct,
+              $capBefore = (if $Record.$preCap != null then $Record.$preCap else $Kill + $Destruction),
+              $capAfter = $Kill + $Destruction
+            ]"/>
+            <!-- EM's $DamageAndKillsList entries (EM 5664; save-check-ael-112.md 2) -->
+            <set_value name="$Engagements" exact="[]"/>
+            <do_for_each name="$Entry" in="@$Cue_Mission.$DamageAndKillsList">
+              <append_to_list name="$Engagements" exact="table[
+                $idcode = $Entry.$idCode,
+                $class = $Entry.$class,
+                $owner = @$Entry.$faction.id,
+                $damage = $Entry.$damage_total,
+                $killed = $Entry.$isPlayerKilled == true
+              ]"/>
+            </do_for_each>
+            <!-- The notoriety EM adds with the payout (EM 5697-5699). Relation losses for the kill
+                 itself come from the game, not EM, and aren't logged in v1 -->
+            <do_if value="$Cue_Mission.$RewardNotoriety != null">
+              <append_to_list name="$Relations" exact="table[$faction = $Cue_Mission.$Faction, $amount = $Cue_Mission.$RewardNotoriety, $reason = 'missioncompleted']"/>
+            </do_if>
+          </do_if>
+          <run_actions ref="md.SWIBH_Hunt.End">
+            <param name="Key" value="$Key"/>
+            <param name="Result" value="$Outcome.$result"/>
+            <param name="FailedStep" value="$Outcome.$failedStep"/>
+            <param name="Payout" value="$Payout"/>
+            <param name="Engagements" value="$Engagements"/>
+            <param name="Relations" value="$Relations"/>
+          </run_actions>
+        </do_if>
+      </actions>
+    </library>
+
+    <!-- Mission_Hunt_CleanUp's actions (EM 5497-5555), which run for offers too: those were never
+         accepted, so they have no record. Stashes the ending EM's step flags give now, while the
+         hunt cue still exists, and checks 1 s later whether Resolve wrote hunt.end -->
+    <library name="CleanUp" purpose="run_actions">
+      <params>
+        <param name="Cue_Mission"/>
+      </params>
+      <actions>
+        <set_value name="$Key" exact="@md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}"/>
+        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
+        <do_if value="$Record">
+          <run_actions ref="md.SWIBH_Hunt.Outcome" result="$Fallback">
+            <param name="Cue_Mission" value="$Cue_Mission"/>
+          </run_actions>
+          <set_value name="$Record.$fallback" exact="$Fallback"/>
+          <signal_cue_instantly cue="md.SWIBH_Hunt.LateEnd" param="$Key"/>
+        </do_if>
+      </actions>
+    </library>
+
+    <!-- ===== Helpers ===== -->
+
+    <!-- table[$result, $failedStep] for hunt.end, from EM's $Result, or from its step flags when
+         Resolve hasn't set it (a cleanup without Resolve can only be a failure). failedStep follows
+         EM's failure texts (EM 6754-6795): 575 find, 576 identify, 572 destroy, 577 damage -->
+    <library name="Outcome" purpose="run_actions">
+      <params>
+        <param name="Cue_Mission"/>
+      </params>
+      <actions>
+        <set_value name="$Result" exact="@$Cue_Mission.$Result"/>
+        <do_if value="$Result != null and $Result == $Cue_Mission.$Result_success">
+          <return value="table[$result = 'success', $failedStep = null]"/>
+        </do_if>
+        <do_if value="$Result != null and $Result == $Cue_Mission.$Result_aborted">
+          <return value="table[$result = 'aborted', $failedStep = null]"/>
+        </do_if>
+        <set_value name="$Step" exact="'damage'"/>
+        <do_if value="not @$Cue_Mission.$Objective_Step_find_success">
+          <set_value name="$Step" exact="'find'"/>
+        </do_if>
+        <do_elseif value="not @$Cue_Mission.$Objective_Step_identify_success">
+          <set_value name="$Step" exact="'identify'"/>
+        </do_elseif>
+        <do_elseif value="not @$Cue_Mission.$Objective_Step_destroy_success">
+          <set_value name="$Step" exact="'destroy'"/>
+        </do_elseif>
+        <return value="table[$result = 'failed', $failedStep = $Step]"/>
+      </actions>
+    </library>
+
+    <!-- EM's kill record on the target's pilot (EM 11277-11291), against the offering faction, as
+         table[$xs, $s, $m, $l, $xl], or null when the pilot is gone -->
+    <library name="TargetKills" purpose="run_actions">
+      <params>
+        <param name="Target"/>
+        <param name="Faction"/>
+      </params>
+      <actions>
+        <set_value name="$Kills" exact="@$Target.pilot.$kEM_kills.{$Faction}"/>
+        <do_if value="not $Kills">
+          <return value="null"/>
+        </do_if>
+        <return value="table[
+          $xs = (if @$Kills.{class.ship_xs} then $Kills.{class.ship_xs} else 0),
+          $s = (if @$Kills.{class.ship_s} then $Kills.{class.ship_s} else 0),
+          $m = (if @$Kills.{class.ship_m} then $Kills.{class.ship_m} else 0),
+          $l = (if @$Kills.{class.ship_l} then $Kills.{class.ship_l} else 0),
+          $xl = (if @$Kills.{class.ship_xl} then $Kills.{class.ship_xl} else 0)
+        ]"/>
+      </actions>
+    </library>
+
+    <!-- Writes hunt.end and closes the hunt, so it's written once. The target's kills come from
+         its live pilot, else from when it died. Repairs: the player's ship (the one they fly, else
+         the one they flew at accept) and every ship under it -->
+    <library name="End" purpose="run_actions">
+      <params>
+        <param name="Key"/>
+        <param name="Result"/>
+        <param name="FailedStep" default="null"/>
+        <param name="Payout" default="null"/>
+        <param name="Engagements" default="null"/>
+        <param name="Relations" default="[]"/>
+      </params>
+      <actions>
+        <set_value name="$Record" exact="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
+        <run_actions ref="md.SWIBH_Hunt.TargetKills" result="$TargetKills">
+          <param name="Target" value="$Record.$target"/>
+          <param name="Faction" value="$Record.$faction"/>
+        </run_actions>
+        <do_if value="not $TargetKills">
+          <set_value name="$TargetKills" exact="$Record.$targetKills"/>
+        </do_if>
+        <set_value name="$Ship" exact="@player.occupiedship"/>
+        <do_if value="not $Ship">
+          <set_value name="$Ship" exact="$Record.$playerShip"/>
+        </do_if>
+        <set_value name="$Repairs" exact="[]"/>
+        <do_if value="@$Ship.isoperational and $Ship.isplayerowned">
+          <append_to_list name="$Repairs" exact="table[$ship = $Ship, $repairprice = $Ship.repairprice]"/>
+          <do_for_each name="$Sub" in="$Ship.allsubordinates">
+            <do_if value="$Sub.isclass.ship and $Sub.isoperational">
+              <append_to_list name="$Repairs" exact="table[$ship = $Sub, $repairprice = $Sub.repairprice]"/>
+            </do_if>
+          </do_for_each>
+        </do_if>
+        <run_actions ref="md.SWIBH_Log.Log_HuntEnd">
+          <param name="hunt" value="$Key"/>
+          <param name="result" value="$Result"/>
+          <param name="failedStep" value="$FailedStep"/>
+          <param name="payout" value="$Payout"/>
+          <param name="targetKills" value="$TargetKills"/>
+          <param name="engagements" value="$Engagements"/>
+          <param name="relations" value="$Relations"/>
+          <param name="repairs" value="$Repairs"/>
+        </run_actions>
+        <do_if value="@$Record.$watch.exists">
+          <cancel_cue cue="$Record.$watch"/>
+        </do_if>
+        <remove_value name="md.SWIBH_Hunt.Hunts.$ByMission.{$Record.$cue}"/>
+        <remove_value name="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
+        <run_actions ref="md.SWIBH_Engagement.HuntEnded">
+          <param name="hunt" value="$Key"/>
+        </run_actions>
+      </actions>
+    </library>
+  </cues>
+</mdscript>

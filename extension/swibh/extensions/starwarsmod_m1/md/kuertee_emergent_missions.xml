@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The diff on SWI's Emergent Missions script (md/kuertee_emergent_missions.xml in SWI's
+     ext_01.cat) that writes the hunt log events (#19). It only adds calls into md/swibh_hunt.xml,
+     which reads EM's hunt cue and changes nothing: no behaviour change to EM.
+
+     It sits at extensions/starwarsmod_m1/md/, SWI's folder: X4 8.00 patches another extension's
+     file by path (T12). `make check` checks each sel matches one node in SWI's unpacked EM file.
+     Line numbers are SWI 0.90's EM; research/hunt-logging-hooks.md has the hook points. -->
+<diff>
+  <!-- Mission_Hunt_CreateMission (EM 5588-5628), once the mission exists and the hunt is in
+       $missions_active: hunt.accept -->
+  <add sel="/mdscript/cues/cue[@name='kEMissions']/cues/cue[@name='Missions_Hunts']/cues/cue[@name='Mission_Hunt']/cues/cue[@name='Mission_Hunt_CreateMission']/actions/reset_cue[@cue='this']" pos="before">
+    <run_actions ref="md.SWIBH_Hunt.Accept">
+      <param name="Cue_Mission" value="$Cue_Mission"/>
+    </run_actions>
+  </add>
+  <!-- Mission_Hunt_Resolve's success branch, just before the L/XL cap overwrites both pay parts
+       (EM 5683-5690): the pay before the cap -->
+  <add sel="/mdscript/cues/cue[@name='kEMissions']/cues/cue[@name='Missions_Hunts']/cues/cue[@name='Mission_Hunt']/cues/cue[@name='Mission_Hunt_Resolve']/actions/do_else[2]/do_if[@value='$Result == $Result_success'][2]/do_if[@value='kEMissions.$IsSWIExists']" pos="before">
+    <run_actions ref="md.SWIBH_Hunt.PreCap">
+      <param name="Cue_Mission" value="$Cue_Mission"/>
+    </run_actions>
+  </add>
+  <!-- Mission_Hunt_Resolve's last action (EM 5719): success, fail and abort all pass it -->
+  <add sel="/mdscript/cues/cue[@name='kEMissions']/cues/cue[@name='Missions_Hunts']/cues/cue[@name='Mission_Hunt']/cues/cue[@name='Mission_Hunt_Resolve']/actions/reset_cue[@cue='this']" pos="before">
+    <run_actions ref="md.SWIBH_Hunt.Resolve">
+      <param name="Cue_Mission" value="$Cue_Mission"/>
+    </run_actions>
+  </add>
+  <!-- Mission_Hunt_CleanUp's first action (EM 5524), before it removes the mission: a hunt.end
+       for a hunt that is cleaned up without Resolve (a timeout or a kill by others, EM 6294-6295,
+       6322-6323) -->
+  <add sel="/mdscript/cues/cue[@name='kEMissions']/cues/cue[@name='Missions_Hunts']/cues/cue[@name='Mission_Hunt']/cues/cue[@name='Mission_Hunt_CleanUp']/actions" pos="prepend">
+    <run_actions ref="md.SWIBH_Hunt.CleanUp">
+      <param name="Cue_Mission" value="$Cue_Mission"/>
+    </run_actions>
+  </add>
+</diff>

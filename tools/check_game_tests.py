@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Offline checks for the in-game test extension (tests/game/swibh_tests), no game needed.
+"""Offline checks for the in-game test extension (tests/game/swibh_tests) and the swibh extension
+(extension/swibh), no game needed. Checks 1, 3 and 4 cover both; check 2 is the test extension's.
 
 1. Every XML file is well-formed by a strict parser (X4 skips a file it can't parse).
 2. Every test named in md/swibh_tests.xml's $Tests is a cue, and every root test cue is listed.
@@ -32,6 +33,7 @@ import xml.etree.ElementTree as ET
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXTENSION = os.path.join(ROOT, 'tests', 'game', 'swibh_tests')
 MD_FILE = os.path.join(EXTENSION, 'md', 'swibh_tests.xml')
+EXTENSIONS = [EXTENSION, os.path.join(ROOT, 'extension', 'swibh')]
 
 # Names that look like references but aren't ids to look up
 FACTION_KEYWORDS = {'player', 'ownerless'}
@@ -61,13 +63,14 @@ def windows_path(path):
 
 
 def extension_files(pattern):
-    return sorted(glob.glob(os.path.join(EXTENSION, '**', pattern), recursive=True))
+    """(extension folder, file) for each file matching pattern in either extension."""
+    return [(ext, f) for ext in EXTENSIONS for f in sorted(glob.glob(os.path.join(ext, '**', pattern), recursive=True))]
 
 
 def check_well_formed():
     bad = []
     files = extension_files('*.xml')
-    for f in files:
+    for _, f in files:
         try:
             xml.dom.minidom.parse(f)
         except Exception as e:  # any parse error fails the file
@@ -93,14 +96,15 @@ def check_test_list():
 def references():
     """Macros, factions and wares the extension names, each with where it's named."""
     found = {'macro': {}, 'faction': {}, 'ware': {}}
-    for f in extension_files('*.xml'):
-        rel = os.path.relpath(f, EXTENSION)
+    for _, f in extension_files('*.xml'):
+        rel = os.path.relpath(f, ROOT)
         with open(f, encoding='utf-8') as fh:
             text = re.sub(r'<!--.*?-->', '', fh.read(), flags=re.S)
+        # (?<![$.\w]) skips a variable or property such as $faction.id or $x.ware.id
         for kind, patterns in (
             ('macro', [r'\bmacro="([a-z0-9_]+_macro)"', r'\b(?:galaxy|sector|zone)="([a-z0-9_]+_macro)"', r'\bmacro\.([a-z0-9_]+_macro)\b']),
-            ('faction', [r'\bfaction\.([a-z0-9_]+)\b', r'\bfaction="([a-z0-9_]+)"']),
-            ('ware', [r'\bware\.([a-z0-9_]+)\b', r'\bware="([a-z0-9_]+)"']),
+            ('faction', [r'(?<![$.\w])faction\.([a-z0-9_]+)\b', r'\bfaction="([a-z0-9_]+)"']),
+            ('ware', [r'(?<![$.\w])ware\.([a-z0-9_]+)\b', r'\bware="([a-z0-9_]+)"']),
         ):
             for pattern in patterns:
                 for name in re.findall(pattern, text):
@@ -209,14 +213,14 @@ def md_diff_target(rel, unpacked, swi):
 
 def check_md_diffs(unpacked, swi):
     notes, bad = [], []
-    for f in extension_files('*.xml'):
+    for ext, f in extension_files('*.xml'):
         if os.path.basename(os.path.dirname(f)) != 'md':
             continue
         diff = ET.parse(f).getroot()
         if diff.tag != 'diff':
             continue
-        rel = os.path.relpath(f, EXTENSION)
-        target = md_diff_target(rel, unpacked, swi)
+        target = md_diff_target(os.path.relpath(f, ext), unpacked, swi)
+        rel = os.path.relpath(f, ROOT)
         if not target:
             if swi or unpacked:
                 bad.append('%s: no script at this path to patch (an MD diff in md/ only patches the game\'s own scripts; '

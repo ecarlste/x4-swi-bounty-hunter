@@ -1,9 +1,11 @@
 // Checks a game test's debuglog.txt with the log parser, as an extractor would read it: the
 // engagement game test (#23, the Engagement cue in tests/game/swibh_tests/md/swibh_tests.xml)
-// fights a hunt's target, then a ship in no hunt, with the player's ship and one wingman.
+// fights a hunt's target, then a ship in no hunt, with the player's ship and one wingman. The
+// CLI also runs the hunt_log test's check (#19, game-check-hunt.ts).
 // Usage: node tools/log/game-check.ts <debuglog.txt>; prints each problem and exits 1 if any.
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { checkHuntLogTest } from "./game-check-hunt.ts";
 import { readLog } from "./parse.ts";
 import type { LogEventOf } from "./schema.ts";
 
@@ -59,8 +61,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("usage: node tools/log/game-check.ts <debuglog.txt>");
     process.exit(2);
   }
-  const problems = await checkEngagementTest((await readFile(path, "utf8")).split(/\r?\n/));
-  for (const problem of problems) console.log(`  FAIL engagement log: ${problem}`);
-  if (problems.length) process.exit(1);
-  console.log("  PASS engagement log: the parser read both engagements, with the hunt key only on the hunt target's");
+  const lines = (await readFile(path, "utf8")).split(/\r?\n/);
+  const engagement = await checkEngagementTest(lines);
+  for (const problem of engagement) console.log(`  FAIL engagement log: ${problem}`);
+  if (!engagement.length) console.log("  PASS engagement log: the parser read both engagements, with the hunt key only on the hunt target's");
+  const hunts = checkHuntLogTest(await readLog(lines));
+  for (const problem of hunts) console.log(`  FAIL hunt_log log: ${problem}`);
+  if (!hunts.length) console.log("  PASS hunt_log log: every event type, with the values the test set up and one hunt.end per hunt");
+  if (engagement.length || hunts.length) process.exit(1);
 }

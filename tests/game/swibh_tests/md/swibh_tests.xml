@@ -26,7 +26,7 @@
       <actions>
         <!-- Set to false to keep the game open after the run, e.g. to look around after a failure -->
         <set_value name="$QuitWhenDone" exact="true"/>
-        <set_value name="$Tests" exact="[Smoke, T01PayCap, T01Knw904, CombatSignals, Engagement]"/>
+        <set_value name="$Tests" exact="[Smoke, T01PayCap, T01Knw904, CombatSignals, Engagement, HuntLog]"/>
         <set_value name="$Index" exact="0"/>
         <set_value name="$StartAge" exact="player.age"/>
         <set_value name="$Passed" exact="0"/>
@@ -766,5 +766,216 @@
         </do_if>
       </actions>
     </library>
+
+    <!-- Hunt log (#19): the swibh extension's hunt and loss log events, with known values. The runner
+         copies extension/swibh's MD into the test extension. The test gamestart has no stations or
+         traffic, so EM can't offer a real hunt: three fake EM hunt cues (HuntLog_Mission) carry
+         the variables EM's hunt cue has, and the test calls md.SWIBH_Hunt's four libraries in the
+         order the diff on EM calls them:
+           A succeeds: accept, a partial sanction bought (through RAP's own SanctionAttack cue),
+             its wingman and then its target destroyed, PreCap, the cap, Resolve, then CleanUp
+           B is aborted: accept, Resolve with $Result aborted, then CleanUp (EM 5646, 5660)
+           C times out: accept, then CleanUp only (Resolve cancelled, EM 6322-6323), so the
+             late check writes its hunt.end
+         and destroys a player-owned ship while all three are open. The real check is
+         tools/log/game-check-hunt.ts, which `make game-test` runs on debuglog.txt afterwards with the
+         real parser: the values below are its expectations, so change both together. Here the
+         test passes when all three hunts were accepted and none is left open. -->
+    <cue name="HuntLog">
+      <conditions>
+        <event_cue_signalled/>
+      </conditions>
+      <actions>
+        <create_ship name="$Wharf" macro="mc40a_macro" sector="player.sector">
+          <owner exact="faction.newrepublic" overridenpc="true"/>
+          <loadout>
+            <level exact="0"/>
+          </loadout>
+          <safepos object="player.occupiedship" x="20km" allowyaxis="true"/>
+        </create_ship>
+        <set_value name="$Targets" exact="table[]"/>
+        <do_for_each name="$Name" in="['$A', '$B', '$C']" counter="$I">
+          <create_ship name="$Ship" macro="fortitude_macro" sector="player.sector">
+            <owner exact="faction.galempire" overridenpc="true"/>
+            <loadout>
+              <level exact="0"/>
+            </loadout>
+            <safepos object="player.occupiedship" x="-10km" z="$I * 3km" allowyaxis="true"/>
+          </create_ship>
+          <set_value name="$Targets.{$Name}" exact="$Ship"/>
+        </do_for_each>
+        <create_ship name="$WingmanA" macro="fortitude_macro" sector="player.sector">
+          <owner exact="faction.galempire" overridenpc="true"/>
+          <loadout>
+            <level exact="0"/>
+          </loadout>
+          <safepos object="player.occupiedship" x="-12km" z="3km" allowyaxis="true"/>
+        </create_ship>
+        <set_object_commander object="$WingmanA" commander="$Targets.$A"/>
+        <create_ship name="$Lost" macro="fortitude_macro" sector="player.sector">
+          <owner exact="faction.player" overridenpc="true"/>
+          <loadout>
+            <level exact="0"/>
+          </loadout>
+          <safepos object="player.occupiedship" x="10km" allowyaxis="true"/>
+        </create_ship>
+        <set_value name="$Missions" exact="table[]"/>
+        <set_value name="$MissionIds" exact="table[$A = 'kEM_Hunt_9001', $B = 'kEM_Hunt_9002', $C = 'kEM_Hunt_9003']"/>
+      </actions>
+      <cues>
+        <!-- A fake EM hunt cue: the variables md.SWIBH_Hunt reads from EM's $Cue_Mission
+             (Mission_Hunt, EM 5254-5370). The hold cue is never signalled: while it waits, it
+             keeps the instance, and its variables, alive until the test cancels it, as EM's
+             CleanUp2 does -->
+        <cue name="HuntLog_Mission" namespace="this" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$MissionId" exact="event.param.$id"/>
+            <set_value name="$MissionTarget" exact="event.param.$target"/>
+            <set_value name="$MissionOffer_Station" exact="event.param.$station"/>
+            <set_value name="$Faction" exact="$MissionOffer_Station.owner"/>
+            <set_value name="$Difficulty" exact="level.medium"/>
+            <set_value name="$BaseRewardData" exact="table[$reward_forTargetKills = 10000Cr, $reward_forTarget = 50000Cr]"/>
+            <set_value name="$PlayerDamageAndKillsData" exact="null"/>
+            <set_value name="$Result" exact="null"/>
+            <!-- EM's result values (EM 5357-5359), which md.SWIBH_Hunt.Outcome compares against -->
+            <set_value name="$Result_success" exact="'success'"/>
+            <set_value name="$Result_fail" exact="'fail'"/>
+            <set_value name="$Result_aborted" exact="'aborted'"/>
+            <set_value name="$Objective_Step_find_success" exact="false"/>
+            <set_value name="$Objective_Step_identify_success" exact="false"/>
+            <set_value name="$Objective_Step_destroy_success" exact="false"/>
+            <set_value name="$RewardCr" exact="0ct"/>
+            <set_value name="$kProfs_sanctionCost_partial" exact="39700Cr"/>
+            <set_value name="$kProfs_sanctionCost_full" exact="1151670Cr"/>
+            <set_value name="HuntLog.$Missions.{event.param.$name}" exact="this"/>
+          </actions>
+          <cues>
+            <cue name="HuntLog_Mission_Hold">
+              <conditions>
+                <event_cue_signalled/>
+              </conditions>
+              <actions>
+                <reset_cue cue="this"/>
+              </actions>
+            </cue>
+          </cues>
+        </cue>
+
+        <cue name="HuntLog_Accept">
+          <delay exact="2s"/>
+          <actions>
+            <do_for_each name="$Name" in="['$A', '$B', '$C']">
+              <signal_cue_instantly cue="HuntLog_Mission" param="table[$name = $Name, $id = $MissionIds.{$Name}, $target = $Targets.{$Name}, $station = $Wharf]"/>
+              <run_actions ref="md.SWIBH_Hunt.Accept">
+                <param name="Cue_Mission" value="$Missions.{$Name}"/>
+              </run_actions>
+            </do_for_each>
+            <set_value name="$Accepted" exact="md.SWIBH_Hunt.Hunts.$ByMission.keys.count"/>
+            <set_value name="$IdA" exact="$Targets.$A.idcode"/>
+            <!-- RAP's own purchase signal (kuertee_professions.xml 3444) -->
+            <set_value name="$RapSanction" exact="@md.kuertee_professions.SanctionAttack.exists"/>
+            <signal_cue_instantly cue="md.kuertee_professions.SanctionAttack" param="table[$ship = $Targets.$A, $sanctionType = 'partial']"/>
+            <signal_cue cue="HuntLog_Losses"/>
+          </actions>
+          <cues>
+            <!-- Each step signals the next: a sub-cue is enabled when its parent's conditions are
+                 met, so a bare delay would count from before the parent's own delay (2026-11-03) -->
+            <cue name="HuntLog_Losses">
+              <conditions>
+                <event_cue_signalled/>
+              </conditions>
+              <delay exact="1s"/>
+              <actions>
+                <destroy_object object="$Lost"/>
+                <destroy_object object="$WingmanA"/>
+                <signal_cue cue="HuntLog_TargetDies"/>
+              </actions>
+              <cues>
+                <cue name="HuntLog_TargetDies">
+                  <conditions>
+                    <event_cue_signalled/>
+                  </conditions>
+                  <delay exact="1s"/>
+                  <actions>
+                    <destroy_object object="$Targets.$A"/>
+                    <signal_cue cue="HuntLog_Resolve"/>
+                  </actions>
+                  <cues>
+                    <cue name="HuntLog_Resolve">
+                      <conditions>
+                        <event_cue_signalled/>
+                      </conditions>
+                      <delay exact="1s"/>
+                      <actions>
+                        <!-- A: a success. 10,000 + 30,000 Cr before the cap, 5,000 + 15,000 Cr
+                             after it, so 20,000 Cr paid -->
+                        <set_value name="$A" exact="$Missions.$A"/>
+                        <set_value name="$A.$Objective_Step_find_success" exact="true"/>
+                        <set_value name="$A.$Objective_Step_identify_success" exact="true"/>
+                        <set_value name="$A.$Objective_Step_destroy_success" exact="true"/>
+                        <set_value name="$A.$Result" exact="$A.$Result_success"/>
+                        <set_value name="$A.$DamageAndKillsList" exact="[table[$idCode = $IdA, $macro = 'fortitude_macro', $class = class.ship_m, $faction = faction.galempire, $damage_total = 80, $isPlayerKilled = true]]"/>
+                        <set_value name="$A.$PlayerDamageAndKillsData" exact="table[$reward = 30000Cr]"/>
+                        <run_actions ref="md.SWIBH_Hunt.PreCap">
+                          <param name="Cue_Mission" value="$A"/>
+                        </run_actions>
+                        <set_value name="$A.$BaseRewardData.$reward_forTargetKills" exact="5000Cr"/>
+                        <set_value name="$A.$PlayerDamageAndKillsData.$reward" exact="15000Cr"/>
+                        <set_value name="$A.$RewardCr" exact="20000Cr"/>
+                        <set_value name="$A.$RewardNotoriety" exact="0.01"/>
+                        <run_actions ref="md.SWIBH_Hunt.Resolve">
+                          <param name="Cue_Mission" value="$A"/>
+                        </run_actions>
+                        <run_actions ref="md.SWIBH_Hunt.CleanUp">
+                          <param name="Cue_Mission" value="$A"/>
+                        </run_actions>
+                        <!-- B: aborted -->
+                        <set_value name="$Missions.$B.$Result" exact="$Missions.$B.$Result_aborted"/>
+                        <run_actions ref="md.SWIBH_Hunt.Resolve">
+                          <param name="Cue_Mission" value="$Missions.$B"/>
+                        </run_actions>
+                        <run_actions ref="md.SWIBH_Hunt.CleanUp">
+                          <param name="Cue_Mission" value="$Missions.$B"/>
+                        </run_actions>
+                        <!-- C: timed out before it was found, cleaned up without Resolve -->
+                        <run_actions ref="md.SWIBH_Hunt.CleanUp">
+                          <param name="Cue_Mission" value="$Missions.$C"/>
+                        </run_actions>
+                        <signal_cue cue="HuntLog_Check"/>
+                      </actions>
+                      <cues>
+                        <!-- The late check waits 1 s -->
+                        <cue name="HuntLog_Check">
+                          <conditions>
+                            <event_cue_signalled/>
+                          </conditions>
+                          <delay exact="2s"/>
+                          <actions>
+                            <set_value name="$Open" exact="md.SWIBH_Hunt.Hunts.$Open.keys.count"/>
+                            <debug_text text="'[swibh-test] INFO hunt_log: %s hunts accepted, %s left open; RAP SanctionAttack cue exists %s'.[$Accepted, $Open, $RapSanction]" filter="general"/>
+                            <do_for_each name="$Name" in="['$A', '$B', '$C']">
+                              <cancel_cue cue="$Missions.{$Name}"/>
+                            </do_for_each>
+                            <do_for_each name="$Ship" in="[$Targets.$B, $Targets.$C, $Wharf]">
+                              <do_if value="@$Ship.exists">
+                                <destroy_object object="$Ship"/>
+                              </do_if>
+                            </do_for_each>
+                            <signal_cue_instantly cue="Report" param="table[$name = 'hunt_log', $ok = ($Accepted == 3 and $Open == 0), $detail = '%s of 3 hunts accepted, %s left open; tools/log/game-check-hunt.ts checks the log events'.[$Accepted, $Open]]"/>
+                          </actions>
+                        </cue>
+                      </cues>
+                    </cue>
+                  </cues>
+                </cue>
+              </cues>
+            </cue>
+          </cues>
+        </cue>
+      </cues>
+    </cue>
   </cues>
 </mdscript>
