@@ -343,6 +343,11 @@
           <owner exact="faction.player" overridenpc="true"/>
           <pilot>
             <select race="player.entity.race" tags="tag.aipilot"/>
+            <!-- Max skills: piloting sets the fighter AI's flight behaviour, missile delay and boost -->
+            <skills>
+              <skill type="piloting" exact="15"/>
+              <skill type="morale" exact="15"/>
+            </skills>
           </pilot>
           <!-- SWI's own X-wing loadout: a level loadout for the player faction gets no engines -->
           <loadout ref="sw_xwing_mc80start"/>
@@ -352,6 +357,11 @@
           <owner exact="faction.galempire" overridenpc="true"/>
           <pilot>
             <select faction="faction.galempire" tags="tag.aipilot"/>
+            <!-- Max skills: piloting sets the fighter AI's flight behaviour, missile delay and boost -->
+            <skills>
+              <skill type="piloting" exact="15"/>
+              <skill type="morale" exact="15"/>
+            </skills>
           </pilot>
           <loadout>
             <level exact="1.0"/>
@@ -500,6 +510,11 @@
           <owner exact="faction.player" overridenpc="true"/>
           <pilot>
             <select race="player.entity.race" tags="tag.aipilot"/>
+            <!-- Max skills: piloting sets the fighter AI's flight behaviour, missile delay and boost -->
+            <skills>
+              <skill type="piloting" exact="15"/>
+              <skill type="morale" exact="15"/>
+            </skills>
           </pilot>
           <!-- SWI's own X-wing loadout: a level loadout for the player faction gets no engines -->
           <loadout ref="sw_xwing_mc80start"/>
@@ -549,6 +564,11 @@
               <owner exact="faction.galempire" overridenpc="true"/>
               <pilot>
                 <select faction="faction.galempire" tags="tag.aipilot"/>
+                <!-- Max skills: piloting sets the fighter AI's flight behaviour, missile delay and boost -->
+                <skills>
+                  <skill type="piloting" exact="15"/>
+                  <skill type="morale" exact="15"/>
+                </skills>
               </pilot>
               <loadout>
                 <level exact="1.0"/>
