@@ -1,6 +1,6 @@
 # Automated in-game tests
 
-Status: **runs in game** (2026-11-02): `make game-test` passes 6 of 6 in about 4 min 45 s (8.00 HF4 + SWI 0.90), T12's diff on EM and the engagement log check included. `hunt_log` (#19) is new and hasn't run in game yet. The "Unverified" list below predates the first runs.
+Status: **runs in game** (2026-11-02): `make game-test` passes 7 of 7 in about 4 min 15 s (8.00 HF4 + SWI 0.90, 2026-11-03), T12's diff on EM and both log checks (engagement, `hunt_log`) included. `engagement` failed once in four runs (the TIE never hit the player's ship), so its AI combat can be flaky. The "Unverified" list below predates the first runs.
 
 `make game-test` plays short scripted scenarios in the real game (X4 8.00 HF4 NoSteam + SWI 0.90) and reports PASS/FAIL, with no clicks. It's a copy of [A Pirate's Life's harness](https://github.com/ecarlste/x4-pirates-life-mod/blob/main/docs/research/automated-game-testing.md), adapted for the 8.00 NoSteam copy and SWI. Dev only: never loaded in a recorded episode.
 

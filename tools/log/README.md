@@ -51,10 +51,9 @@ Call the generated library; never write a `[swibh]` line by hand:
 - Steps played again after a reload get a new `t`, so they aren't dropped: a hunt can then show two `hunt.end`, or stay open. Telling those apart (by the `session.start` lines between them) is the extractor's job.
 - Open hunts are hunt keys with a `hunt.accept` and no `hunt.end`. Which hunt a `player.loss` counts against is left to the extractor (the event lists `activeHunts`).
 
-## Not yet seen in game
+## Seen in game
 
-The MD is valid against 8.00's `md.xsd`, but these are **unverified** until the first game test reads a real `debuglog.txt` ([research/hunt-logging-hooks.md](../../research/hunt-logging-hooks.md), "Emitting JSON from MD"):
+The `hunt_log` game test (2026-11-03) reads a real `debuglog.txt` with the parser: `'%s'.[(player.age)f]` prints a plain decimal, `{` and `"` survive `debug_text` unchanged, and a 789-character line isn't cut ([research/hunt-logging-hooks.md](../../research/hunt-logging-hooks.md#19-implementation-status)). A string table key needs a leading `$` (`{'$' + $Key}`). Still **unverified**:
 
-- How `'%s'.[(player.age)f]` prints (a plain decimal is expected), and that `{` and `"` survive `debug_text` unchanged.
 - That `'\''` is a single quote, `'\\'` a backslash and `'\n'` a newline in MD strings, as `Json_Name`'s cleanup assumes.
-- How long a line can be before it's cut; a big wing makes `hunt.accept` long.
+- How long a line can be before it's cut, past 789 characters; a big wing makes `hunt.accept` long.

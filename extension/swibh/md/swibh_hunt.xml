@@ -17,9 +17,10 @@
      the late check comes first writes it and closes the hunt; the other finds it closed.
 
      The stash lives here, not on EM's cue, because EM's cue is cancelled at cleanup:
-       Hunts.$Open       hunt key -> the hunt's record (table, fields below)
+       Hunts.$Open       '$' + hunt key -> the hunt's record (table, fields below). MD rejects a
+                         string table key without a leading $, and a hunt key has none
        Hunts.$ByMission  EM's hunt cue -> hunt key
-     A record: $cue (EM's), $target, $faction (offering), $wing (ships), $playerShip (the player's
+     A record: $key (the hunt key), $cue (EM's), $target, $faction (offering), $wing (ships), $playerShip (the player's
      ship at accept), $preCap (money, set by PreCap), $targetKills (set when the target dies),
      $fallback (set by CleanUp), $watch (the Watch instance). -->
 <mdscript name="SWIBH_Hunt" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
@@ -37,7 +38,7 @@
           </conditions>
           <actions>
             <set_value name="$Key" exact="event.param"/>
-            <set_value name="$Record" exact="md.SWIBH_Hunt.Hunts.$Open.{$Key}"/>
+            <set_value name="$Record" exact="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
             <set_value name="$Record.$watch" exact="this"/>
             <create_group groupname="$Watched"/>
             <add_to_group groupname="$Watched" object="$Record.$target"/>
@@ -88,7 +89,7 @@
             <cue name="LateEnd_Check">
               <delay exact="1s"/>
               <actions>
-                <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{$Key}"/>
+                <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
                 <do_if value="$Record">
                   <run_actions ref="md.SWIBH_Hunt.End">
                     <param name="Key" value="$Key"/>
@@ -111,7 +112,8 @@
           <actions>
             <set_value name="$Ship" exact="event.param.$ship"/>
             <set_value name="$Tier" exact="event.param.$sanctionType"/>
-            <do_for_each name="$Key" valuename="$Record" in="md.SWIBH_Hunt.Hunts.$Open">
+            <do_for_each name="$Slot" valuename="$Record" in="md.SWIBH_Hunt.Hunts.$Open">
+              <set_value name="$Key" exact="$Record.$key"/>
               <do_if value="$Record.$target == $Ship and ($Tier == 'partial' or $Tier == 'full')">
                 <set_value name="$Cost" exact="if $Tier == 'full' then @$Record.$cue.$kProfs_sanctionCost_full else @$Record.$cue.$kProfs_sanctionCost_partial"/>
                 <run_actions ref="md.SWIBH_Log.Log_HuntSanction">
@@ -161,7 +163,8 @@
         <!-- A turret's ship rather than the turret (notifications.xml 196-197) -->
         <set_value name="$Killer" exact="if @event.param2.isclass.defensible then event.param2 else @event.param2.defensible"/>
         <set_value name="$Hunts" exact="[]"/>
-        <do_for_each name="$Key" valuename="$Record" in="md.SWIBH_Hunt.Hunts.$Open">
+        <do_for_each name="$Slot" valuename="$Record" in="md.SWIBH_Hunt.Hunts.$Open">
+          <set_value name="$Key" exact="$Record.$key"/>
           <set_value name="$ByWing" exact="false"/>
           <do_if value="$Killer">
             <set_value name="$ByWing" exact="$Killer == $Record.$target or $Record.$wing.indexof.{$Killer} gt 0"/>
@@ -219,7 +222,8 @@
         </do_elseif>
         <set_value name="$SizeClass" exact="if $Target.isclass.ship_xl then 'xl' else (if $Target.isclass.ship_l then 'l' else (if $Target.isclass.ship_m then 'm' else 's'))"/>
 
-        <set_value name="md.SWIBH_Hunt.Hunts.$Open.{$Key}" exact="table[
+        <set_value name="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}" exact="table[
+          $key = $Key,
           $cue = $Cue_Mission,
           $target = $Target,
           $faction = $Cue_Mission.$Faction,
@@ -264,7 +268,7 @@
         <param name="Cue_Mission"/>
       </params>
       <actions>
-        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{@md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}}"/>
+        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + @md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}}"/>
         <do_if value="$Record">
           <set_value name="$Record.$preCap" exact="(($Cue_Mission.$BaseRewardData.$reward_forTargetKills)f + ($Cue_Mission.$PlayerDamageAndKillsData.$reward)f) * 1ct"/>
         </do_if>
@@ -280,7 +284,7 @@
       </params>
       <actions>
         <set_value name="$Key" exact="@md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}"/>
-        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{$Key}"/>
+        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
         <do_if value="$Record">
           <run_actions ref="md.SWIBH_Hunt.Outcome" result="$Outcome">
             <param name="Cue_Mission" value="$Cue_Mission"/>
@@ -337,7 +341,7 @@
       </params>
       <actions>
         <set_value name="$Key" exact="@md.SWIBH_Hunt.Hunts.$ByMission.{$Cue_Mission}"/>
-        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{$Key}"/>
+        <set_value name="$Record" exact="@md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
         <do_if value="$Record">
           <run_actions ref="md.SWIBH_Hunt.Outcome" result="$Fallback">
             <param name="Cue_Mission" value="$Cue_Mission"/>
@@ -414,7 +418,7 @@
         <param name="Relations" default="[]"/>
       </params>
       <actions>
-        <set_value name="$Record" exact="md.SWIBH_Hunt.Hunts.$Open.{$Key}"/>
+        <set_value name="$Record" exact="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
         <run_actions ref="md.SWIBH_Hunt.TargetKills" result="$TargetKills">
           <param name="Target" value="$Record.$target"/>
           <param name="Faction" value="$Record.$faction"/>
@@ -449,7 +453,7 @@
           <cancel_cue cue="$Record.$watch"/>
         </do_if>
         <remove_value name="md.SWIBH_Hunt.Hunts.$ByMission.{$Record.$cue}"/>
-        <remove_value name="md.SWIBH_Hunt.Hunts.$Open.{$Key}"/>
+        <remove_value name="md.SWIBH_Hunt.Hunts.$Open.{'$' + $Key}"/>
         <run_actions ref="md.SWIBH_Engagement.HuntEnded">
           <param name="hunt" value="$Key"/>
         </run_actions>

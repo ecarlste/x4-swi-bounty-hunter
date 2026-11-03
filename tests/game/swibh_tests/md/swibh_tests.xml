@@ -878,22 +878,36 @@
             <!-- RAP's own purchase signal (kuertee_professions.xml 3444) -->
             <set_value name="$RapSanction" exact="@md.kuertee_professions.SanctionAttack.exists"/>
             <signal_cue_instantly cue="md.kuertee_professions.SanctionAttack" param="table[$ship = $Targets.$A, $sanctionType = 'partial']"/>
+            <signal_cue cue="HuntLog_Losses"/>
           </actions>
           <cues>
+            <!-- Each step signals the next: a sub-cue is enabled when its parent's conditions are
+                 met, so a bare delay would count from before the parent's own delay (2026-11-03) -->
             <cue name="HuntLog_Losses">
+              <conditions>
+                <event_cue_signalled/>
+              </conditions>
               <delay exact="1s"/>
               <actions>
                 <destroy_object object="$Lost"/>
                 <destroy_object object="$WingmanA"/>
+                <signal_cue cue="HuntLog_TargetDies"/>
               </actions>
               <cues>
                 <cue name="HuntLog_TargetDies">
+                  <conditions>
+                    <event_cue_signalled/>
+                  </conditions>
                   <delay exact="1s"/>
                   <actions>
                     <destroy_object object="$Targets.$A"/>
+                    <signal_cue cue="HuntLog_Resolve"/>
                   </actions>
                   <cues>
                     <cue name="HuntLog_Resolve">
+                      <conditions>
+                        <event_cue_signalled/>
+                      </conditions>
                       <delay exact="1s"/>
                       <actions>
                         <!-- A: a success. 10,000 + 30,000 Cr before the cap, 5,000 + 15,000 Cr
@@ -930,10 +944,14 @@
                         <run_actions ref="md.SWIBH_Hunt.CleanUp">
                           <param name="Cue_Mission" value="$Missions.$C"/>
                         </run_actions>
+                        <signal_cue cue="HuntLog_Check"/>
                       </actions>
                       <cues>
                         <!-- The late check waits 1 s -->
                         <cue name="HuntLog_Check">
+                          <conditions>
+                            <event_cue_signalled/>
+                          </conditions>
                           <delay exact="2s"/>
                           <actions>
                             <set_value name="$Open" exact="md.SWIBH_Hunt.Hunts.$Open.keys.count"/>
