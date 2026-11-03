@@ -478,8 +478,8 @@
          Each TIE Advanced attacks the player's ship and the wingman attacks it, both kept on those
          orders (KeepFighting); the TIE Advanced is kept alive (min hull) until the player's ship has taken a
          hit and the wingman has dealt one, then destroyed. Hits come from the per-projectile damage
-         events. The quiet gap is shortened to
-         10 s, so each engagement ends with reason quiet. The player's ship and the wingman keep a
+         events. The quiet gap is 30 s, so the AI's
+         passes stay one engagement, which ends with reason quiet. The player's ship and the wingman keep a
          min hull, so nobody dies. Hit counts and durations go to INFO (the hit-rate unknown).
          The runner's log check (tools/log/game-check.ts) then reads the same engagements from
          debuglog.txt with the log parser. -->
@@ -495,7 +495,7 @@
         <set_value name="$OldRelation" exact="faction.galempire.relationto.{faction.player}"/>
         <set_faction_relation faction="faction.galempire" otherfaction="faction.player" value="-1"/>
         <set_value name="$OldQuietGap" exact="md.SWIBH_Engagement.Engagements.$QuietGap"/>
-        <set_value name="md.SWIBH_Engagement.Engagements.$QuietGap" exact="10s"/>
+        <set_value name="md.SWIBH_Engagement.Engagements.$QuietGap" exact="30s"/>
         <set_object_min_hull object="player.occupiedship" exact="50"/>
         <create_ship name="$Wingman" macro="t65b_xwing_macro" sector="player.sector">
           <owner exact="faction.player" overridenpc="true"/>
@@ -524,9 +524,8 @@
           </actions>
         </cue>
 
-        <!-- While a fight's TIE Advanced lives, keep it on its Attack order, and the wingman on one too once
-             the TIE Advanced has hit the player's ship in the open engagement: so both ships' hits land in
-             one engagement (the 2026-11-02 fifth run's wingman hit first, and the TIE never did) -->
+        <!-- While a fight's TIE Advanced lives, keep it and the wingman on their Attack orders. The
+             AI fights in passes with long silences, hence the test's 30 s quiet gap -->
         <cue name="Engagement_Keep" instantiate="true" checkinterval="2s">
           <conditions>
             <check_value value="@Engagement.$Enemy.isoperational"/>
@@ -535,7 +534,6 @@
             <run_actions ref="KeepFighting">
               <param name="Wingman" value="Engagement.$Wingman"/>
               <param name="Enemy" value="Engagement.$Enemy"/>
-              <param name="HoldWingman" value="not (Engagement.$Engagements.$Open and @Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0)"/>
             </run_actions>
           </actions>
         </cue>
@@ -571,7 +569,6 @@
               <run_actions ref="KeepFighting">
                 <param name="Wingman" value="Engagement.$Wingman"/>
                 <param name="Enemy" value="$Enemy"/>
-                <param name="HoldWingman" value="true"/>
               </run_actions>
             </do_if>
           </actions>
@@ -589,10 +586,10 @@
                 </do_if>
               </actions>
               <cues>
-                <!-- The quiet gap ran out (10 s, then up to 2 s for the poll), or 30 s passed -->
+                <!-- The quiet gap ran out (30 s, then up to 2 s for the poll), or 45 s passed -->
                 <cue name="Engagement_Closed" checkinterval="1s">
                   <conditions>
-                    <check_value value="not Engagement.$Engagements.$Open or player.age gt $HitsAt + 30s"/>
+                    <check_value value="not Engagement.$Engagements.$Open or player.age gt $HitsAt + 45s"/>
                   </conditions>
                   <actions>
                     <set_value name="$Problems" exact="''"/>
@@ -664,13 +661,11 @@
     </cue>
     <!-- For CombatSignals and Engagement: puts the enemy back on its Attack order against the
          player's ship, and the wingman on one against it, whenever either order has ended. The
-         2026-11-02 runs' TIE made one pass and stopped, and the wingman on defence never fired.
-         HoldWingman leaves the wingman's orders alone for now -->
+         2026-11-02 runs' TIE made one pass and stopped, and the wingman on defence never fired -->
     <library name="KeepFighting" purpose="run_actions">
       <params>
         <param name="Wingman"/>
         <param name="Enemy"/>
-        <param name="HoldWingman" default="false"/>
       </params>
       <actions>
         <do_if value="@$Enemy.isoperational and @$Enemy.order.id != 'Attack'">
@@ -678,7 +673,7 @@
             <param name="primarytarget" value="player.occupiedship"/>
           </create_order>
         </do_if>
-        <do_if value="not $HoldWingman and @$Enemy.isoperational and @$Wingman.isoperational and @$Wingman.order.id != 'Attack'">
+        <do_if value="@$Enemy.isoperational and @$Wingman.isoperational and @$Wingman.order.id != 'Attack'">
           <create_order object="$Wingman" id="'Attack'" immediate="true">
             <param name="primarytarget" value="$Enemy"/>
           </create_order>

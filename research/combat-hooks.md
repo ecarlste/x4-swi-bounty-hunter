@@ -160,3 +160,7 @@ With the wingman ordered to attack the TIE and both orders re-checked every 2 s,
 ### Game test, 2026-11-02 (sixth run, Firespray)
 
 With `firespray_macro` (class `ship_m`, owner galempire, `<loadout><level exact="1.0"/>`) as the enemy, it never fired: in `combat_signals` the X-wing landed 236 damage events on it (145 shield, 91 hull, with 23 `event_object_attacked` for 23 `_attacked_object`, about one per attack run) and nothing hit the player's ship. In `engagement` no engagement opened, since the wingman waits for the enemy's first hit. Likely the level loadout gave it no weapons (galempire's loadout rules don't fit it [inferred]); SWI's `loadouts.xml` has no Firespray loadout. The TIE (`tie_fighter_macro`) did get weapons from the same level loadout, and with min hull 30 it never died in a run.
+
+### Game test, 2026-11-02 (seventh run, TIE Advanced)
+
+`tie_advanced_macro` (shielded, about even with the X-wing) does fire, but it went for the wingman rather than the player's ship: in `engagement` each fight logged one 0.07 s engagement in which the wingman took 4 hits (1,804 damage), then nothing. `combat_signals` saw only 11 damage events in 40 s. The AI fights in short passes with long silences whichever ship it is, so the test no longer scripts who hits first (the wingman hold is gone) and uses a 30 s quiet gap, so one fight's passes stay one engagement. Whether 20 s is right in real play is still the T20 playtest's question.
