@@ -344,9 +344,8 @@
           <pilot>
             <select race="player.entity.race" tags="tag.aipilot"/>
           </pilot>
-          <loadout>
-            <level exact="1.0"/>
-          </loadout>
+          <!-- SWI's own X-wing loadout: a level loadout for the player faction gets no engines -->
+          <loadout ref="sw_xwing_mc80start"/>
           <safepos object="player.occupiedship" x="300m" allowyaxis="true"/>
         </create_ship>
         <create_ship name="$Enemy" macro="tie_advanced_macro" sector="player.sector">
@@ -502,9 +501,8 @@
           <pilot>
             <select race="player.entity.race" tags="tag.aipilot"/>
           </pilot>
-          <loadout>
-            <level exact="1.0"/>
-          </loadout>
+          <!-- SWI's own X-wing loadout: a level loadout for the player faction gets no engines -->
+          <loadout ref="sw_xwing_mc80start"/>
           <safepos object="player.occupiedship" x="300m" allowyaxis="true"/>
         </create_ship>
       </actions>
