@@ -484,11 +484,13 @@
            1. a TIE Advanced (tie_advanced_macro, shielded and about an even match for the X-wing) registered as a hunt's target (HuntStarted), so the
               engagement must carry the hunt key swibh-test-hunt;
            2. another TIE Advanced that's in no hunt, so it must not.
-         Each TIE Advanced attacks the player's ship and the wingman attacks it, both kept on those
-         orders (KeepFighting); the TIE Advanced is kept alive (min hull) until the player's ship has taken a
-         hit and the wingman has dealt one, then destroyed. Hits come from the per-projectile damage
-         events. The quiet gap is 30 s, so the AI's
-         passes stay one engagement, which ends with reason quiet. The player's ship and the wingman keep a
+         Each fight takes turns (KeepTurn), since a free-for-all left the AI picking its own target
+         (2026-11-02 runs): the wingman is warped 1.5 km to the side of where the TIE Advanced appears and
+         holds still with its fire held while the TIE Advanced attacks the player's ship; once the player's
+         ship has taken a hit, the TIE Advanced holds still and the wingman attacks it. Once the wingman has
+         dealt a hit the TIE Advanced (kept alive by a min hull until then) is destroyed. Hits come from the
+         per-projectile damage events. The quiet gap is 30 s, so both turns stay one engagement, which
+         ends with reason quiet. The player's ship and the wingman keep a
          min hull, so nobody dies. Hit counts and durations go to INFO (the hit-rate unknown).
          The runner's log check (tools/log/game-check.ts) then reads the same engagements from
          debuglog.txt with the log parser. -->
@@ -539,16 +541,16 @@
           </actions>
         </cue>
 
-        <!-- While a fight's TIE Advanced lives, keep it and the wingman on their Attack orders. The
-             AI fights in passes with long silences, hence the test's 30 s quiet gap -->
+        <!-- While a fight's TIE Advanced lives, keep both ships on the current turn's orders -->
         <cue name="Engagement_Keep" instantiate="true" checkinterval="2s">
           <conditions>
             <check_value value="@Engagement.$Enemy.isoperational"/>
           </conditions>
           <actions>
-            <run_actions ref="KeepFighting">
+            <run_actions ref="KeepTurn">
               <param name="Wingman" value="Engagement.$Wingman"/>
               <param name="Enemy" value="Engagement.$Enemy"/>
+              <param name="Turn" value="Engagement.$Turn"/>
             </run_actions>
           </actions>
         </cue>
@@ -562,6 +564,10 @@
             <set_value name="$Phase" exact="event.param.$phase"/>
             <set_value name="$Hunt" exact="event.param.$hunt"/>
             <set_value name="$Begun" exact="player.age"/>
+            <set_value name="Engagement.$Turn" exact="'enemy'"/>
+            <warp object="Engagement.$Wingman" sector="player.sector">
+              <safepos object="player.occupiedship" x="1500m" z="2km" allowyaxis="true"/>
+            </warp>
             <create_ship name="$Enemy" macro="tie_advanced_macro" sector="player.sector">
               <owner exact="faction.galempire" overridenpc="true"/>
               <pilot>
@@ -586,18 +592,33 @@
                 </run_actions>
               </do_if>
               <set_value name="Engagement.$Enemy" exact="$Enemy"/>
-              <run_actions ref="KeepFighting">
+              <run_actions ref="KeepTurn">
                 <param name="Wingman" value="Engagement.$Wingman"/>
                 <param name="Enemy" value="$Enemy"/>
+                <param name="Turn" value="'enemy'"/>
               </run_actions>
             </do_if>
           </actions>
           <cues>
-            <!-- Both ships have a hit in this fight's engagement (or 60 s passed): the TIE Advanced has done
+            <!-- The player's ship took a hit in this fight's engagement: the wingman's turn -->
+            <cue name="Engagement_WingmanTurn" checkinterval="1s">
+              <conditions>
+                <check_value value="@$Enemy.isoperational and Engagement.$Engagements.$Open and Engagement.$Engagements.$Start ge $Begun and @Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0"/>
+              </conditions>
+              <actions>
+                <set_value name="Engagement.$Turn" exact="'wingman'"/>
+                <run_actions ref="KeepTurn">
+                  <param name="Wingman" value="Engagement.$Wingman"/>
+                  <param name="Enemy" value="$Enemy"/>
+                  <param name="Turn" value="'wingman'"/>
+                </run_actions>
+              </actions>
+            </cue>
+            <!-- Both ships have a hit in this fight's engagement (or 90 s passed): the TIE Advanced has done
                  its job. $Ships keeps the last engagement's stats after it closes, hence $Start -->
             <cue name="Engagement_Hits" checkinterval="1s">
               <conditions>
-                <check_value value="not @$Enemy.exists or player.age gt $Begun + 60s or (Engagement.$Engagements.$Open and Engagement.$Engagements.$Start ge $Begun and @Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0 and @Engagement.$Engagements.$Ships.{Engagement.$Wingman}.$hitsDealt gt 0)"/>
+                <check_value value="not @$Enemy.exists or player.age gt $Begun + 90s or (Engagement.$Engagements.$Open and Engagement.$Engagements.$Start ge $Begun and @Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0 and @Engagement.$Engagements.$Ships.{Engagement.$Wingman}.$hitsDealt gt 0)"/>
               </conditions>
               <actions>
                 <set_value name="$HitsAt" exact="player.age"/>
@@ -679,7 +700,7 @@
         </cue>
       </cues>
     </cue>
-    <!-- For CombatSignals and Engagement: puts the enemy back on its Attack order against the
+    <!-- For CombatSignals: puts the enemy back on its Attack order against the
          player's ship, and the wingman on one against it, whenever either order has ended. The
          2026-11-02 runs' TIE made one pass and stopped, and the wingman on defence never fired -->
     <library name="KeepFighting" purpose="run_actions">
@@ -697,6 +718,46 @@
           <create_order object="$Wingman" id="'Attack'" immediate="true">
             <param name="primarytarget" value="$Enemy"/>
           </create_order>
+        </do_if>
+      </actions>
+    </library>
+    <!-- For Engagement: one turn of a fight. Turn 'enemy': the enemy attacks the player's ship and
+         the wingman waits with its fire held. Turn 'wingman': the enemy waits with its fire held,
+         ignoring attacks, and the wingman attacks it. Re-issues whichever order has ended -->
+    <library name="KeepTurn" purpose="run_actions">
+      <params>
+        <param name="Wingman"/>
+        <param name="Enemy"/>
+        <param name="Turn"/>
+      </params>
+      <actions>
+        <do_if value="@$Enemy.isoperational and @$Wingman.isoperational">
+          <do_if value="$Turn == 'enemy'">
+            <do_if value="$Enemy.order.id != 'Attack'">
+              <create_order object="$Enemy" id="'Attack'" immediate="true">
+                <param name="primarytarget" value="player.occupiedship"/>
+              </create_order>
+            </do_if>
+            <do_if value="$Wingman.order.id != 'Wait'">
+              <create_order object="$Wingman" id="'Wait'" immediate="true">
+                <param name="holdfire" value="true"/>
+                <param name="noattackresponse" value="true"/>
+              </create_order>
+            </do_if>
+          </do_if>
+          <do_else>
+            <do_if value="$Enemy.order.id != 'Wait'">
+              <create_order object="$Enemy" id="'Wait'" immediate="true">
+                <param name="holdfire" value="true"/>
+                <param name="noattackresponse" value="true"/>
+              </create_order>
+            </do_if>
+            <do_if value="$Wingman.order.id != 'Attack'">
+              <create_order object="$Wingman" id="'Attack'" immediate="true">
+                <param name="primarytarget" value="$Enemy"/>
+              </create_order>
+            </do_if>
+          </do_else>
         </do_if>
       </actions>
     </library>
