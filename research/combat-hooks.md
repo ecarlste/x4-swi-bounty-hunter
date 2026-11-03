@@ -199,3 +199,7 @@ Two findings from the same lines. First, an engagement keeps its start and grows
 ### Game test, 2026-11-02 (fourteenth run, passing)
 
 With turns and the wait for `combat_signals`' engagement to close, every game test passed, and so did the offline log check (`PASS engagement log`). Fight 1 (hunt): 30.9 s, the player's ship took 2 hits (300 damage), the wingman dealt 12 (1,920), with the hunt key. Fight 2 (no hunt): 29.7 s, the player's ship took 2 hits (300), the wingman dealt 4 (640), no hunt key. Both ended quiet. With turns, a fight's engagement lasts about 30 s (one TIE pass, then the wingman's attack). The whole run took 4 min 45 s (tests 3 min 12 s).
+
+### Game test, 2026-11-02 (fifteenth run, after the code review's hit-count fixes)
+
+Every game test and the offline log check passed again, with no MD errors, after the hit-count changes (recent-opponent rule, one hit per projectile through the shield, no entry for docked ships). Fight 1 (hunt): 7.3 s, the player's ship took 1 hit (150), the wingman dealt 2 (320). Fight 2: 8.2 s, the player's ship took 2 hits (300), the wingman dealt 5 (800). Whether `IsNewHit` ever merged a shield-and-hull pair isn't visible in these lines (no shield ran out). Total run 4 min 8 s.
