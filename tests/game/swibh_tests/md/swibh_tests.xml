@@ -840,6 +840,10 @@
             <set_value name="$BaseRewardData" exact="table[$reward_forTargetKills = 10000Cr, $reward_forTarget = 50000Cr]"/>
             <set_value name="$PlayerDamageAndKillsData" exact="null"/>
             <set_value name="$Result" exact="null"/>
+            <!-- EM's result values (EM 5357-5359), which md.SWIBH_Hunt.Outcome compares against -->
+            <set_value name="$Result_success" exact="'success'"/>
+            <set_value name="$Result_fail" exact="'fail'"/>
+            <set_value name="$Result_aborted" exact="'aborted'"/>
             <set_value name="$Objective_Step_find_success" exact="false"/>
             <set_value name="$Objective_Step_identify_success" exact="false"/>
             <set_value name="$Objective_Step_destroy_success" exact="false"/>
@@ -898,7 +902,7 @@
                         <set_value name="$A.$Objective_Step_find_success" exact="true"/>
                         <set_value name="$A.$Objective_Step_identify_success" exact="true"/>
                         <set_value name="$A.$Objective_Step_destroy_success" exact="true"/>
-                        <set_value name="$A.$Result" exact="'success'"/>
+                        <set_value name="$A.$Result" exact="$A.$Result_success"/>
                         <set_value name="$A.$DamageAndKillsList" exact="[table[$idCode = $IdA, $macro = 'fortitude_macro', $class = class.ship_m, $faction = faction.galempire, $damage_total = 80, $isPlayerKilled = true]]"/>
                         <set_value name="$A.$PlayerDamageAndKillsData" exact="table[$reward = 30000Cr]"/>
                         <run_actions ref="md.SWIBH_Hunt.PreCap">
@@ -915,7 +919,7 @@
                           <param name="Cue_Mission" value="$A"/>
                         </run_actions>
                         <!-- B: aborted -->
-                        <set_value name="$Missions.{'B'}.$Result" exact="'aborted'"/>
+                        <set_value name="$Missions.{'B'}.$Result" exact="$Missions.{'B'}.$Result_aborted"/>
                         <run_actions ref="md.SWIBH_Hunt.Resolve">
                           <param name="Cue_Mission" value="$Missions.{'B'}"/>
                         </run_actions>
