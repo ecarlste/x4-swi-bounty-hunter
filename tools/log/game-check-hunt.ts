@@ -114,7 +114,9 @@ export function checkHuntLogTest(log: Log): string[] {
     }
   }
 
-  const losses = ofType(log.events, "player.loss");
+  // The earlier tests' cleanup destroys player-owned ships too, before hunt_log accepts its hunts
+  const accepted = Math.min(...[...keys.values()].map((hunt) => log.hunts.get(hunt)?.[0]?.t ?? Infinity));
+  const losses = ofType(log.events, "player.loss").filter((e) => e.t >= accepted);
   if (losses.length !== 1) problems.push(`${losses.length} player.loss, expected 1`);
   for (const loss of losses) {
     const active = [...keys.values()].map((hunt) => ({ hunt, byHuntWing: false, sameSector: true }));

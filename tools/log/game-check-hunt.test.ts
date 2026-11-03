@@ -80,6 +80,20 @@ test("a value the test didn't set up is reported with where it is", async () => 
   ]);
 });
 
+test("a player.loss from an earlier test, before the hunts, isn't counted", async () => {
+  const earlier = line("player.loss", 30.5, {
+    activeHunts: [],
+    killer: null,
+    lost: { ...ship("XWG-001", "player"), macro: "t65b_xwing_macro", class: "ship_s" },
+    piloted: false,
+    value: 92028100,
+  });
+  const lines = goodLog();
+  lines.splice(1, 0, earlier);
+
+  assert.deepEqual(checkHuntLogTest(await readLog(lines)), []);
+});
+
 test("every hunt needs exactly one hunt.end", async () => {
   const lines = goodLog().filter((l) => !(l.includes("hunt.end") && l.includes(C)));
   // Not a replay: a later t
