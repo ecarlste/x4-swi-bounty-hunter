@@ -152,3 +152,7 @@ Same three ships for 40 s, every combat event on them counted, the first 60 logg
 ### Game test, 2026-11-02 (fourth run, damage events)
 
 With the wingman ordered to attack the TIE and both orders re-checked every 2 s, `combat_signals` saw both directions in 40 s: 15 damage events on the TIE (6 shield, 9 hull, so the wingman got through its shield), 1 on the player's ship, and 3 `event_object_attacked` on the TIE for 3 `event_object_attacked_object` by the X-wing (about one per attack run). `engagement` fight 1 passed: one engagement of 2.7 s in which the player's ship took 4 hits (600 damage) and the wingman dealt 1 (150). Fight 2 failed on a test bug (its check read fight 1's leftover `$Ships`), fixed after the run. Tests ran in 1 min 7 s.
+
+### Game test, 2026-11-02 (fifth run)
+
+`combat_signals` passed with hits both ways. `engagement` fight 2 passed (one engagement: the player's ship took 1 hit, 150 damage; the wingman dealt 1, 193; no hunt key). Fight 1 failed on scenario luck, not the hooks: the wingman dealt 12 hits (3,172 damage) in a 3.5 s engagement before the TIE had hit the player's ship, and the TIE never did within the 60 s. The test now holds the wingman's Attack order until the TIE has hit the player's ship in the open engagement.

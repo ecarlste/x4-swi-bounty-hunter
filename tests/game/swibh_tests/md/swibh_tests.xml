@@ -524,7 +524,9 @@
           </actions>
         </cue>
 
-        <!-- While a fight's TIE lives, keep it and the wingman on their Attack orders -->
+        <!-- While a fight's TIE lives, keep it on its Attack order, and the wingman on one too once
+             the TIE has hit the player's ship in the open engagement: so both ships' hits land in
+             one engagement (the 2026-11-02 fifth run's wingman hit first, and the TIE never did) -->
         <cue name="Engagement_Keep" instantiate="true" checkinterval="2s">
           <conditions>
             <check_value value="@Engagement.$Enemy.isoperational"/>
@@ -533,6 +535,7 @@
             <run_actions ref="KeepFighting">
               <param name="Wingman" value="Engagement.$Wingman"/>
               <param name="Enemy" value="Engagement.$Enemy"/>
+              <param name="HoldWingman" value="not (Engagement.$Engagements.$Open and @Engagement.$Engagements.$Ships.{player.occupiedship}.$hitsTaken gt 0)"/>
             </run_actions>
           </actions>
         </cue>
@@ -568,6 +571,7 @@
               <run_actions ref="KeepFighting">
                 <param name="Wingman" value="Engagement.$Wingman"/>
                 <param name="Enemy" value="$Enemy"/>
+                <param name="HoldWingman" value="true"/>
               </run_actions>
             </do_if>
           </actions>
@@ -660,11 +664,13 @@
     </cue>
     <!-- For CombatSignals and Engagement: puts the TIE (Enemy) back on its Attack order against the
          player's ship, and the wingman on one against the TIE, whenever either order has ended. The
-         2026-11-02 runs' TIE made one pass and stopped, and the wingman on defence never fired -->
+         2026-11-02 runs' TIE made one pass and stopped, and the wingman on defence never fired.
+         HoldWingman leaves the wingman's orders alone for now -->
     <library name="KeepFighting" purpose="run_actions">
       <params>
         <param name="Wingman"/>
         <param name="Enemy"/>
+        <param name="HoldWingman" default="false"/>
       </params>
       <actions>
         <do_if value="@$Enemy.isoperational and @$Enemy.order.id != 'Attack'">
@@ -672,7 +678,7 @@
             <param name="primarytarget" value="player.occupiedship"/>
           </create_order>
         </do_if>
-        <do_if value="@$Enemy.isoperational and @$Wingman.isoperational and @$Wingman.order.id != 'Attack'">
+        <do_if value="not $HoldWingman and @$Enemy.isoperational and @$Wingman.isoperational and @$Wingman.order.id != 'Attack'">
           <create_order object="$Wingman" id="'Attack'" immediate="true">
             <param name="primarytarget" value="$Enemy"/>
           </create_order>
