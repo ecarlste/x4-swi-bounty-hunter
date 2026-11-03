@@ -323,7 +323,7 @@
 
     <!-- CombatSignals (#23 diagnostic, research/combat-hooks.md): which MD signal fires per hit?
          The 2026-11-02 run saw event_object_attacked(_object) only about once per attacker pair.
-         Same scenario as Engagement (the player's ship, an X-wing wingman, a TIE, both kept on Attack
+         Same scenario as Engagement (the player's ship, an X-wing wingman, a Firespray (firespray_macro, a shielded heavy fighter), both kept on Attack
          orders by KeepFighting, min hulls so nobody dies) for 40 s. Counts every combat event on the three
          ships per event and ship, logs the first 60 events in full, and samples each ship's shield,
          hull, lastattacktime and lastattacker every second. Passes when all three ships existed;
@@ -349,7 +349,7 @@
           </loadout>
           <safepos object="player.occupiedship" x="300m" allowyaxis="true"/>
         </create_ship>
-        <create_ship name="$Enemy" macro="tie_fighter_macro" sector="player.sector">
+        <create_ship name="$Enemy" macro="firespray_macro" sector="player.sector">
           <owner exact="faction.galempire" overridenpc="true"/>
           <pilot>
             <select faction="faction.galempire" tags="tag.aipilot"/>
@@ -365,7 +365,7 @@
           <delay exact="1s"/>
           <actions>
             <do_if value="not @$Wingman.exists or not @$Enemy.exists">
-              <signal_cue_instantly cue="CombatSignals_Done" param="'the wingman or the TIE was not created'"/>
+              <signal_cue_instantly cue="CombatSignals_Done" param="'the wingman or the Firespray was not created'"/>
             </do_if>
             <do_else>
               <set_object_min_hull object="player.occupiedship" exact="50"/>
@@ -472,11 +472,11 @@
     <!-- Engagement (#23): the swibh extension's engagement log events (extension/swibh/md/
          swibh_engagement.xml, installed into this extension by the runner). Gives the player a
          wingman (t65b_xwing_macro, assigned on defence) and makes galempire hostile, then fights twice:
-           1. a TIE (tie_fighter_macro) registered as a hunt's target (HuntStarted), so the
+           1. a Firespray (firespray_macro, sturdier than a TIE, so it outlasts the fight) registered as a hunt's target (HuntStarted), so the
               engagement must carry the hunt key swibh-test-hunt;
-           2. another TIE that's in no hunt, so it must not.
-         Each TIE attacks the player's ship and the wingman attacks the TIE, both kept on those
-         orders (KeepFighting); the TIE is kept alive (min hull) until the player's ship has taken a
+           2. another Firespray that's in no hunt, so it must not.
+         Each Firespray attacks the player's ship and the wingman attacks it, both kept on those
+         orders (KeepFighting); the Firespray is kept alive (min hull) until the player's ship has taken a
          hit and the wingman has dealt one, then destroyed. Hits come from the per-projectile damage
          events. The quiet gap is shortened to
          10 s, so each engagement ends with reason quiet. The player's ship and the wingman keep a
@@ -524,8 +524,8 @@
           </actions>
         </cue>
 
-        <!-- While a fight's TIE lives, keep it on its Attack order, and the wingman on one too once
-             the TIE has hit the player's ship in the open engagement: so both ships' hits land in
+        <!-- While a fight's Firespray lives, keep it on its Attack order, and the wingman on one too once
+             the Firespray has hit the player's ship in the open engagement: so both ships' hits land in
              one engagement (the 2026-11-02 fifth run's wingman hit first, and the TIE never did) -->
         <cue name="Engagement_Keep" instantiate="true" checkinterval="2s">
           <conditions>
@@ -540,7 +540,7 @@
           </actions>
         </cue>
 
-        <!-- One fight: param table[$phase, $hunt], $hunt null for a TIE in no hunt -->
+        <!-- One fight: param table[$phase, $hunt], $hunt null for a Firespray in no hunt -->
         <cue name="Engagement_Fight" instantiate="true" namespace="this">
           <conditions>
             <event_cue_signalled/>
@@ -549,7 +549,7 @@
             <set_value name="$Phase" exact="event.param.$phase"/>
             <set_value name="$Hunt" exact="event.param.$hunt"/>
             <set_value name="$Begun" exact="player.age"/>
-            <create_ship name="$Enemy" macro="tie_fighter_macro" sector="player.sector">
+            <create_ship name="$Enemy" macro="firespray_macro" sector="player.sector">
               <owner exact="faction.galempire" overridenpc="true"/>
               <pilot>
                 <select faction="faction.galempire" tags="tag.aipilot"/>
@@ -576,7 +576,7 @@
             </do_if>
           </actions>
           <cues>
-            <!-- Both ships have a hit in this fight's engagement (or 60 s passed): the TIE has done
+            <!-- Both ships have a hit in this fight's engagement (or 60 s passed): the Firespray has done
                  its job. $Ships keeps the last engagement's stats after it closes, hence $Start -->
             <cue name="Engagement_Hits" checkinterval="1s">
               <conditions>
@@ -662,8 +662,8 @@
         </cue>
       </cues>
     </cue>
-    <!-- For CombatSignals and Engagement: puts the TIE (Enemy) back on its Attack order against the
-         player's ship, and the wingman on one against the TIE, whenever either order has ended. The
+    <!-- For CombatSignals and Engagement: puts the enemy back on its Attack order against the
+         player's ship, and the wingman on one against it, whenever either order has ended. The
          2026-11-02 runs' TIE made one pass and stopped, and the wingman on defence never fired.
          HoldWingman leaves the wingman's orders alone for now -->
     <library name="KeepFighting" purpose="run_actions">
