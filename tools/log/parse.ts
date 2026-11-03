@@ -108,7 +108,7 @@ export function parseLine(text: string): LogEvent | string | null {
 }
 
 // Hunt events always carry the key; engagements only when the target's wing took part
-const hasHuntKey = (event: LogEvent): event is HuntEvent => "hunt" in event && event.hunt !== undefined;
+export const hasHuntKey = (event: LogEvent): event is HuntEvent => "hunt" in event && event.hunt !== undefined;
 
 // Reads a debug log's lines. Lines replayed by a reload are dropped: an event whose
 // JSON is the same as an earlier one's, except session.start, which marks each load.
