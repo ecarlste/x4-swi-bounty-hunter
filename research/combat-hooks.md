@@ -188,3 +188,9 @@ The test now takes turns, per the user's suggestion: the wingman is warped 1.5 k
 ### Game test, 2026-11-02 (twelfth run, turns)
 
 Fight 2 passed with turns: 7.0 s, the player's ship took 1 hit (451 damage), then the wingman dealt 1 (160), ending quiet with no hunt key. Fight 1 never fought: `KeepTurn` read `$Enemy.order.id` on a just-spawned TIE that had no order yet (`Property lookup failed`), which aborted the library before any order was given. The lookups are now `@`-guarded, as `KeepFighting`'s were.
+
+### Game test, 2026-11-02 (thirteenth run, turns with guarded lookups)
+
+Fight 2 passed (8.2 s, the player's ship took 1 hit (150), then the wingman dealt 3 (480)). Fight 1 failed, and the `engagement.end` lines show why, which also explains the "fight 1 fails, fight 2 passes" pattern of earlier runs: `combat_signals`' engagement (start t 38) was still open when the `engagement` test began at t 76, and setting the 30 s gap stretched it. Fight 1's TIE (SRL-384) did attack the player's ship, but those hits went into that old engagement, which ended at t 114 and, since the hunt target had joined, carried the hunt key. The test only counts engagements that started after the fight began, so the wingman's turn never came, and at t 137 the TIE shot the holding wingman (4 hits, 1,804 damage), opening a new engagement with only that. `Engagement_Setup` now waits until no engagement is open (60 s at most) and sets the 30 s gap only then.
+
+Two findings from the same lines. First, an engagement keeps its start and grows across scenario changes, so a hunt can join an engagement opened before the hunt existed; the hunt key then covers hits from before the hunt (the hunt matching runs on each hit, by design). Second, `combat_signals`' TIE, removed with `destroy_object` by the test, is logged `"killed":true`: `FoeDestroyed` marks any destruction of a known opponent, not only a kill by the wing.

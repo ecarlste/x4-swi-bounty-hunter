@@ -507,8 +507,8 @@
         <set_value name="$Summary" exact="''"/>
         <set_value name="$OldRelation" exact="faction.galempire.relationto.{faction.player}"/>
         <set_faction_relation faction="faction.galempire" otherfaction="faction.player" value="-1"/>
+        <set_value name="$Started" exact="player.age"/>
         <set_value name="$OldQuietGap" exact="md.SWIBH_Engagement.Engagements.$QuietGap"/>
-        <set_value name="md.SWIBH_Engagement.Engagements.$QuietGap" exact="30s"/>
         <set_object_min_hull object="player.occupiedship" exact="50"/>
         <create_ship name="$Wingman" macro="t65b_xwing_macro" sector="player.sector">
           <owner exact="faction.player" overridenpc="true"/>
@@ -526,9 +526,14 @@
         </create_ship>
       </actions>
       <cues>
-        <cue name="Engagement_Setup">
-          <delay exact="2s"/>
+        <!-- Once combat_signals' engagement has closed (or 60 s passed): the 2026-11-02 thirteenth
+             run's stayed open into fight 1 and took its hits, so fight 1 never saw its own -->
+        <cue name="Engagement_Setup" checkinterval="1s">
+          <conditions>
+            <check_value value="player.age ge $Started + 2s and (not $Engagements.$Open or player.age gt $Started + 60s)"/>
+          </conditions>
           <actions>
+            <set_value name="md.SWIBH_Engagement.Engagements.$QuietGap" exact="30s"/>
             <do_if value="not @$Wingman.exists">
               <set_value name="$Problems" exact="' t65b_xwing_macro wingman was not created;'"/>
               <signal_cue_instantly cue="Engagement_Done"/>
