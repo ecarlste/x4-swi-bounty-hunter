@@ -156,3 +156,7 @@ With the wingman ordered to attack the TIE and both orders re-checked every 2 s,
 ### Game test, 2026-11-02 (fifth run)
 
 `combat_signals` passed with hits both ways. `engagement` fight 2 passed (one engagement: the player's ship took 1 hit, 150 damage; the wingman dealt 1, 193; no hunt key). Fight 1 failed on scenario luck, not the hooks: the wingman dealt 12 hits (3,172 damage) in a 3.5 s engagement before the TIE had hit the player's ship, and the TIE never did within the 60 s. The test now holds the wingman's Attack order until the TIE has hit the player's ship in the open engagement.
+
+### Game test, 2026-11-02 (sixth run, Firespray)
+
+With `firespray_macro` (class `ship_m`, owner galempire, `<loadout><level exact="1.0"/>`) as the enemy, it never fired: in `combat_signals` the X-wing landed 236 damage events on it (145 shield, 91 hull, with 23 `event_object_attacked` for 23 `_attacked_object`, about one per attack run) and nothing hit the player's ship. In `engagement` no engagement opened, since the wingman waits for the enemy's first hit. Likely the level loadout gave it no weapons (galempire's loadout rules don't fit it [inferred]); SWI's `loadouts.xml` has no Firespray loadout. The TIE (`tie_fighter_macro`) did get weapons from the same level loadout, and with min hull 30 it never died in a run.
