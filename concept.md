@@ -61,25 +61,33 @@ The ship and wing for each step are open: [Hunting ladder: ship and wing per tar
 
 ### Characters
 
-- **Viewer-written:** the pilot of every wingman in the player's wing (and later any named crew) is a character written by viewers, in the style of the Kenshi Genesis series: viewers write and improve each other's stories, and likes pick who joins. Each joins in their own video.
+- **Viewer-written:** the pilot of every wingman in the player's wing (and later any named crew) is a character written by viewers, in the style of the Kenshi Genesis series: viewers write and improve each other's stories on the casting call, and author score picks who joins. Each joins in their own video.
 - **Dream ship:** the author picks a ship and loadout from a fixed list (set by the hunting-ladder ticket), maybe a size above where the character starts. Getting it for them is that character's thread.
-- **Climbing the ladder:** characters move up in ship size with Bobby, as far as the game allows. When a bigger ship comes free, the character whose author has the highest **author score** gets it, if they're alive, in the wing and able to fly that size. The score counts one point per like on the author's story, plus one per like on each helpful feedback comment they leave on others' stories, so it rewards feedback people value, not arguing. How submissions, voting and the score run belongs to [Launch viewer interaction](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/9).
+- **Climbing the ladder:** characters move up in ship size with Bobby, as far as the game allows. When a bigger ship comes free, the character whose author has the highest **author score** gets it, if they're alive, in the wing and able to fly that size. The score counts one point per like on the author's story, plus one per like on each helpful feedback comment they leave on others' stories, so it rewards feedback people value, not arguing. How stories, the score and joining run: see [Viewer interaction](#viewer-interaction).
 - **Death:** a character dies only if their suit's air runs out before they're picked up, so every rescue is played out. A pilot whose ship is destroyed always ejects in a spacesuit, and any ship of ours can pick them up (vanilla `md/notifications.xml` `PlayerOwnedKilled`, `aiscripts/order.rescue.ship.xml`; SWI doesn't change it). Suits have `<oxygen maxtime="30"/>` (`libraries/defaults.xml`, units not given); time it in the test game before episode 1. A character who dies gets a homage in the video and a credit in the description.
 - **Intro cards and homages:** every named character (characters, Shaddo, the nemesis, notable targets when the edit thinks they've earned it) gets a short intro card when they first appear, and a homage if they die. How the cards look is production work (out of scope).
 
-## Viewer interaction (ideas, nothing decided)
+## Viewer interaction
 
-- Chat picks the next contract from the board.
-- Viewers' names on targets, rivals or crew.
-- Polls at story beats: take the bribe or bring them in, spare or destroy.
-- A standing "most wanted" list the audience follows between streams.
+Decided 2026-11-05 (grilling, [Launch viewer interaction](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/9)). Facts: [research/youtube-viewer-interaction.md](https://github.com/ecarlste/x4-swi-bounty-hunter/blob/research/youtube-viewer-interaction/research/youtube-viewer-interaction.md).
 
-Some of these work with stock SWI and a human reading chat; others would need a mod. Which ones are worth building is a later question.
+There's no live chat in the first run and recording runs 3 videos ahead, so viewers take part through things that can wait.
+
+- **Casting call:** one normal video (not a Short), up with episode 1 and open all series, with a community post pointing to it. Stories are top-level comments, feedback is replies. Stories can't live on a community post: the Data API can't read those comments. Rules pinned on it: no links (the channel holds links for review), one active story per author, edit freely until picked. Before counting, clear the held-for-review and "likely spam" queues.
+- **Joining:** when a wing slot opens in recording, the author with the highest **pick score** (points since their last pick; all of them if never picked) and no living character in the wing gets their character in. Promotion to a bigger ship uses the lifetime **author score**. Scores are snapshotted at that moment in recording; on a tie the earlier story wins. A story is frozen as of its pick, and the author carries it on in replies.
+- **Score without a story:** feedback alone earns score, so a viewer can write a story later and enter with what they've built.
+- **Deaths:** the author keeps their score. Their pick score starts again from the pick, so they get back in by staying active. Self-likes can't be filtered (nobody can see who liked a comment) and are accepted: at most 1 point per comment.
+- **Counting:** a TypeScript script in this repo reads the casting call's threads and replies through the Data API and prints the scoreboard. It's open source, so the algorithm is public, which is fine; the API key never goes in the repo. Run by hand at each wing slot and promotion. Built as an ordinary issue before the first wing slot, not before episode 1.
+- **Polls** only on **standing choices** the game holds open for weeks (the next ship, a base, which faction's hunts to favour), posted when the choice shows in a published video and obeyed in the first session after the poll closes. Moments in a fight stay your call; the edit can ask "what would you have done?".
+- **Ledger** in each description and a pinned post, looking back only: debt left to Shaddo, hunts taken to paid, the death counter, the wing roster with authors. No live most-wanted list: it would be 3 weeks stale.
+- **Premiere chat:** you're in it at every Premiere. Nothing said there counts for votes or score.
+- **Dropped or later:** chat picking the contract (no live chat); viewer names on targets or rivals (the mod could do it with `set_object_name`; post-launch); a companion site (below).
+- **Companion site (post-launch):** a later effort. Fans would follow their character and give build and backstory input, fed from parsed saves or the hunt log, in real time or per publish. **Rule:** it never spoils: just enough to have fun with, with suspense kept for the videos (deaths, losses, spine beats wait for their Premiere). The vote stays on YouTube for the first run.
 
 ## Open questions
 
 - How good is the stock bounty loop in SWI 0.90: variety, pay, pacing over a long series?
 - Which extra mods fit (bounty, combat, UI, immersion), and do they work on 8.00 with SWI?
 - ~~Videos, streams, or both; how long an episode; how often?~~ Recorded sessions cut into weekly story videos: see [Format](#format) (2026-11-02).
-- How viewers show up and take part, and what we show them between episodes. There's no live chat in the first run, so it happens between episodes.
+- ~~How viewers show up and take part, and what we show them between episodes?~~ The casting call, polls on standing choices, the ledger and Premiere chat: see [Viewer interaction](#viewer-interaction) (2026-11-05).
 - ~~Does anything need building, and if so is it its own mod or part of A Pirate's Life's SWI profile?~~ Yes, its own extension on top of SWI: see [design.md](design.md) (2026-11-01).
