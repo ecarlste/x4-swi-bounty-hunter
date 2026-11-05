@@ -87,8 +87,24 @@ The viewer who wrote a character's story.
 _Avoid_: Submitter, owner
 
 **Author score**:
-An author's running total for the whole series: a point per like on their story, plus a point per like on each feedback comment they leave on others' stories. The highest score decides which character is promoted to a bigger ship.
+An author's running total for the whole series: a point per like on their story, plus a point per like on each feedback comment they leave on others' stories, all on the casting call. Feedback alone earns it, before any story. The highest score decides which character is promoted to a bigger ship.
 _Avoid_: Karma, points (alone)
+
+**Pick score**:
+The part of an author's score earned since their last character was picked (all of it for an author never picked). When a wing slot opens, the author with the highest pick score and no living character in the wing gets their character in.
+_Avoid_: Entry points
+
+**Casting call**:
+The one video, up from episode 1 and open all series, where authors post character stories as comments and leave feedback as replies. A story is frozen as of its pick; later developments go in the author's replies.
+_Avoid_: Call (alone), contest, submission thread, contract (that's the game's)
+
+**Ledger**:
+The hand-kept summary in each video's description and a pinned post, looking back only: debt left to Shaddo, hunts taken to paid, the death counter, the wing roster with each character's author.
+_Avoid_: Most-wanted list, scoreboard
+
+**Standing choice**:
+A decision the game holds open for weeks (the next ship, a base, which faction's hunts to favour), the only kind put to a viewer poll; the result is obeyed in the first session after the poll closes.
+_Avoid_: Story-beat poll
 
 **Dream ship**:
 The ship and loadout a character's author picks from a fixed list: the goal of that character's thread.
