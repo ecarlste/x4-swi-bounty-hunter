@@ -1,0 +1,36 @@
+# Accepted hunt missing from current missions
+
+Playtest #4 (2026-11-03). At the Bounty Hunters Guild HQ in Milagro the player accepted "Search and destroy: CSA Patrol V-19 (GKJ-...)" from ICG (683,224.96 Cr + up to 83,520 Cr, Medium), at about 17:18 real time. The offer list then showed "Mission accepted - ...". The player refitted at the same station's shipyard. Now the hunt is not in current missions, and accepting it again shows the "3 missions an hour" warning. Earlier accepts: about 12:36 (done 13:07) and about 15:39 (paid about 16:45).
+
+EM = `ext/md/kuertee_emergent_missions.xml` and EM Lua = `starwarsmod_m1/ui/kuertee_emergent_missions.lua`, both in the unpacked SWI 0.90 (`/mnt/e/x4-dev/reference/mods/swi-0.90`). Vanilla map = `base/ui/addons/ego_detailmonitor/menu_map.lua` in the unpacked 8.00. Tags: [read] = seen in code, [inferred] = reasoned, not tested.
+
+## What the player can do now
+
+1. **Check once more, in the right place.** Open the Mission Manager (current missions) and look for the hunt under the Guild/Emergent section, and in the logbook. If it really is missing, no mission exists. The "Mission accepted" label in the offer list does not prove one does (see Cause). In SWI an accepted hunt starts straight at "find the target", so there is no NPC to talk to first.
+2. **Best fix: reload the save made before the 17:18 accept.** The hour limit is stored in the save, so reloading also takes this failed accept off the count. After accepting, check the Mission Manager right away, before refitting or leaving. If the mission is missing, reload at once.
+3. **Or wait it out.** One slot frees when the oldest counted accept is 1 hour of **game time** old. Pausing does not count toward it. SETA speeds it up. The list is only refreshed when the map opens, so close and reopen the map to see the change. The "time left" in the warning should show the right minutes and seconds, even though the code uses 60 h (see Unverified).
+4. **What doesn't help.** Docking or undocking doesn't create the missing mission. Flying away from the station, or picking ICG > a size class again in the Guild trade NPC conversation, deletes the stuck offer and makes a fresh one for the same target. Neither one gives back the used slot. Don't click Accept again on the same offer while slots remain: each Accept counts as a slot even if no mission appears.
+
+## Cause
+
+**Confirmed [read]:**
+
+- **"Mission accepted" is only a label in the UI.** Vanilla `menu.buttonMissionOfferAccept` sends the `accept` signal to the offer's actor and then sets `entry.accepted = true` on its own copy of the offer list (vanilla map 3549-3595). `menu.addMissionRow` prints "Mission accepted - <name>" for entries marked that way (17630-17633, text 1001/6404). The label shows whatever the mod does with the signal.
+- **The hour count goes up when you click Accept, not when the mission is made.** `Mission_Hunt_Accept` (EM 5567-5587) reacts to `accept`, signals `Mission_Hunt_MissionContact_Generate`, and its child `Mission_Hunt_Accept2` adds `player.age` to `Missions_Hunts.$missionTimes` right away (5582). Nothing removes that entry if the mission is never made.
+- **The mission is made later, and only if the contact NPC can be spawned.** `Mission_Hunt_MissionContact_Generate` (6393-6411) runs the `MissionNPC` library (9742). That runs `ActorAndRoomManager` (9939), which runs `CreateRoomAndAddActor` (10147). Only when an NPC exists in a new room does `Mission_Hunt_MissionContact_OnCreate` (6330-6350) signal `Mission_Hunt_CreateMission`. That cue holds the only `create_mission` (5601). It then calls `remove_offer` (5617) and adds the cue to `$missions_active` (5629).
+- **A failed spawn leaves the offer open and adds no mission.** `MissionNPC` fails if it finds no station (9801-9806, needs an L dock in SWI, 9753-9761). `ActorAndRoomManager` fails if `create_dynamic_interior` gives no interior (9973-9981) or no actor shows up within about 3 s (10010-10020). On failure `Mission_Hunt_MissionContact_TryAgain` (6366-6391) tries up to 3 times, then gives up silently. No mission, no message, the offer stays, and the slot stays used.
+- **The limit:** `$missionsPerHour_max = 3` (EM 5097). SWI has no access-key bonus (EM 5173-5181, see swi-bounty.md 4.2). Entries older than 1 h of `player.age` (game time) are removed only when the map opens or `Missions_Hunts_MapMenu_MissionOffers` is signalled (5182-5186). The count goes to the Lua (5193). Lua stops accepts when `count >= max` (EM Lua 146-151, 199-226) and shows text 543 with time left from the oldest entry (5194, Lua 233-243).
+- **A created mission does not vanish when you refit or leave.** `Mission_Hunt_CleanUp` (5497-5560) removes only cues where `not $Cue_Mission.hasmission` or the mission is complete (5517-5520), or an abort without a mission. Moving the contact NPC after a ship or dock-size change (`ActorAndRoomManager_CleanUp`, 10038-10101) moves the NPC, not the mission.
+- **The target lock** (`$MissionTarget.pilot.$kEMissions_missions.{faction}`, set at offer creation, EM 5271) blocks a second ICG offer for GKJ while the first offer cue exists. It is cleared by `Mission_Hunt_CleanUp` (5530-5532).
+
+**Likely [inferred]:** the accept at 17:18 counted a slot, but the mission contact NPC was never spawned, so `create_mission` never ran. The offer could still be accepted afterwards, which points the same way: `create_mission` always removes the offer (5617). The refit probably didn't cause it, because nothing in the refit path removes a created mission. Why the spawn failed is unknown. Possible reasons: no room definition or failed `create_dynamic_interior` at the offering station, a room left from the earlier hunt's contact at the same station (same seed, 10227), or the station's dock state.
+
+**Why 3 already [inferred]:** the count holds accepts from the last game-hour, not the last real hour. If the game was paused a lot (notes, menus with pause), the 15:39 accept, or even the 12:36 one, can still be within one game-hour. Re-sending `accept` for the same offer also adds an entry each time (5582), even when it does nothing else. This can happen with Accept in the map, then Accept again in the briefing, or a second try. Only `player.age` is stored, so the code can't tell which accepts were counted.
+
+## Unverified
+
+- That the contact spawn failed this time. Without a debug log (`UserSettings.$debugChance_missionHunt`, lines 5571 and 5592) or a save, nobody can tell that apart from "a mission was created and then aborted or removed". With debug on, the log would show `create_mission` for that mission ID, or `$MissionContact_Tries`.
+- Whether the shipyard menu or refit changes the station's attention level enough to fire `K_DepartStation` (EM 12224-12245). That would only delete offers with no mission, not missions.
+- Whether the offer seen now is the same offer or a new one for the same target (made by reopening the convo).
+- The "time left" text: Lua uses `60 * 60 * 60` (60 h) instead of 3600 (Lua 239-241). Since 60 h is a whole number of hours, `%M:%S` probably still shows the right rolling-hour countdown, if `ConvertTimeString` `%M` means minutes within the hour. Not checked.
+- Which three accepts filled the limit.
