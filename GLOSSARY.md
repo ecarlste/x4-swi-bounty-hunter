@@ -200,6 +200,10 @@ _Avoid_: Bookmark, chapter, timestamp
 
 ## Releases
 
+**Launch**:
+The Premiere of episode 1, the series' start. Only episode 1 must be recorded by then; each later stage's features must be ready before the first session that needs them.
+_Avoid_: Release (that's the extension's), first episode (when the date is meant)
+
 **Display name**:
 "No Disintegrations - SWI Bounty Hunting": the extension's name for players, in `content.xml`, on Nexus and in showcase titles. It can change; the internal id `swibh` never does.
 _Avoid_: Mod name (ambiguous with `swibh`), series name
