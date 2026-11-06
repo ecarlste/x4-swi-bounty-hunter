@@ -62,6 +62,20 @@ _Avoid_: Hostile escort
 Paying a target's wingman, through a contact before the strike, to desert. A wingman bought out always deserts at the wing roll.
 _Avoid_: Bribe, payoff
 
+## Ships
+
+**Capture**:
+Taking a ship for the player by making its crew bail, or by boarding it, then claiming it with a marine, who flies it until a character or a better pilot takes over. Fair game is a hunt's target, its loyal wingmen and any pirate. Capturing a hunt's target counts as killing it.
+_Avoid_: Steal (in rules text), salvage, claim (that's only the last step)
+
+**Build**:
+A named loadout for one hull that ships with the extension: a **stock build** (one the player flies, or a placeholder until a character's author picks theirs) or a **homage build** (designed by the author whose character flies that ship, kept in the extension for good, and never an exact copy of an earlier one).
+_Avoid_: Loadout (that's any ship's equipment, in the game's sense), BH loadout, fit
+
+**Refit**:
+A contact's service that brings a ship to one of their builds: it flies to the contact's faction wharf, docks, gets the build's equipment, repairs and bounty-hunter paint, then undocks and resumes its orders. A contact only offers builds its faction has the equipment for.
+_Avoid_: Outfit, upgrade, wharf refit (that's the game's own)
+
 ## Logging
 
 **Log event**:
@@ -139,7 +153,7 @@ A decision the game holds open for weeks (the next ship, a base, which faction's
 _Avoid_: Story-beat poll
 
 **Dream ship**:
-The ship and loadout a character's author picks from a fixed list: the goal of that character's thread.
+The ship a character's author picks from a fixed list, flown with their homage build: the goal of that character's thread.
 _Avoid_: Wishlist ship
 
 **Death counter**:
@@ -167,11 +181,11 @@ _Avoid_: Bookmark, chapter, timestamp
 _Avoid_: Mod name (ambiguous with `swibh`), series name
 
 **Pre-release**:
-A testing build of the extension for us and a few testers; it may need a new game.
+A testing version of the extension for us and a few testers; it may need a new game.
 _Avoid_: Beta, alpha
 
 **Release**:
-A public build of the extension on Nexus or Steam Workshop; it must work on existing saves.
+A public version of the extension on Nexus or Steam Workshop; it must work on existing saves.
 _Avoid_: Launch (that word is for the series)
 
 ## Mods
