@@ -117,6 +117,7 @@ Ordered by importance. "Way" = how to reach the test conditions (a, b, c above).
 | T18 | Bounty-like vanilla missions in SWI | a (look at offers) | S1, S2 |
 | T19 | Sanction on a wing leader: wing detach, escorts, relation | b + c (H4/H5 to place a leader target; log rep); detach logic automatable | S2 |
 | T20 | Engagement log events for the player's wing | automated (`engagement`) + playtest for load, ship change, ship loss and the hook unknowns | S2 |
+| T21 | Rename a wingman's pilot from a script | c (Lua call on a live NPC) | S1 |
 
 **Automated (`make game-test`, [tests/game/README.md](tests/game/README.md)):** T01's cap logic (`t01_pay_cap`), plus a `smoke` test that SWI and EM are loaded. Its test gamestart (SWI's showcase galaxy, god and jobs off) and runner could also take, as new tests in `md/swibh_tests.xml`: T11 (`create_ship` for `indibhg`; spawn and log what appears), T12 (built: the test extension carries the patch, the runner judges it as `t12_diff_patch`), T17 (file writing with `debug_to_file`; the runner already passes `-scriptlogfiles`), and parts of T02 (EM's reward libraries called with a spawned target, as T01 does). The rest need a live universe, the stock start, a conversation or the UI, so stay manual.
 
@@ -129,7 +130,7 @@ Run order differs from importance: S0 first, because the helper's logging and pa
 | Session | Start from | Tests | Saves to make |
 | --- | --- | --- | --- |
 | S0 Environment | Custom start, anywhere | T12, T17 (file writing only) | none |
-| S1 Stock BHG start | New Bankrupt Bounty Hunter game, helper loaded but only read-only cues (H8, H9, H13) | T07, T15, T06 part 1, T17, T18, T03 if a wharf is in reach | `test-S1-start` (right after load), `test-S1-60min`, `test-S1-120min` |
+| S1 Stock BHG start | New Bankrupt Bounty Hunter game, helper loaded but only read-only cues (H8, H9, H13) | T07, T15, T06 part 1, T17, T18, T21, T03 if a wharf is in reach | `test-S1-start` (right after load), `test-S1-60min`, `test-S1-120min` |
 | S2 Guild hunts | Custom start in Milagro (Bounty Hunters HQ), see S2 setup | T03, T02, T04, T16, T19, T20, T01, T13, T18 | `test-S2-start`, `test-S2-offers`, `test-S2-SM-accepted`, `test-S2-L-accepted`, `test-S2-L-destroyed` |
 | S3 Police bounty | Custom start in Hutt Cartel space (or `test-S1-60min` + H2/H3) | T05 | `test-S3-start`, `test-S3-licence` |
 | S4 Hunter spawns | `test-S2-start` (or `test-S1-60min`) + helper | T10, T11, T06 part 2 | `test-S4-start` |
@@ -347,6 +348,19 @@ Run order differs from importance: S0 first, because the helper's logging and pa
 - **Automated (`make game-test`, test `engagement`):** the player's ship and one wingman (`t65b_xwing_macro`) fight a TIE Advanced (`tie_advanced_macro`, shielded and about an even match for the X-wing) in turns (the TIE attacks the player's ship while the wingman holds, then the wingman attacks the holding TIE), first registered as a hunt's target, then another in no hunt. Passes when each fight closes one engagement with reason `quiet`, a hit taken by the player's ship and one dealt by the wingman, and the hunt key only on the first. Then `tools/log/game-check.ts` reads the same two engagements from `debuglog.txt` with the log parser. The INFO lines give hit counts and durations.
 - **Playtest (the test gamestart can't do these: it can't save, load or change ship, and losing the player's ship ends the run):** with an engagement open (fire on a hostile and stop), (1) load a save: the debug log gets `engagement.end` with `"reason":"load"`; (2) dock and take the pilot seat of another ship within the quiet gap: `"reason":"shipChange"`; (3) lose the player's ship mid-fight: `"reason":"shipLost"`. Also: (4) a fight with ~10 wingmen (hit counts per minute, frame rate); (5) whether turret hits and missiles show in the counts (a missile-only or turret-only ship); (6) a wing with a carrier and drones: docked fighters and drones must not appear in `ships`; (7) whether 20 s splits fights you'd call one (missile boats, long passes).
 - **Pass:** every reason appears as described and the unknowns are written into research/combat-hooks.md.
+
+### T21 Rename a wingman's pilot from a script
+
+- **Question:** can a script give an NPC pilot (the person, not the ship) a new name that shows everywhere and survives a save and load? The stage 1 **rename pilot** action needs it, so a character's name can be set after its pick ([Extension scope at launch](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/11)).
+- **Why it's open:** the stock UI renames ships and the player only (`SetComponentName(player, text)`, vanilla 8.00 `ui/addons/ego_detailmonitor/menu_playerinfo.lua:1039`; ships and stations through `menu_map.lua` and `menu_station_configuration.lua`). It has no NPC rename. MD's `set_object_name` takes an `object` (`libraries/common.xsd:33741`), and an NPC is an entity, so it may not apply.
+- **Setup:** S1. One of the BHG start's R-41s (T07) and its pilot.
+- **Steps:**
+  1. With a small test Lua (or the debug console), call `SetComponentName` on the pilot's component id with "Test Pilot".
+  2. Check the name on the ship's info, the crew list, the map's tooltip and the pilot's comms.
+  3. Save, load and check again.
+  4. If the Lua call does nothing, try MD `set_object_name` on the pilot entity and record any script error.
+- **Record:** which call works, where the new name shows and where the old one stays, and whether it survives the load.
+- **Pass:** one call renames the pilot everywhere, and the name survives the load. **Fail:** neither call works, so the name goes in the edit only, and the rename pilot action is dropped.
 
 ## Results
 
