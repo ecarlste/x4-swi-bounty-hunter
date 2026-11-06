@@ -1,6 +1,6 @@
 # Licence costs and the next hunting ship (SWI 0.90)
 
-Read from files on 2026-11-04 for playtest #4 ([../playtests/stock-bounty-loop.md](../playtests/stock-bounty-loop.md), the HWK-290 question). Nothing here was tested in game. Tags: [read] = seen in the files; [inferred] = follows from what was read but not checked in game.
+Read from files on 2026-11-04 for playtest #4 ([../playtests/stock-bounty-loop.md](../playtests/stock-bounty-loop.md), the HWK-290 question). Nothing here was tested in game. SWI 0.91 HF1 changes no ship price; its licence changes are marked "0.91" below ([swi-0.91-diff.md](swi-0.91-diff.md)). Tags: [read] = seen in the files; [inferred] = follows from what was read but not checked in game.
 
 ## Short answer
 
@@ -35,7 +35,7 @@ The player block gets the civilian ship and civilian equipment licence of: galem
 | Sienar Fleet Systems (`sienar`) | 250 k | 2 M | 1 M | 10 M | 0 |
 | Rendili Drive Yards (`rendili`) | 100 k | 2 M | 500 k | 6 M | 0 |
 | Incom Corporation (`incom`) | 100 k | 2 M | 1 M | 3 M ("Unique Ships") | 0 |
-| Mon Calamari Shipyards (`moncal`) | 150 k | 2 M | 10 k | 10 M | 0 |
+| Mon Calamari Shipyards (`moncal`) | 150 k | 2 M | 10 k (0.91: 1 M) | 10 M | 0 |
 | TransGalMeg Industries (`transgalmeg`) | 150 k | 3 M | 500 k | 10 M | 0 |
 | Kuat Drive Yards (`kuat`) | 2 M | 5 M | 10 M | 40 M | 0 |
 | Corellian Engineering Corp. (`corellia`) | 100 k | 5 M | 500 k (hidden) | 500 k (hidden) | 0 |
@@ -53,13 +53,15 @@ Names in game: "Corporation Military Equipment Access", "Corporation Military Sh
 | militaryequipment | Bounty Hunters' Guild Unique Equipment Access | **1 M** | -10 |
 | militaryship | Bounty Hunters' Guild Unique Ship Access | **3 M** | -10 |
 
+SWI 0.91 adds "Bounty Hunters' Guild Advanced Equipment Access" (capital equipment, 500 k, -10) and "Advanced Ship Access" (capital ships, 6 M, hidden). No ship lists the Guild as a capital-ship seller yet ([swi-0.91-diff.md](swi-0.91-diff.md)).
+
 No precursor and no citizenship gate. Guild military ships: HWK-290 (~992 k), Firespray-31 (~1.49 M), ST-70 Razor Crest (~1.07 M), Dynamic-class freighter (~888 k). Guild civilian ships (owned licence): N-1 Modified Starfighter (~189 k), S-161 "Stinger" XL (~1.13 M), YV-666 (~856 k). The Guild has five wharfs (`god.xml` 2974-3026).
 
 ### Pirates (no ceremony, no citizenship)
 
 | Faction | Civ. equip. | Civ. ships | Mil. equip. | Mil. ships ("Refurbished Military Ships Access") | Capital | Rep |
 |---|---|---|---|---|---|---|
-| Pirate Syndicates (`valarian`) | 50 k (owned) | 300 k (owned) | 500 k | **1 M** | 500 k each | -10 |
+| Pirate Syndicates (`valarian`) | 50 k (owned) | 300 k (owned) | 500 k | **1 M** | 500 k each (0.91: ships 2 M) | -10 |
 | Black Sun (`blacksun`) | 50 k | 300 k | 500 k | 1 M | hidden | -10 |
 | Hutt Pirates (`huttpirates`) | 50 k | 300 k | 500 k | 1 M | hidden | -10 |
 | Mandalorian Raiders (`mandoraiders`) | all hidden | | 500 k | 1 M | hidden | - |

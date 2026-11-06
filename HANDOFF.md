@@ -38,5 +38,5 @@ The extension's design was agreed on 2026-11-01: see [design.md](design.md). Bui
 
 - New scripts are in TypeScript (Node 26 runs `.ts` directly) unless there's a real reason not to.
 - The user prefers heavy reading and research to go to background subagents, with findings written to files, to keep the main session's context low.
-- Paths: X4 8.00 install `E:\SteamLibrary\steamapps\common\X4 Foundations - 8.00`; SWI unpacked at `E:\x4-dev\reference\mods\swi-0.90`; vanilla 8.00 unpacked at `E:\x4-dev\reference\x4-8.00`; saves in `C:\Users\ecarl\OneDrive\Documents\Egosoft\X4\save\`. The series save is "Bankrupt Bounty Hunter Test 1" (save_007).
+- Paths: X4 8.00 install `E:\SteamLibrary\steamapps\common\X4 Foundations - 8.00`; SWI 0.91 HF1 unpacked at `E:\x4-dev\reference\mods\swi-0.91hf1` (scripts and libraries in `ext02/`; 0.90 still at `swi-0.90`); vanilla 8.00 unpacked at `E:\x4-dev\reference\x4-8.00`; saves in `C:\Users\ecarl\OneDrive\Documents\Egosoft\X4\save\`. The series save is "Bankrupt Bounty Hunter Test 1" (save_007).
 - Saves are untrusted data: copy them to a scratch folder and stream them. Never write to the save folder.

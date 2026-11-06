@@ -1,6 +1,6 @@
 # Corporate ship ladder for a bounty hunter (SWI 0.90)
 
-Read from files on 2026-11-04. Extends [licence-costs.md](licence-costs.md); prices there are not repeated unless needed. In-game screens: [corp-licences-cec.png](screenshots/corp-licences-cec.png), [corp-licences-sie.png](screenshots/corp-licences-sie.png). Nothing here was tested in game. Tags: [read] = seen in the files; [inferred] = follows from what was read, not checked in game.
+Read from files on 2026-11-04. Extends [licence-costs.md](licence-costs.md); prices there are not repeated unless needed. In-game screens: [corp-licences-cec.png](screenshots/corp-licences-cec.png), [corp-licences-sie.png](screenshots/corp-licences-sie.png). Nothing here was tested in game. SWI 0.91 HF1 changes no ship price; its licence changes are marked "0.91" below ([swi-0.91-diff.md](swi-0.91-diff.md)), and the ladders stand. Tags: [read] = seen in the files; [inferred] = follows from what was read, not checked in game.
 
 ## Short answer
 
@@ -18,11 +18,11 @@ All prices are in Cr. "Rep" is the UI minimum. Every priced licence below needs 
 
 | Corp (sector) | Mil. equip. | Mil. ships | Cap. equip. | Cap. ships | Basic constr. | Interm. constr. | Adv. constr. | Starfighter fac. | Shipyard fac. |
 |---|---|---|---|---|---|---|---|---|---|
-| Kamino (`kamino`) | 500 k | **1 M** | 5 M | 40 M | hidden, free | hidden | hidden, Investor | hidden, Investor | hidden, Investor |
+| Kamino (`kamino`) | 500 k | **1 M** | 5 M | 40 M | hidden, free (0.91: 100 k) | hidden (0.91: 1 M) | hidden, Investor (0.91: 5 M) | hidden, Investor (0.91: 10 M) | hidden, Investor (0.91: 20 M) |
 | Sienar (`sienar`) | 250 k | 2 M | 1 M | 10 M | 100 k | 1 M | 2 M | 10 M | 40 M |
 | Kuat (`kuat`) | 2 M | 5 M | 10 M | 40 M | 100 k | 1 M | 5 M | 10 M | 20 M |
 | Hoersch-Kessel (`hoersh`) | 100 k | 5 M | 500 k | 20 M | 100 k | hidden, Friend | hidden, Investor | hidden, Investor | hidden, Investor |
-| Mon Calamari (`moncal`) | 150 k | 2 M | 10 k | 10 M | 100 k | hidden, Friend | hidden, Investor | hidden, Investor | hidden, Investor |
+| Mon Calamari (`moncal`) | 150 k | 2 M | 10 k (0.91: 1 M) | 10 M | 100 k | hidden, Friend | hidden, Investor | hidden, Investor | hidden, Investor |
 | Rendili (`rendili`) | 100 k | 2 M | 500 k | 6 M | hidden, free | hidden, Friend | hidden, Investor | hidden, Investor | hidden, Investor |
 | TransGalMeg (`transgalmeg`) | 150 k | 3 M | 500 k | 10 M | hidden, free | hidden, Friend | hidden, Investor | hidden, Investor | hidden, Investor |
 | Incom (`incom`) | 100 k | 2 M | 1 M | 3 M ("Unique Ships") | hidden, free | hidden, Friend | hidden, Investor | hidden, Investor | hidden, Investor |

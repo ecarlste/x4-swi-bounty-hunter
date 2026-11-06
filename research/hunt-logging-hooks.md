@@ -2,6 +2,8 @@
 
 Facts for design.md feature 1 (`[swibh-hunt] {json}` per hunt). EM = SWI 0.90 `ext/md/kuertee_emergent_missions.xml`, RAP = `ext/md/kuertee_professions.xml` (both under `E:\x4-dev\reference\mods\swi-0.90`). Schema: 8.00 `base/libraries/md.xsd` and `common.xsd`. Tags: [read] = seen in files; [inferred] = reasoning; **unverified** = to confirm in game.
 
+**SWI 0.91 HF1:** the Hunt cues are identical, 5 lines later in EM (`Mission_Hunt` 5256), and all four of swibh's `sel`s match one node in 0.91's EM. RAP's sanction cues are unchanged (about +19 lines). See [swi-0.91-diff.md](swi-0.91-diff.md).
+
 Builds on, doesn't repeat: [wing-split-facts.md](wing-split-facts.md) §6 (Resolve hook option, field table), [hunt-pay-ael-112.md](hunt-pay-ael-112.md) (the three reward rolls), [save-check-ael-112.md](save-check-ael-112.md) (cue vars as saved), [cap-fix-facts.md](cap-fix-facts.md) (cap library, diffs reach saves), [swi-bounty.md](swi-bounty.md) §4.
 
 All `$X` below are on the hunt cue instance `$Cue_Mission` (`Mission_Hunt`, EM 5251, `namespace="this"`, so its sub-cues' `$X` and Resolve's locals like `$DamageAndKillsList` land on it too) unless noted.

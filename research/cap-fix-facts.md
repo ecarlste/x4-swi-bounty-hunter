@@ -2,6 +2,8 @@
 
 Facts for designing the fix to SWI's L/XL hunt pay cap. `EM` = SWI 0.90 `ext/md/kuertee_emergent_missions.xml` (unpacked at `E:\x4-dev\reference\mods\swi-0.90`). Tags: [read] = seen in files, [web] = from a web source, [inferred] = reasoning.
 
+**SWI 0.91 HF1:** everything here still holds. The cap library and the Hunt are identical, 5 lines later (library 7345-7382, Hunt cap call 5689; Mayday, Escort and Sector Raid calls 703, 1364, 3005, still commented out). See [swi-0.91-diff.md](swi-0.91-diff.md).
+
 ## 1. `$rewardCap_mult`: a local, not a setting
 
 - It is a **local variable inside the library** `CapRewardBasedOnMissionTarget` (EM 7340–7377). It is not in `UserSettings`. [read]

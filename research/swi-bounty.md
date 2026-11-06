@@ -6,6 +6,8 @@ Scope: everything in Star Wars Interworlds 0.90 (X4 8.00) that touches bounty hu
 
 Conventions: **[read]** = read directly in code. **[inferred]** = my reading of how the pieces combine, or depends on engine/vanilla behaviour I did not verify. Line numbers are for SWI 0.90 files.
 
+**SWI 0.91 HF1:** the hunt, the pay cap and the sanctions are unchanged; the few changes below are marked "0.91". Details and line offsets: [swi-0.91-diff.md](swi-0.91-diff.md).
+
 Text refs: SWI ships no `0001-L044.xml`; English text is in `ext/t/0001.xml` (page 11513 = Emergent Missions, page 161815 = Reputations and Professions, page 999840 = SWI).
 
 ---
@@ -315,7 +317,7 @@ Also `bountyhunters_garrison_m`: 12 galaxy-wide, 3 per sector, at bountyhunters 
 `ext/aiscripts/order.sw.bountyhunter.fighters.xml` (order `SWBountyHunterFighters`, category internal):
 - Wait 1–2 min.
 - Pick `global.$Bounties.$pilots.random.ship` (the EM tracker in section 3).
-- Skip if null, L/XL, or if its commander is L/XL.
+- Skip if null, L/XL, or if its commander is L/XL. (0.91: also skip a docked target or a station.)
 - Otherwise `run_script order.fight.attack.object` with primary target = that ship, `pursuetargets=true`, `checkrelation=false`, `allowothertargets=true`, `forceprimarytarget=true`.
 
 [inferred] The script has no loop after the attack. It relies on the default job order restarting when it ends (vanilla behaviour). The hunt is galaxy-wide: a hunter may cross the map for a random target.
@@ -392,7 +394,7 @@ There are **no in-game options** for any kuertee setting in SWI. `sw_gameoptions
 | RAP `$maxInspirationPoints` | 25 | RAP |
 | RAP `$activityMult` | 1 | RAP |
 | RAP `$isNewOfferOnMissionComplete` | false | RAP |
-| RAP `$debugChance` | 100 on a fresh start (actions) and forced 100 during `Init` in SWI | RAP 120, 694–697 |
+| RAP `$debugChance` | 100 on a fresh start (actions) and forced 100 during `Init` in SWI (0.91: 0, no override, patched into saves) | RAP 120, 694–697 |
 
 Debug chat commands exist ("debug rap bh member", "debug em hunt …", "reset emissions"). They need kuertee's `Chat_Window_API`, which SWI does not ship (only referenced in `menu_interactmenu.xpl`). [inferred: unreachable]
 
@@ -504,7 +506,7 @@ Debug chat commands exist ("debug rap bh member", "debug em hunt …", "reset em
 - In SWI the RAP BountyHunter profession accumulates points with no player-visible effect except SSAC "Ranger" standing. [inferred]
 
 **Oddities:**
-- RAP `Init` forces `UserSettings.$debugChance = 100` in SWI during init, and fresh games start at 100 (patch 16 sets 0 only for upgraded saves). Possible debug-log spam. [read]
+- RAP `Init` forces `UserSettings.$debugChance = 100` in SWI during init, and fresh games start at 100 (patch 16 sets 0 only for upgraded saves). Possible debug-log spam. [read] Fixed in 0.91: 0, with a save patch.
 - The hunt list in SWI is galaxy-wide, not station-local, and has no 3 h freshness check (unlike full mod).
 - The BHG description promises "a bounty on your head", but the code delivers one wave of two fighters.
 - The gamestart ship has 4 shields (S P12 ×4) and 2 lasers; the concept doc mentions only "two lasers and basic software".

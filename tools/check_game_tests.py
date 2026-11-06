@@ -12,7 +12,8 @@
 4. Every MD diff (an md/*.xml with a <diff> root) targets a script that exists, and each sel matches
    exactly one node there (X4 skips an operation whose sel matches nothing). X4 patches by path:
    md/<name> patches the game's md/<name>; extensions/<folder>/md/<name> patches that extension's
-   (starwarsmod_m1 is SWI, unpacked at SWI_UNPACKED/ext; a DLC folder sits next to X4_UNPACKED).
+   (starwarsmod_m1 is SWI, unpacked at SWI_UNPACKED/ext02, then /ext for 0.90; a DLC folder sits next
+   to X4_UNPACKED).
 
 Reads the game's and SWI's files as data only. Paths come from test.config (or the environment):
 X4_PATH (the 8.00 install), X4_UNPACKED (unpacked vanilla 8.00, the folder with libraries/md.xsd;
@@ -193,22 +194,28 @@ def library_ids(dirs, filename, element):
 SWI_FOLDER = 'starwarsmod_m1'
 
 
+def swi_ext_dirs(swi):
+    """SWI's unpacked catalogs, the one X4 loads last first: 0.91 moved its scripts and
+    libraries from ext_01 (ext/) to ext_02 (ext02/), and a later catalog overrides an earlier one."""
+    return [d for d in (os.path.join(swi, 'ext02'), os.path.join(swi, 'ext')) if os.path.isdir(d)] if swi else []
+
+
 def md_diff_target(rel, unpacked, swi):
     """The unpacked MD script the diff at <rel> (relative to the extension) patches, or None.
     An MD diff in our own md/ only reaches the game's scripts: 8.00 loads a diff named after
     another extension's script as a new script and ignores its <diff> root (T12, 2026-11-02)."""
     parts = rel.replace(os.sep, '/').split('/')
     if len(parts) == 2 and unpacked:
-        base = unpacked
+        bases = [unpacked]
     elif len(parts) == 4 and parts[0] == 'extensions':
         if parts[1] == SWI_FOLDER:
-            base = os.path.join(swi, 'ext') if swi else None
+            bases = swi_ext_dirs(swi)
         else:
-            base = os.path.join(os.path.dirname(unpacked), parts[1]) if unpacked else None
+            bases = [os.path.join(os.path.dirname(unpacked), parts[1])] if unpacked else []
     else:
         return None
-    path = os.path.join(base, 'md', parts[-1]) if base else None
-    return path if path and os.path.exists(path) else None
+    paths = [os.path.join(b, 'md', parts[-1]) for b in bases]
+    return next((p for p in paths if os.path.exists(p)), None)
 
 
 def check_md_diffs(unpacked, swi):
@@ -246,8 +253,7 @@ def check_ids(kind, names, unpacked, swi):
     dirs = []
     if unpacked and os.path.isdir(unpacked):
         dirs += glob.glob(os.path.join(os.path.dirname(unpacked), '*', 'libraries'))
-    if swi and os.path.isdir(os.path.join(swi, 'ext', 'libraries')):
-        dirs.append(os.path.join(swi, 'ext', 'libraries'))
+    dirs += [os.path.join(d, 'libraries') for d in swi_ext_dirs(swi) if os.path.isdir(os.path.join(d, 'libraries'))]
     if not dirs:
         return ['%ss not checked: X4_UNPACKED and SWI_UNPACKED not found' % kind], []
     ids = library_ids(dirs, kind + 's.xml', kind)
