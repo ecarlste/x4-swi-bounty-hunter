@@ -1,0 +1,68 @@
+# Episode 1 vs per-episode engagement (2026-11-06)
+
+Question ([#65](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/65)): for a new channel launching a story-driven gaming series, does growth come more from a strong first episode or from steady engagement in every episode? This covers how YouTube treats a new channel's first upload, what a cliffhanger and a comment call to action in episode 1 are worth, what launching with no banked videos costs, and the cadence in the first weeks.
+
+The plan this is for ([concept.md](../concept.md#format)) is one 10–20 min story video a week as a Premiere on a fixed day, no Shorts, and a casting call video that goes up with episode 1. [Saving Shaddo (#50)](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/50) dropped the 3-video bank. In that plan, episode 1 covers the dirty jobs and ends on the unnamed newbie: a cliffhanger that opens the casting call.
+
+Labels match [youtube-channel.md](youtube-channel.md). **[Official]** means YouTube Help, the YouTube Blog, or a YouTube employee on Creator Insider. **[Reported official]** means a YouTube statement we have only through press or blog transcripts of a video we could not play ourselves. **[Creator]** means a named creator or strategist speaking for themselves. **[Folklore]** means advice with no source behind it. **Inference:** marks our own reasoning, which no source states.
+
+## 1. How YouTube treats a new channel's first upload
+
+- **[Official] No channel-level boost or penalty is described anywhere.** YouTube's own account of the recommendation system names clicks, watch time, sharing, likes, dislikes and "valued watchtime". Valued watch time is measured "through user surveys that ask you to rate the video you watched from one to five stars". Only 4–5 star ratings count, and a model predicts the answer for viewers who weren't surveyed ([YouTube Blog, Cristos Goodrow, 2021-09-15](https://blog.youtube/inside-youtube/on-youtubes-recommendation-system/)). How YouTube Works adds viewing behaviour, subscriptions, satisfaction surveys and "the reputation and the quality of a channel" ([How YouTube Works: recommendations](https://www.youtube.com/howyoutubeworks/product-features/recommendations/)). Neither source says anything about a channel's first video.
+- **[Reported official] A first upload is matched by topic, not by channel history.** Todd Beaupré spoke on Creator Insider ("YouTube Algorithm 2026 - What Creators Need to Know", 2026-09-01, [video](https://www.youtube.com/watch?v=rHLjxrbXmmY)). He said: "When a new channel publishes for the first time, there are zero viewers who have that channel in their history". In that case YouTube looks at "the user's topical preferences and what we understand about what this video is about". "And if we don't [find matching viewers], then maybe that video just won't get more impressions." These quotes come from transcripts on [OutlierKit](https://outlierkit.com/resources/how-youtube-recommends-new-channels/) and [PPC Land](https://ppc.land/subscribers-skip-90-of-uploads-in-their-feed-youtube-director-says/).
+- **[Reported official] The early window isn't final.** In the same video he said videos reach "people who've never watched the channel before" within the first hour, and "We're not basing decisions just on those initial moments" ([PPC Land](https://ppc.land/subscribers-skip-90-of-uploads-in-their-feed-youtube-director-says/)). That fits the 2020 statement in [youtube-channel.md](youtube-channel.md) §1 that YouTube judges each video on its own and doesn't judge a channel as a whole from a few videos.
+- **[Reported official] History helps the later episodes, not the first.** Beaupré (as paraphrased by PPC Land) said viewers who have watched a channel and its topic before rank its new videos higher. Subscribing "isn't as strong as a lot of people think", and "even your best videos, 90% of the time, your subscribed audience isn't deciding to watch."
+- **[Official] Hype isn't available at launch.** Viewers can hype a video for 7 days after it's published, but only on "Channels in the YouTube Partner Program with 500 to 500,000 subscribers" ([Help: hype eligibility](https://support.google.com/youtube/answer/15509925)). The new channel has neither the subscribers nor the Partner Program membership.
+- **[Folklore]** "The first video sets your channel's fate", "upload your best video first", "a new channel uploading right after creation looks like spam" ([example](https://www.inreels.ai/blog/warm-up-youtube-channel-before-first-upload)). No YouTube source backs any of these.
+
+**Inference:** episode 1 gets no special algorithmic treatment. It's tested like any video, on viewers whose tastes match its topic (space sims, X4, Star Wars). Its weight comes from the series: it's the video every new viewer is sent back to, through the playlist, the casting call and "start here" links. So it is the most-watched entry point for as long as the series runs, not a one-shot launch event. Every later episode starts with a small advantage, the viewers who now have the channel in their history, and is still judged on its own.
+
+## 2. A cliffhanger and a comment call to action in episode 1
+
+- **[Official] The ending has to satisfy, not just hook.** Valued watch time counts only videos rated 4–5 stars ([Goodrow 2021](https://blog.youtube/inside-youtube/on-youtubes-recommendation-system/)). We found no YouTube statement on cliffhangers as such.
+- **[Official] The opening is measured; the ending isn't.** Audience retention's "Intro" key moment is the share of viewers "still watched your video after the first 30 seconds". YouTube's advice for a weak intro is to make the thumbnail and title "better reflect your video content" and to "Modify the first 30 seconds" ([Help: key moments](https://support.google.com/youtube/answer/9314415)). Spikes and dips show which parts were rewatched or skipped.
+- **[Official] End screens carry the call to action.** They take up the last 5–20 seconds and can point to a video, a playlist or a subscribe button. YouTube's best practice is to use calls to action that encourage clicks on each element. Viewers can hide end screens, and they don't show on mobile web ([Help: end screens](https://support.google.com/youtube/answer/6388789)).
+- **[Official] Series and familiar formats are how a channel grows its regular viewers.** YouTube Help lists "Upload consistent content about similar topics, or in a familiar format", community posts, comments and live Premieres. It also cites "Channels who create popular series that keep viewers coming back to watch more", and channels with consistent hosts ([Help: returning and new viewers](https://support.google.com/youtube/answer/10246996)).
+- **[Official] Comments aren't a named ranking signal.** None of YouTube's signal lists above mention comments. We found no official statement that comment count raises a video's reach. Claims that it does are third-party ([skeptical summary](https://www.commentshark.com/blog/do-youtube-comments-affect-the-algorithm)).
+- **[Creator]** Rene Ritchie (now YouTube's Creator Liaison) is reported recommending cliffhangers, in a podcast summary only ([Grey Matter](https://www.greymatter.show/episodes/s1e73-rene-ritchie-sage-advice-for-youtube-content-creators)). Paddy Galloway, a growth strategist for large channels, said a series that's "an Episodic 12345 ... generally speaking, that doesn't work amazingly well on YouTube". He suggests grouping content into "three or four main series" ([Creator Science #152, 2023-06-13](https://creatorscience.com/podcast/paddy-galloway/)).
+
+**Inference:** in this plan the cliffhanger's value isn't algorithmic. It turns a viewer into a participant: the unnamed newbie is the question, and the casting call is where viewers answer it. That's worth more than a comment count, because the comments are the game's input (the pick scores). Three practical points follow.
+
+1. The call to action has to point at the **casting call video**, not at episode 1's own comments. Stories live as top-level comments there ([concept.md, Viewer interaction](../concept.md#viewer-interaction)). So the call goes in an end-screen element linking the casting call, a pinned comment, and the description. Mobile web viewers don't see end screens, so the pinned comment and description are needed too.
+2. The episode has to end satisfied as well as open: the dirty jobs done, Shaddo saved, a reward paid, then the newbie. An ending that only withholds risks the 4–5 star ratings that valued watch time counts.
+3. Galloway's warning applies to every later episode. A viewer who lands on episode 6 cold needs a hunt that stands on its own (one hunt taken to paid, as Format already says). So per-episode quality isn't optional either.
+
+## 3. The cost of launching with no banked videos
+
+- **[Official] Breaks aren't penalised.** "YouTube's search and discovery system doesn't intentionally penalize creators for taking breaks." "The algorithm follows the audience, so pay attention to the audience and keep them updated." The same page recommends batching to have "some backup videos if you miss a week", and scheduling videos ahead ([Help: well-being tips](https://support.google.com/youtube/answer/12930055)).
+- **[Official] A Premiere stays on the channel afterwards as a regular upload.** Viewers who set a reminder are notified about 30 minutes before and again at the start ([Help: Premieres](https://support.google.com/youtube/answer/9080341)).
+- **[Creator]** Matt Gielen (Little Monster Media) says inconsistency hurts growth. His advice for a two-week vacation was "do two videos in advance" ([Tubefilter, 2020-10-08](https://tubefilter.com/2020/10/08/creator-news-burnout-youtube-algorithm/)).
+
+**Inference:** going without a bank costs no algorithm penalty. The costs are practical:
+
+- **Schedule risk.** A bad recording week, illness or a broken mod update means a missed Premiere in the weeks when the audience is smallest and least loyal. The Help page's remedy is the bank itself.
+- **No second video to watch.** A viewer who enjoys episode 1 in week 1 has nowhere to go but the casting call. Most new viewers won't subscribe (Beaupré), so whether they come back depends on episode 2 being recommended to them later.
+- **No room to fix episode 1.** A bank lets the first public video be the best of three. Without one, episode 1 is the first edited video ever made for this channel.
+
+The plan already softens the second cost: the casting call goes up with episode 1, so there are two videos on day one, and the casting call is the place the cliffhanger sends people. A cheaper fallback than a full 3-video bank is to bank one: finish episode 2 before episode 1 goes public. That covers one bad week and keeps the cliffhanger unchanged. Raw recordings and showcase videos don't fill the gap; they're a different audience ([youtube-channel.md](youtube-channel.md) §3).
+
+## 4. Cadence in the first weeks
+
+- **[Reported official] Upload frequency isn't a ranking factor, as several write-ups of Beaupré's 2026 remarks put it** ([OutlierKit summary](https://outlierkit.com/resources/how-youtube-recommendations-work/)). We couldn't find a verbatim quote, so this is weaker than the quotes above. The official guidance we did find is about consistency of topic, format and host, not of schedule ([Help: returning and new viewers](https://support.google.com/youtube/answer/10246996)).
+- **[Creator]** Gielen recommends at least weekly, scaling up only if quality holds. He says the algorithm rewards audience consistency over upload cadence: one video a week watched by 50% of subscribers beats four watched by 30% each ([Tubefilter, 2020](https://tubefilter.com/2020/10/08/creator-news-burnout-youtube-algorithm/)). An independent study of 2,543 upload gaps across 53 channels found no evidence that shorter gaps raise a video's chance of breaking out ([Overseer](https://www.overseeros.com/blog/youtube-upload-frequency-study); a vendor blog, so weak).
+- **[Folklore]** "Launch with 5–7 videos over the first 2–3 weeks", "post daily at first". There's no YouTube source for either.
+
+**Inference:** one Premiere a week on a fixed day is enough. Nothing official says the first weeks need a faster pace, and the fixed day is what returning viewers learn. The thing to protect in weeks 1–4 is not missing a week, which is the bank question in §3, not the frequency question.
+
+## Answer
+
+**Inference, drawn from the sources above:** it's both, but they do different jobs, and neither is a launch boost.
+
+- **Episode 1** is the series' permanent front door and the only episode with no channel history behind it. Put the effort into its first 30 seconds (it's measured) and its title and thumbnail, which decide the topic matching. Its ending should satisfy before it opens the casting call.
+- **Every later episode** is judged on its own and is somebody's first video. Each one needs its own hook and its own payoff (one hunt taken to paid). Growth in returning viewers comes from the series being consistent, not from any one video.
+- **No bank:** there's no algorithm cost. The cost is schedule risk in the weeks with the smallest audience. Banking just episode 2 covers it cheaply.
+
+## Gaps
+
+- We found no YouTube source on cliffhangers, numbered series or episode-to-episode view decay. We have only the creator remarks above. A data study of episode-by-episode view decay in gaming series would settle how much of a series' views episode 1 takes. We didn't find one.
+- The Beaupré quotes come from third-party transcripts. We didn't watch the video.
