@@ -10,7 +10,7 @@ A bounty hunting system for Star Wars Interworlds 0.90 on X4 8.00 (moving to 0.9
 
 - Internal ID and folder: `swibh` (plain, so the display name can change without breaking saves). Depends on `SW Interworlds`.
 - Not part of A Pirate's Life for now. That's a 9.x mod with no SWI profile yet ([research/cap-fix-facts.md](research/cap-fix-facts.md)). Keep it in mind for when SWI reaches 9.x.
-- Works on existing saves. A diff patch on SWI's MD libraries takes effect when a save loads (proven by T12, on a new game and an existing save). A pre-release may need a new game; a release on Nexus or Steam Workshop must work on existing saves (decided 2026-11-01).
+- Works on existing saves. A diff patch on SWI's MD libraries takes effect when a save loads (proven by T12, on a new game and an existing save). A pre-release may need a new game; a release on Nexus must work on existing saves (decided 2026-11-01; release criteria in [#13](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/13)).
 
 ## Features, in build order
 
