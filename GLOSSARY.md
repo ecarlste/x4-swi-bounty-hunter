@@ -153,3 +153,21 @@ _Avoid_: Beta, alpha
 **Release**:
 A public build of the extension on Nexus or Steam Workshop; it must work on existing saves.
 _Avoid_: Launch (that word is for the series)
+
+## Mods
+
+**Series mod**:
+A mod chosen for the playthrough and listed as part of the series setup. What a series mod needs (DLC, other mods) is installed but isn't a series mod itself, and the extension requires only what it uses, never a series mod by default.
+_Avoid_: Required mod, dependency (that's what the extension declares)
+
+**Locked mod**:
+A mod that changes the universe, jobs, factions or ships, or leaves things in the save, so it is installed before the series' first game starts and stays for the whole run.
+_Avoid_: Core mod, permanent mod
+
+**QoL mod**:
+A mod that only changes the UI or the information shown, so it can be added or removed mid-run.
+_Avoid_: UI mod (some locked mods have UI too)
+
+**Version lock**:
+The point, on the day the series is ready to launch, when the newest SWI and series mods have passed a short playtest, the docs are updated, and every version is fixed for the run.
+_Avoid_: Freeze
