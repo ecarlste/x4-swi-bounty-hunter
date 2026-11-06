@@ -74,6 +74,18 @@ _Avoid_: Parser (that's the shared module extractors use)
 One of the series arc's three parts (Broke, Making a name, Big game), each set by the largest target size the player takes on.
 _Avoid_: Act, chapter, season
 
+**Rung**:
+One target size on the hunting ladder (S, M, L, XL, then the nemesis): its wing configs, and the spine beat of the first hunt at that size taken to paid. An aim, never a gate. A stage spans one or more rungs.
+_Avoid_: Tier, level
+
+**Wing config**:
+The ship Bobby flies plus the ships of his wing, as one of a rung's three steps: **entry** (can just take that size), **established** (takes it reliably) or **top** (overmatches it, ready for the next size).
+_Avoid_: Loadout (that's one ship's equipment), fleet setup
+
+**Reserve pilot**:
+A character already picked who has no ship yet and rides along until a seat comes free.
+_Avoid_: Bench, spare
+
 **Spine beat**:
 A fixed story moment the series plays toward, such as the debt paid or the first target of a new size taken to paid. It lands when the game gets there, never on a schedule.
 _Avoid_: Plot point, milestone
