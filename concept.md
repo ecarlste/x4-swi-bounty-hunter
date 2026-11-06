@@ -44,7 +44,7 @@ Decided 2026-11-03 (grilling, [#3](https://github.com/ecarlste/x4-swi-bounty-hun
 
 - **Emergent, with a light spine.** The story is what the hunts produce, framed in the edit. A short spine of fixed beats gives each stage a goal; a beat lands when the game gets there, never on a schedule.
 - **Bobby the Fat** keeps the stock name and backstory: debt from missed contract deadlines, ship sold, 500 Cr in Hutt space.
-- **Shaddo the Hutt** holds the bounty: an invented creditor (not a canon Hutt), never seen in game. The bounty is debt collection, not a vendetta. The thread is told, not coded: any Hutt or pirate attack is framed as his collectors, starting with the R-41 ambush at the start, and the debt is a running total on screen. Paying it ends the collection, not Shaddo: he stays in the background as a possible client, rival or nemesis.
+- **Shaddo the Hutt** holds the bounty: an invented creditor (not a canon Hutt), never seen in game. The bounty is debt collection, not a vendetta. The thread is told, not coded: any Hutt or pirate attack is framed as his collectors, starting with the R-41 ambush at the start, and the debt is a running total on screen. Paying it ends the collection, not Shaddo: he stays in the background as a possible client, rival or nemesis. Stage 1's jobs for him and his rescue may bring him into the game: [Saving Shaddo: the scripted rescue](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/50).
 - **The debt** is sized so stage 1 lasts about 10 story videos, from the pay data of [Playtest the stock bounty loop](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/4). It's fixed before episode 1 and never changed on screen.
 - **Narration:** you, playing, as yourself; the in-character framing (Bobby's log lines, Shaddo's messages) goes on title cards in the edit.
 - **Every loss is canon.** Ejecting, retreating and rescue ships are all on camera, and recovering is part of the story. The only reload in the series is a true game over (stranded and out of air), and it adds one to an on-screen **death counter**. No reloading to try a fight another way: tactics get tried in the test game.
@@ -53,16 +53,33 @@ Decided 2026-11-03 (grilling, [#3](https://github.com/ecarlste/x4-swi-bounty-hun
 
 Taking the first target of a new size to paid is the beat that moves the series up.
 
-1. **Broke:** S targets, solo, to pay Shaddo. Opens with the ambush and the debt stated; ends when the debt is paid.
-2. **Making a name:** M then L targets, a better ship, the first wingmen, guild ranks.
-3. **Big game:** XL targets, ending with the nemesis in an XL or an SWI dreadnought (XXL). Post-launch; a sketch only.
+1. **Broke:** S targets and jobs for Shaddo, solo, to pay the debt. Opens with the ambush and the debt stated. Ends with **Saving Shaddo**: a bounty hunter comes after Shaddo and Bobby fights him off. That hunter returns as the nemesis. Shaddo pays with his newest recruit (his worst pilot, the first cast character) in a pirate R-41, plus cash for about 2 N-1 Modifieds or an upgrade. Open: [Saving Shaddo: the scripted rescue](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/50).
+2. **Making a name:** the first wingmen on S targets, then M, then L targets, guild ranks.
+3. **Big game:** XL targets, ending with the nemesis (the hunter from Saving Shaddo) in an XL or an SWI dreadnought (XXL). Post-launch; a sketch only.
 
-The ship and wing for each step are open: [Hunting ladder: ship and wing per target size](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/36), after [What the player can field per target size in SWI](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/35).
+### The hunting ladder
+
+Decided 2026-11-05 (grilling, [Hunting ladder: ship and wing per target size](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/36)). Facts: [What the player can field per target size in SWI](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/35), [research/corp-ship-ladder.md](research/corp-ship-ladder.md), [research/reapers-ship-pack-ships.md](https://github.com/ecarlste/x4-swi-bounty-hunter/blob/research/reapers-ship-pack-ships/research/reapers-ship-pack-ships.md).
+
+Each **rung** (one target size) has three wing configs: **entry** (can just take the size), **established** (takes it reliably) and **top** (seal-clubbing it, ready for the next size). Trials in the test game set them. A rung is an aim, not a gate. Bobby flies the first ship of each config and leads.
+
+| Rung | Entry | Established | Top |
+|---|---|---|---|
+| S | Fortitude (the start ship), solo | R-41 on a high preset, solo | R-41 + 3 R-41 wingmen (stage 2) |
+| M | HWK-290 + 4 R-41 (or N-1 Modified) | HWK-290 + 3 HWK-290 + 4 R-41 | Firespray + 4 corvettes or corsairs (Weequay, C-ROC, Gozanti) + 4 HWK-290 + 4 R-41 |
+| L | Not set: no L target played yet. Ideas: the Heraklon Auxiliary Carrier (Reaper's; claim a derelict or 3.88 M at Nar Shaddaa), a pack of M ships stripping turrets then bail or board, bombers | | |
+| XL | Venator (Clone Era), bought at Kamino (40 M licence + about 39.6 M) or captured, with Bobby's fighter docked in it for the kill | | |
+| Nemesis | No new ship: the XL fleet. XXL ownership stays off the ladder | | |
+
+- The M configs are the user's plan, to be proven in [M-rung loadout trials](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/47) (the HWK leads and strips shields; a wingman loss in an earlier 4 R-41 fight shows the risk). The top M config is the step up to weak L targets.
+- **Ships are stolen first, bought second:** captured from bounty targets and pirates, then refitted as bounty-hunter ships. Buying (corporation, Bounty Hunters and Valarian licences; no stations) is the fallback. Open: [Capture and refit: how Bobby gets his ships](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/49), after [Pirates mod capture: what ports to 8.00 + SWI](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/48). Live prisoners worth more than dead: [Alive bounties: prisoners worth more alive](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/51).
+- **Dream-ship list:** every ship in a rung's configs. For now: R-41, N-1 Modified, HWK-290, Firespray, Weequay Corvette, C-ROC Corsair, Gozanti. L and XL picks (bombers among them) join when those rungs are set.
 
 ### Characters
 
 - **Viewer-written:** the pilot of every wingman in the player's wing (and later any named crew) is a character written by viewers, in the style of the Kenshi Genesis series: viewers write and improve each other's stories on the casting call, and author score picks who joins. Each joins in their own video.
-- **Dream ship:** the author picks a ship and loadout from a fixed list (set by the hunting-ladder ticket), maybe a size above where the character starts. Getting it for them is that character's thread.
+- **Dream ship:** the author picks a ship and loadout from a fixed list (the ships in the hunting ladder's configs), maybe a size above where the character starts.
+- **Cadence, no cap:** the first 3 characters arrive together, then 1 per published video. A character with no free ship is a **reserve pilot** until a captured or bought ship gives them a seat. Amends the "wing slot opens" rule of [Launch viewer interaction](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/9) (decided in [#36](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/36)). Getting it for them is that character's thread.
 - **Climbing the ladder:** characters move up in ship size with Bobby, as far as the game allows. When a bigger ship comes free, the character whose author has the highest **author score** gets it, if they're alive, in the wing and able to fly that size. The score counts one point per like on the author's story, plus one per like on each helpful feedback comment they leave on others' stories, so it rewards feedback people value, not arguing. How stories, the score and joining run: see [Viewer interaction](#viewer-interaction).
 - **Death:** a character dies only if their suit's air runs out before they're picked up, so every rescue is played out. A pilot whose ship is destroyed always ejects in a spacesuit, and any ship of ours can pick them up (vanilla `md/notifications.xml` `PlayerOwnedKilled`, `aiscripts/order.rescue.ship.xml`; SWI doesn't change it). Suits have `<oxygen maxtime="30"/>` (`libraries/defaults.xml`, units not given); time it in the test game before episode 1. A character who dies gets a homage in the video and a credit in the description.
 - **Intro cards and homages:** every named character (characters, Shaddo, the nemesis, notable targets when the edit thinks they've earned it) gets a short intro card when they first appear, and a homage if they die. How the cards look is production work (out of scope).
@@ -74,7 +91,7 @@ Decided 2026-11-05 (grilling, [Launch viewer interaction](https://github.com/eca
 There's no live chat in the first run and recording runs 3 videos ahead, so viewers take part through things that can wait.
 
 - **Casting call:** one normal video (not a Short), up with episode 1 and open all series, with a community post pointing to it. Stories are top-level comments, feedback is replies. Stories can't live on a community post: the Data API can't read those comments. Rules pinned on it: no links (the channel holds links for review), one active story per author, edit freely until picked. Before counting, clear the held-for-review and "likely spam" queues.
-- **Joining:** when a wing slot opens in recording, the author with the highest **pick score** (points since their last pick; all of them if never picked) and no living character in the wing gets their character in. Promotion to a bigger ship uses the lifetime **author score**. Scores are snapshotted at that moment in recording; on a tie the earlier story wins. A story is frozen as of its pick, and the author carries it on in replies.
+- **Joining:** at each pick (the first 3 together, then 1 per published video; see Characters), the author with the highest **pick score** (points since their last pick; all of them if never picked) and no living character in the wing gets their character in. Promotion to a bigger ship uses the lifetime **author score**. Scores are snapshotted at that moment in recording; on a tie the earlier story wins. A story is frozen as of its pick, and the author carries it on in replies.
 - **Score without a story:** feedback alone earns score, so a viewer can write a story later and enter with what they've built.
 - **Deaths:** the author keeps their score. Their pick score starts again from the pick, so they get back in by staying active. Self-likes can't be filtered (nobody can see who liked a comment) and are accepted: at most 1 point per comment.
 - **Counting:** a TypeScript script reads the casting call's threads and replies through the Data API and prints the scoreboard. It lives in its own repo, separate from the mod: this repo is `swibh` and its game tooling only. It's open source, so the algorithm is public, which is fine; the API key never goes in either repo. Run by hand at each wing slot and promotion. Built before the first wing slot, not before episode 1 ([#40](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/40)).
