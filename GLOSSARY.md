@@ -25,8 +25,8 @@ One clue on the way to a hunt's target, such as a sighting, an informant or a ju
 _Avoid_: Clue, hint, last-known location (that's SWI's stale position)
 
 **Target**:
-The ship a hunt names to be killed; "bounty target" in full.
-_Avoid_: Mark, bounty (alone: that's the pay)
+The ship a hunt names to be killed; "bounty target" in full. A target is wanted for the ships it has killed, and every contact whose faction it has hurt offers a hunt on it; the first hunt to finish claims it.
+_Avoid_: Mark, bounty (alone: that's the pay), wanted ship
 
 **Sanction**:
 A permit, bought from the Bounty Hunters trade NPC, that lets the player attack a hunt's target. Partial stops the police response; Full also removes the relation loss for attacking the target.
