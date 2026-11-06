@@ -5,8 +5,24 @@ Bounty hunting in Star Wars Interworlds 0.90 on X4 8.00: a YouTube series played
 ## Hunting
 
 **Hunt**:
-A bounty contract from SWI's Emergent Missions to find and kill one target ship for pay.
+A bounty contract to find and kill one target ship for pay, offered by a contact (from SWI's Emergent Missions, or later from the extension itself) or found on a SWI wharf board. Its steps are Offer, Track, Strike, Escape and Payout.
 _Avoid_: Bounty mission, contract (when the Hunt mission type is meant)
+
+**Contact**:
+A named person who represents one faction and offers the hunter hunts. The hunter meets them once in person at the faction's HQ and can reach them remotely from then on.
+_Avoid_: Client, quest giver, faction (when the person is meant)
+
+**Standing**:
+How far the hunter has come with one contact, in tiers earned by hunts done for them. It's separate from the relation with the contact's faction, which only decides whether the contact will deal with the hunter.
+_Avoid_: Reputation, relation, rank
+
+**Notoriety**:
+How famous the hunter is across the galaxy, in tiers from Nobody to Legendary. It rises with every completed hunt and never drops.
+_Avoid_: Fame, reputation, renown
+
+**Lead**:
+One clue on the way to a hunt's target, such as a sighting, an informant or a jump record. Each lead points at the next, and the last gives a fresh position.
+_Avoid_: Clue, hint, last-known location (that's SWI's stale position)
 
 **Target**:
 The ship a hunt names to be killed; "bounty target" in full.
@@ -41,6 +57,10 @@ _Avoid_: Bailer, bail (that's a crew abandoning its ship)
 **Loyal wingman**:
 A target's wingman that stays to fight after the wing roll; killing one costs no relation and adds to the hunt's pay.
 _Avoid_: Hostile escort
+
+**Buyout**:
+Paying a target's wingman, through a contact before the strike, to desert. A wingman bought out always deserts at the wing roll.
+_Avoid_: Bribe, payoff
 
 ## Logging
 
