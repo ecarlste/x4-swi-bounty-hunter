@@ -6,7 +6,7 @@ Status: **agreed in the grilling session of 2026-11-01.** The display name "No D
 
 ## What it is
 
-A bounty hunting system for Star Wars Interworlds 0.90 on X4 8.00, as a separate extension loaded on top of SWI. Its goal: any SWI player can make a living purely as a bounty hunter at every ship size, stays in the action, and plays it with a community watching. Being hunted in turn by hunters that hostile factions pay is on the roadmap.
+A bounty hunting system for Star Wars Interworlds 0.90 on X4 8.00 (moving to 0.91 HF1 in [#42](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/42); the hunt and the cap are unchanged there, see [research/swi-0.91-diff.md](research/swi-0.91-diff.md)), as a separate extension loaded on top of SWI. Its goal: any SWI player can make a living purely as a bounty hunter at every ship size, stays in the action, and plays it with a community watching. Being hunted in turn by hunters that hostile factions pay is on the roadmap.
 
 - Internal ID and folder: `swibh` (plain, so the display name can change without breaking saves). Depends on `SW Interworlds`.
 - Not part of A Pirate's Life for now. That's a 9.x mod with no SWI profile yet ([research/cap-fix-facts.md](research/cap-fix-facts.md)). Keep it in mind for when SWI reaches 9.x.
@@ -45,7 +45,7 @@ This applies on **every** hunt whose target leads a wing, with or without a sanc
 - **Mechanics** ([research/wing-split-facts.md](research/wing-split-facts.md)):
   - Removing the commander isn't enough, because an escort's order re-attaches it to its leader. Each wingman needs new orders.
   - Escorts of escorts follow their own leader.
-  - SWI's own detach (RAP 6762-6774) still covers a target that is a follower.
+  - SWI's own detach (RAP 6762-6774; 6781-6793 in 0.91) still covers a target that is a follower.
 - **The sanction stays as it is:** no police or station response, and (Full) no relation loss for attacking the target. Two things remain open: the sanction's purpose now that the wing roll exists, and full immunity's price (1.15M Cr against a 220k hunt).
 
 ### 3. Remove the L/XL pay cap

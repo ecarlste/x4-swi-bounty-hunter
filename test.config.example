@@ -17,4 +17,4 @@ X4_PROFILE_ID="90000201"
 # Offline checks only (make check): the unpacked vanilla 8.00 base game, the folder holding
 # libraries\md.xsd (DLC folders next to it are read too), and SWI 0.90's unpacked reference
 X4_UNPACKED="E:\x4-dev\reference\x4-8.00\base"
-SWI_UNPACKED="E:\x4-dev\reference\mods\swi-0.90"
+SWI_UNPACKED="E:\x4-dev\reference\mods\swi-0.91hf1"

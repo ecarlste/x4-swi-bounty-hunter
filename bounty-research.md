@@ -150,7 +150,7 @@ SWI's own gaps:
 | `ic_onRowChanged` | 27274 | `row, rowdata, uitable, modified, input, source` |
 | `ic_onSelectElement` | 27489 | `uitable, modified, row, isdblclick, input` |
 
-`menu.registerCallback` is at 31575. SWI's own kuertee Lua registers map callbacks the same way and loads from `starwarsmod_m1/ui.xml` with only `ego_*` dependencies [read].
+`menu.registerCallback` is at 31575. Lines are SWI 0.90's; 0.91 HF1 keeps all five with the same arguments, at 20184, 19991, 7238, 27375 and 27590, `registerCallback` 31676 ([research/swi-0.91-diff.md](research/swi-0.91-diff.md)). SWI's own kuertee Lua registers map callbacks the same way and loads from `starwarsmod_m1/ui.xml` with only `ego_*` dependencies [read].
 
 **`ui.xml` dependency.** The 8.00 addon schema says a `<dependency>` addon that isn't available stops the addon loading (`ui/core/addon.xsd` 61-64) [read]. SWI has no `kuertee_ui_extensions` addon, so HH's Lua would never load. Fix: depend on `ego_detailmonitor` and `ego_detailmonitorhelper` only, as SWI does. `Register_OnLoad_Init` turns out to be SirNukes' Lua loader (SirNukes 1.91 changelog), not UIX; HH falls back to calling `init()` directly when it's missing [read].
 
@@ -169,7 +169,7 @@ SWI's own gaps:
 
 Two routes:
 
-1. **SWI's own hook (recommended).** SWI's `gameoptions.xpl` calls `displayOptions_modifyOptions(options, config)` before building any options page (line 9492), and SWI already uses it to hide Timelines (`starwarsmod_m1/ui/sw_gameoptions.lua`). Because `config` is passed, a callback can add `config.optionDefinitions["bountyhunter"]` and a main-menu entry with `submenu = "bountyhunter"`. The submenu handler's last branch shows any id in `config.optionDefinitions` (line 5424). Value types available: `button`, `dropdown`, `slidercell` [read]. Values go to MD with `AddUITriggeredEvent` and are stored as MD globals, so they're per-save. Hide the entry in the start menu (`menu.isStartmenu`) [inferred].
+1. **SWI's own hook (recommended).** SWI's `gameoptions.xpl` calls `displayOptions_modifyOptions(options, config)` before building any options page (line 9492; 9496 in 0.91), and SWI already uses it to hide Timelines (`starwarsmod_m1/ui/sw_gameoptions.lua`). Because `config` is passed, a callback can add `config.optionDefinitions["bountyhunter"]` and a main-menu entry with `submenu = "bountyhunter"`. The submenu handler's last branch shows any id in `config.optionDefinitions` (line 5424). Value types available: `button`, `dropdown`, `slidercell` [read]. Values go to MD with `AddUITriggeredEvent` and are stored as MD globals, so they're per-save. Hide the entry in the start menu (`menu.isStartmenu`) [inferred].
 2. **SirNukes Mod Support APIs.** Its changelog says 1.91 is the "update for x4 8.0", 1.93 updates the chat window API for 8.0, and 1.95 (2025-12-08) is the latest [read, GitHub `bvbohnen/x4-projects`]. Its options menu wraps `OptionsMenu`'s `displayOptions`, `submenuHandler`, `viewCreated` and the row and select handlers. SWI's copy keeps those function names, so it probably works [inferred; test]. It would also make SWI's dead debug chat commands reachable (they need the Chat Window API).
 
 Route 1 adds no dependency. Route 2 is less code if we port HH's options as they are.

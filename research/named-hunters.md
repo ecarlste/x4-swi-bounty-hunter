@@ -10,6 +10,8 @@ Boba Fett, Sabine Wren, Neesh, Ketsu Onyo, IG-88, Embo, Unknown Mandalorian (2 s
 Cad Bane, Bossk, Asajj Ventress, Amanaman, 4-LOM, Kuer Het Mes, Taros Arkeen, Nobutora,
 Griff the Dreaded, Shuul Daran, Ketraar. Shiroyasha (TIE Fury) is commented out.
 
+SWI 0.91 HF1 has the same 19 jobs. Its hunters also skip a docked tracker pick or a station. Reaper's Ship Pack 2.8 adds a 20th, `bountyhunters_ohil` (AEG-77X group, `indibhg`), with no `startactive="false"`, so it's active from the start [read; [swi-0.91-diff.md](swi-0.91-diff.md)].
+
 Shared rules for all of them:
 
 - Owner is faction `indibhg`, shown as "Bounty Hunter" (the Guild itself is `bountyhunters`, "Bounty Hunters Guild").
@@ -87,7 +89,7 @@ Paths are from `/mnt/e/x4-dev/reference/x4-8.00/base/aiscripts/` (vanilla) unles
 
 The player is never in EM's tracker, so the hunter's first pick can't be the player. The switch happens inside the attack it runs on its tracker target.
 
-- SWI `order.sw.bountyhunter.fighters.xml` 56-62: the hunter runs `order.fight.attack.object` on the tracked ship with `checkrelation=false`, `allowothertargets=true`, `pursuetargets=true`, `forceprimarytarget=true`.
+- SWI `order.sw.bountyhunter.fighters.xml` 56-62 (61-67 in 0.91, unchanged): the hunter runs `order.fight.attack.object` on the tracked ship with `checkrelation=false`, `allowothertargets=true`, `pursuetargets=true`, `forceprimarytarget=true`.
 - While the tracked ship lives, the hunter sticks to it (`order.fight.attack.object.xml` 667).
 - When it dies, the hunter picks a new target (`order.fight.attack.object.xml` 1270-1276 -> `selecttarget` -> `lib.target.selection`).
 - `lib.target.selection.xml` 62-92: with `allowothertargets`, it lists **every** gravidar contact in its sector, ship or station. `maybeattackedby` is only set when `checkrelation` is true, so there is **no relation filter**.
