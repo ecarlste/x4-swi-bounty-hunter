@@ -213,7 +213,7 @@ A testing version of the extension for us and a few testers; it may need a new g
 _Avoid_: Beta, alpha
 
 **Release**:
-A public version of the extension on Nexus or Steam Workshop; it must work on existing saves.
+A public version of the extension on Nexus; it must work on existing saves.
 _Avoid_: Launch (that word is for the series)
 
 ## Mods
@@ -229,6 +229,14 @@ _Avoid_: Core mod, permanent mod
 **QoL mod**:
 A mod that only changes the UI or the information shown, so it can be added or removed mid-run.
 _Avoid_: UI mod (some locked mods have UI too)
+
+**Plays well with**:
+A mod the extension's page lists as a good companion. The extension doesn't depend on it and works fully without it.
+_Avoid_: Optional dependency, recommended mod
+
+**APL integration**:
+A feature of the extension that works only with A Pirate's Life and turns on only when A Pirate's Life is installed (capture-as-kill, for one).
+_Avoid_: APL feature (that's A Pirate's Life's own), optional mod
 
 **Version lock**:
 The point, on the day the series is ready to launch, when the newest SWI and series mods have passed a short playtest, the docs are updated, and every version is fixed for the run.
