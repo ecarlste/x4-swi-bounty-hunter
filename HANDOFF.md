@@ -5,7 +5,7 @@ Read this first in a new session, then the docs it links. Update it or delete it
 ## What exists
 
 - The repo is public at https://github.com/ecarlste/x4-swi-bounty-hunter (since 2026-11-01), with GitHub Issues and the five triage labels set up (CLAUDE.md, docs/agents/).
-- [concept.md](concept.md): the series concept and its open questions. Format (#2) and story and character (#3, 2026-11-03: Bobby, Shaddo the Hutt's debt, stages that follow target size, viewer-written characters) are decided.
+- [concept.md](concept.md): the series concept and its open questions. Format (#2) and story and character (#3, 2026-11-03: Bobby, Shaddo the Hutt's debt, stages that follow target size, viewer-written characters) are decided. Saving Shaddo (#50, 2026-11-06) puts Shaddo in game and adds stage 0: 3 dirty jobs and the rescue, all of episode 1.
 - [mods.md](mods.md): the install (8.00 HF4, DLCs, SWI 0.90), how we check a mod, and the candidates. Head Hunter - Reloaded 1.01 is rejected as is, because it's built for 9.00.
 - [bounty-research.md](bounty-research.md): how bounty hunting works in SWI and vanilla 8.00, Head Hunter's features, and the gap analysis. All 17 Head Hunter features can be built on 8.00 + SWI: 14 we know how to build, and 3 SWI or vanilla already cover. The detail is in [research/](research/): `swi-bounty.md`, `vanilla-bounty.md`, `headhunter.md` and `save-check-knw-904.md`.
 - [test-plan.md](test-plan.md): 18 in-game tests (T01-T18) grouped into sessions, with a results table.
