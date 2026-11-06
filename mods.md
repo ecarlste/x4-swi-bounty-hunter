@@ -4,6 +4,27 @@ Every extension in the playthrough's X4 8.00 install (`X4 Foundations - 8.00\ext
 
 [Back to the concept](concept.md)
 
+## Series mods
+
+The mods chosen for the playthrough, and the public list that video descriptions link to (no Nexus collection). Terms are in [GLOSSARY.md](GLOSSARY.md#mods). Decided in [Launch mod list](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/10).
+
+| Mod | Kind | Status |
+| --- | --- | --- |
+| SW Interworlds | Locked | Launch on the newest version that passes the version lock; 0.91 HF1 installed for now |
+| Reaper's Ship Pack (SWI), With Jobs | Locked | Installed (2.8) |
+| Mycu: Equipment tooltips | QoL | Installed; a must: without it you can't judge equipment trade-offs |
+
+- **DLC and other mods' dependencies** stay installed and are recorded below, but aren't series mods.
+- **The `swibh` extension requires only what it uses**, today SWI alone, never a series mod by default. It's tested on bare SWI too.
+- **Locked mods** go in before the Bankrupt Bounty Hunter start and stay for the run. **QoL mods** can change mid-run; each change gets a line in Changes and a note in the video description.
+- **Not at launch:** standalone UI Extensions, SirNukes Mod Support APIs (until a chosen mod needs one), and both Head Hunter mods. Head Hunter's features go to grilling as ideas for `swibh`, not as a mod to install.
+- **Anything piratey** (bailing, boarding, captures, piracy) comes from our own mod in development, [A Pirate's Life](https://github.com/ecarlste/x4-pirates-life-mod), not a third-party mod. It targets vanilla 9.x for now, with SWI support planned; whether it makes launch is in [Locked-mod shortlist: which to try](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/45).
+- **More candidates:** a sweep for locked mods on 8.00 + SWI before the version lock found a shortlist ([Locked-mod sweep for 8.00 + SWI](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/44)); choosing is in [Locked-mod shortlist: which to try](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/45). Head Hunter's features: [Head Hunter features: inventory](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/43).
+
+### Version lock
+
+On the day the series is ready to launch: install the newest SWI and series mods, playtest briefly on a fresh Bankrupt Bounty Hunter start, update these docs, then fix every version for the run.
+
 ## Installed
 
 | Extension | ID (folder) | Version | Date | Source | Notes |
@@ -43,9 +64,9 @@ Mods to try for the series. Move a row up to **Installed** once it's in, with it
 
 | Mod | Why | Works on 8.00 + SWI? | Status |
 | --- | --- | --- | --- |
-| kuertee's UI Extensions and HUD ([GitHub](https://github.com/kuertee/x4-mod-ui-extensions)) | Many UI mods need it | Unclear. SWI ships its own copy of the hooked menus, but a Nexus collection for SWI says to install both. The last 8.0 release is v8.0.4.3 (its listed date looks wrong); 9.0.x releases are for 9.0 | To check: does a separate install override SWI's menus? |
+| kuertee's UI Extensions and HUD ([GitHub](https://github.com/kuertee/x4-mod-ui-extensions)) | Many UI mods need it | Unclear. SWI ships its own copy of the hooked menus, but a Nexus collection for SWI says to install both. The last 8.0 release is v8.0.4.3 (its listed date looks wrong); 9.0.x releases are for 9.0 | Not at launch: SWI's built-in menus stay. Add only if a chosen mod needs it |
 | Head Hunter - Reloaded by IceDesign ([Nexus 2289](https://www.nexusmods.com/x4foundations/mods/2289)), `ice_headhunter` 1.01, 2026-08-10 | A wanted board on the map, bounties on ships that kill, hunter groups after the player's wanted ships | **No.** `content.xml` requires game version 900 and kuertee's UI Extensions 900 (not optional); SirNukes APIs 1.95 is optional. The UI hooks it uses (5 map menu callbacks) all exist in SWI's built-in menus, but its `ui.xml` also depends on the `kuertee_ui_extensions` addon, which SWI doesn't have. Hunter groups would not spawn: the factions they come from (Scale Plate, Buccaneers, Fallen Families, Argon and others) are inactive in SWI, and SWI replaces the whole ship library, so those factions have no ships. Bounties for kills would likely work, since that code only excludes Xenon, Kha'ak and ownerless | Rejected for 9.x. Making it work would need a fork: lower the version requirements, and point the hunter factions at SWI factions that have `military`-tagged ships, such as `blacksun`, `huttcartel`, `mandodw` or `valarian`. `indibhg` has ships, but only under named tags like `bhg_random_small`, and `bountyhunters` has none of its own |
-| Head Hunter by Chillmatica ([Nexus 1150](https://www.nexusmods.com/x4foundations/mods/1150), [Steam](https://steamcommunity.com/sharedfiles/filedetails/?id=2992233767)) | The original that Reloaded rebuilds | Unknown. Updated for 7.0+ (needs SirNukes Mod Support APIs); abandoned, with no confirmed 8.00 reports. It probably also sends hunters from vanilla factions | To check: get the zip, then check its `content.xml` and hunter factions |
+| Head Hunter by Chillmatica ([Nexus 1150](https://www.nexusmods.com/x4foundations/mods/1150), [Steam](https://steamcommunity.com/sharedfiles/filedetails/?id=2992233767)) | The original that Reloaded rebuilds | Unknown. Updated for 7.0+ (needs SirNukes Mod Support APIs); abandoned, with no confirmed 8.00 reports. It probably also sends hunters from vanilla factions | Not at launch. Its features (and Reloaded's) are read as ideas for `swibh`: [Head Hunter features: inventory](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/43) |
 
 ## Changes
 
@@ -56,3 +77,4 @@ Mods to try for the series. Move a row up to **Installed** once it's in, with it
 | 2026-10-31 | Checked Head Hunter - Reloaded 1.01: built for 9.00, not compatible as is; added the original Head Hunter as a candidate |
 | 2026-11-02 | Installed Mycu's Equipment tooltips 1.6.2, with its dependency patched to SWI; added Reaper's Ship Pack 2.8 as a candidate (needs SWI 0.91) |
 | 2026-11-05 | Replaced SWI 0.90 with 0.91 HF1 (old folder moved out, not overwritten); installed Reaper's Ship Pack 2.8 With Jobs. Its jobs change which ships factions spawn, so they also change bounty targets. `make game-test` passes 7 of 7 on this install |
+| 2026-11-05 | Launch mod list decided: series mods SWI, Reaper's Ship Pack, Equipment tooltips; version lock on launch day; standalone UIX, SirNukes and Head Hunter not at launch |
