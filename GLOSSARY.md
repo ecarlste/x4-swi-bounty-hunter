@@ -36,6 +36,22 @@ _Avoid_: Hunt protection, licence
 SWI's limit on what an L or XL hunt pays out, set from the target's size rather than the offer.
 _Avoid_: Reward cap
 
+**Dead or Alive**:
+An offer's usual terms: the hunt pays when the target is killed or captured, and pays more if its prisoner is also delivered.
+_Avoid_: Wanted (on its own), kill bounty
+
+**Alive only**:
+An offer's terms when the target's pilot must be delivered as a prisoner; the hunt fails if the target dies.
+_Avoid_: Capture bounty, live bounty
+
+**Prisoner**:
+A hunt target's pilot, taken from their escape pod and held aboard a ship in the player's wing until delivery. Never the target's crew or wingmen.
+_Avoid_: Captive, passenger, arrest (the game has no arrest)
+
+**Delivery**:
+Handing a prisoner to the contact's faction by docking the ship that carries them at a station or ship of that faction.
+_Avoid_: Turn-in, drop-off
+
 ## Wings
 
 **Wing roll**:
