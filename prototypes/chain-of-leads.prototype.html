@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chain of Leads</title>
+<!-- PROTOTYPE, throwaway. Answers "Tracking game: the chain of leads" (issue 55). Not production. -->
+<style>
+:root{--bg:#f7f7f5;--panel:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#b5541b;--accent-soft:#f6e6da;--ok:#2f7a3d;--bad:#a8322d;--warn:#9a6b00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--panel:#201f1d;--ink:#ecebe6;--muted:#9c9b94;--line:#34332f;--accent:#e08a52;--accent-soft:#3a2a1f;--ok:#6cc27b;--bad:#e2746e;--warn:#d9ab3d}}
+:root[data-theme="dark"]{--bg:#161615;--panel:#201f1d;--ink:#ecebe6;--muted:#9c9b94;--line:#34332f;--accent:#e08a52;--accent-soft:#3a2a1f;--ok:#6cc27b;--bad:#e2746e;--warn:#d9ab3d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+p{margin:6px 0}.muted{color:var(--muted)}
+.intro{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0 20px}
+.intro ul{margin:6px 0;padding-left:20px}
+.grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:7px;padding:6px 10px;cursor:pointer;margin:3px 4px 3px 0}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.done{opacity:.45}
+select,input{font:inherit;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+input[type=number]{width:64px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:14px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.changed{background:var(--accent-soft);border-radius:4px;padding:0 4px}
+.window{border:1px solid var(--accent);border-radius:8px;padding:12px;background:var(--bg)}
+.window .head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px;font-weight:600}
+.lead{padding:6px 0;border-bottom:1px dashed var(--line)}
+.lead:last-child{border-bottom:0}
+.lead .tag{display:inline-block;font-size:12px;padding:0 6px;border-radius:10px;border:1px solid var(--line);color:var(--muted);margin-right:6px}
+.lead.current .tag{border-color:var(--accent);color:var(--accent)}
+.lead.donel{color:var(--muted)}
+.lead .rev{font-style:italic;font-size:13px}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:2px 0 8px}
+.bar>span{display:block;height:100%}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.log{font-size:13px;max-height:280px;overflow:auto;border-top:1px solid var(--line);margin-top:8px;padding-top:6px}
+.log div{padding:2px 0}.log .t{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.tabs button.active{background:var(--accent-soft);border-color:var(--accent)}
+.steps{counter-reset:s}
+.sector-strip{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.sec{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 6px;min-width:0}
+.sec.p{border-color:var(--accent)}.sec.tg{background:var(--accent-soft)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tuning label{font-size:13px;color:var(--muted);display:inline-flex;gap:4px;align-items:center;margin:2px 10px 2px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Chain of leads: the Track step</h1>
+<p class="muted">Prototype, throwaway, for the ticket "Tracking game: the chain of leads". Nothing here is game code; numbers are guesses to react to.</p>
+
+<div class="intro">
+<p><b>The question.</b> How does Track play as a chain of leads? How many leads per target size, what kind each one is, how the bounty-hunter window shows and follows them, and how the last lead hands over a fresh position, all inside a 20-40 minute hunt with under a quarter of it empty travel.</p>
+<p><b>The model being tested:</b></p>
+<ul>
+<li>Leads sit on the target's real trail. Lead 1 is where SWI's stale sighting already points, and each lead is one stop further along. Two leads per sector: <i>who saw it</i> (at a station), then <i>where it went</i> (the jump record at the gate).</li>
+<li>The window shows finished leads with what they told you, the current lead with a "Plot course" button, and only a count of the rest.</li>
+<li>The last lead hands over a fresh position: <code>swibh</code> writes the faction's sighting record, so SWI's own beacon moves to the target's live sector. For a short <b>hot trail</b> after that, the beacon follows the target through gates.</li>
+<li>SWI's find step fires once you're in the target's sector (proximity), then you scan the target to identify it and the strike begins. The 3-hour find timer still runs underneath.</li>
+<li>At standing tier 3+, the contact hands over a <b>tracking fob</b>: the last lead becomes a remote ping from the window, with no trip.</li>
+</ul>
+<p class="muted">Try the guided scenarios first, then free play. The budget panel scores each run against the hunt-length goals.</p>
+</div>
+
+<div class="grid">
+<section class="card">
+  <h2>Bounty-hunter window <span class="muted">(what the player sees)</span></h2>
+  <div id="window"></div>
+  <h3>Budget for the whole hunt</h3>
+  <div id="budget"></div>
+</section>
+<section class="card">
+  <h2>Behind the scenes <span class="muted">(true state)</span></h2>
+  <div id="state"></div>
+  <div class="log" id="log"></div>
+</section>
+</div>
+
+<div class="grid" style="margin-top:16px">
+<section class="card">
+  <h2>Guided scenarios</h2>
+  <div class="tabs" id="tabs"></div>
+  <div id="scenario"></div>
+</section>
+<section class="card">
+  <h2>Free play</h2>
+  <div class="row">
+    <label>Target size <select id="size"><option>S</option><option selected>M</option><option>L</option><option>XL</option></select></label>
+    <label>Standing tier <select id="standing"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+    <button class="primary" data-act="accept">Accept the hunt</button>
+  </div>
+  <div style="margin-top:8px">
+    <button data-act="goLead">Plot course to the current lead and fly</button>
+    <button data-act="work">Work the lead (talk, scan or pay)</button>
+    <button data-act="goTarget">Fly to the beacon</button>
+    <button data-act="identify">Scan the target (identify)</button>
+    <button data-act="askContact">Ask the contact for a fresh lead</button>
+  </div>
+  <div>
+    <button data-act="wait5">Kill time: +5 min</button>
+    <button data-act="wait30">+30 min (loot something)</button>
+    <button data-act="wait180">+3 hours</button>
+  </div>
+  <h3>Tuning (changing it re-accepts the hunt)</h3>
+  <div class="tuning" id="tuning"></div>
+</section>
+</div>
+</main>
+
+<script>
+/* ===== Portable logic module: pure, no DOM. ===== */
+const ChainOfLeads = (() => {
+  const SECTORS = ["Nal Hutta","Nar Shaddaa","Ylesia","Sriluur","Kessel","Ord Mantell","Ryloth","Tatooine","Geonosis"];
+  const DEFAULT_TUNING = {
+    jumpMin: 2.5,        // fly through a sector to the next gate and jump
+    approachMin: 1,      // in-sector hop to a station or gate
+    sightingMin: 3, informantMin: 4, bribeMin: 2, jumpRecordMin: 2, fobMin: 1, identifyMin: 2,
+    targetMinPerSector: 20, targetArrivedAgo: 5, // the target moves on every N min; it arrived M min before you accepted
+    hotTrailMin: 10,
+    findTimerMin: 180,
+    fobTier: 3,
+  };
+  const OVERHEAD = { offer: 2, escape: 3, payout: 2 };
+  const STRIKE = { S: 6, M: 10, L: 14, XL: 18 };
+  const BRIBE_CR = { S: 5000, M: 15000, L: 40000, XL: 100000 };
+  // Lead chains by size: [kind, sector offset from the contact, place].
+  // Decided: every lead in one sector (the stale sighting's), 2 for S and 3 for M/L/XL.
+  const TEMPLATES = {
+    S:  [["sighting",1,"station"],["jumprecord",1,"gate"]],
+    M:  [["informant",1,"station"],["bribe",1,"station2"],["jumprecord",1,"gate"]],
+    L:  [["sighting",1,"station"],["informant",1,"station2"],["jumprecord",1,"gate"]],
+    XL: [["informant",1,"station"],["bribe",1,"station2"],["jumprecord",1,"gate"]],
+  };
+  const KIND = {
+    sighting:   { name: "Station sighting", verb: "Dock and ask the harbour master" },
+    informant:  { name: "Informant", verb: "Meet the contact's informant in the bar" },
+    bribe:      { name: "Bribed dock official", verb: "Pay the dock official for the flight plan" },
+    jumprecord: { name: "Jump record", verb: "Scan the gate's traffic log" },
+    fob:        { name: "Client's tracking fob", verb: "Ping the fob from the window" },
+    fresh:      { name: "Fresh lead from the contact", verb: "Scan the gate's traffic log" },
+  };
+  const placeName = (sector, place) =>
+    place === "station" ? `${SECTORS[sector]} spaceport`
+    : place === "station2" ? `${SECTORS[sector]} trading post`
+    : place === "gate" ? `${SECTORS[sector]} gate to ${SECTORS[sector+1]}`
+    : "anywhere (remote)";
+
+  const activityMin = (k, tu) => ({sighting:tu.sightingMin, informant:tu.informantMin, bribe:tu.bribeMin, jumprecord:tu.jumpRecordMin, fresh:tu.jumpRecordMin, fob:tu.fobMin})[k];
+
+  function accept(size, standing, tuning = DEFAULT_TUNING) {
+    const tu = { ...DEFAULT_TUNING, ...tuning };
+    let chain = TEMPLATES[size].map(([kind, sector, place]) => ({ kind, sector, place, done: false, reveal: null }));
+    const lastSector = chain[chain.length - 1].sector;
+    if (standing >= tu.fobTier) chain[chain.length - 1] = { kind: "fob", sector: null, place: "remote", done: false, reveal: null };
+    return {
+      tu, size, standing, t: 0, phase: "track",
+      player: { sector: 0, place: "station" },
+      chain, cur: 0,
+      target: { start: lastSector + 1 },
+      beacon: { kind: "swi", sector: 1 },
+      found: false, foundAt: null, identifiedAt: null,
+      spent: 0, travel: 0, working: 0, waiting: 0,
+      log: [{ t: 0, msg: `Hunt accepted (${size} target, standing ${standing}). SWI's beacon shows a stale sighting at ${SECTORS[1]}, about 25 min old.` }],
+    };
+  }
+
+  function targetSector(s, t = s.t) {
+    const first = s.tu.targetMinPerSector - s.tu.targetArrivedAgo;
+    const moves = t < first ? 0 : 1 + Math.floor((t - first) / s.tu.targetMinPerSector);
+    return Math.min(SECTORS.length - 1, s.target.start + moves);
+  }
+  function beaconSector(s) {
+    if (s.beacon.kind === "swi") return s.beacon.sector;
+    return targetSector(s, Math.min(s.t, s.beacon.hotUntil));
+  }
+  const hotLeft = s => s.beacon.kind === "lead" ? Math.max(0, s.beacon.hotUntil - s.t) : 0;
+
+  // ---- helpers that return a new state ----
+  const log = (s, msg) => ({ ...s, log: [...s.log, { t: s.t, msg }] });
+  function pass(s, min, bucket) {
+    let n = { ...s, t: s.t + min, [bucket]: s[bucket] + min };
+    return checkTimers(n);
+  }
+  function checkTimers(s) {
+    if (s.phase === "track" && !s.found && s.t >= s.tu.findTimerMin)
+      return log({ ...s, phase: "expired" }, "SWI's 3-hour find timer ran out. The hunt ends silently: no message, no pay.");
+    return s;
+  }
+  function checkFind(s) {
+    if (s.phase !== "track" || s.found) return s;
+    if (s.player.sector === targetSector(s)) {
+      const early = s.cur < s.chain.length ? ` (${s.chain.length - s.cur} lead(s) left unfollowed)` : "";
+      return log({ ...s, found: true, foundAt: s.t }, `Target in your zone: SWI's find step fires${early}. Scan it to identify.`);
+    }
+    return s;
+  }
+  function flyTo(s, sector, place) {
+    let n = s;
+    const jumps = Math.abs(sector - n.player.sector);
+    for (let i = 0; i < jumps; i++) {
+      const dir = sector > n.player.sector ? 1 : -1;
+      n = pass({ ...n, player: { sector: n.player.sector + dir, place: "space" } }, n.tu.jumpMin, "travel");
+      n = checkFind(n);
+      if (n.phase !== "track") return n;
+    }
+    if (n.player.place !== place || jumps > 0) n = pass({ ...n, player: { sector, place } }, n.tu.approachMin, "travel");
+    return checkFind(n);
+  }
+
+  function step(s, action) {
+    if (action.type === "accept") return accept(action.size, action.standing, action.tuning);
+    if (s.phase === "expired") return log(s, "The hunt is over. Accept a new one.");
+    if (s.phase === "strike") return log(s, "Track is done; this is the strike now.");
+    const lead = s.chain[s.cur];
+    switch (action.type) {
+      case "goLead": {
+        if (!lead) return log(s, "No leads left. Fly to the beacon.");
+        if (lead.place === "remote") return log(s, "This lead needs no trip: work it from the window.");
+        if (s.player.sector === lead.sector && s.player.place === lead.place) return log(s, "You're already there.");
+        const t0 = s.t;
+        let n = flyTo(s, lead.sector, lead.place);
+        return log(n, `Flew to ${placeName(lead.sector, lead.place)} (${(n.t - t0).toFixed(1)} min).`);
+      }
+      case "work": {
+        if (!lead) return log(s, "No leads left to work.");
+        if (lead.place !== "remote" && !(s.player.sector === lead.sector && s.player.place === lead.place))
+          return log(s, `Refused: you're not at the lead yet (${placeName(lead.sector, lead.place)}).`);
+        let n = pass(s, activityMin(lead.kind, s.tu), "working");
+        if (lead.kind === "bribe") n = { ...n, spent: n.spent + BRIBE_CR[s.size] };
+        const last = s.cur === s.chain.length - 1;
+        let reveal;
+        if (last) {
+          const live = targetSector(n);
+          reveal = `The target is in ${SECTORS[live]} right now.`;
+          n = { ...n, beacon: { kind: "lead", setAt: n.t, hotUntil: n.t + n.tu.hotTrailMin } };
+          n = log(n, `${KIND[lead.kind].name}: fresh position handed over. swibh writes the faction's sighting record; SWI's beacon jumps to ${SECTORS[live]}. Hot trail for ${n.tu.hotTrailMin} min.`);
+        } else {
+          const next = s.chain[s.cur + 1];
+          const where = next.place === "remote" ? "the fob" : placeName(next.sector, next.place);
+          reveal = lead.kind === "sighting" ? `Docked here; left toward ${where}.`
+            : lead.kind === "informant" ? `"Saw it refuel. Ask at ${where}."`
+            : lead.kind === "bribe" ? `Flight plan filed: next, ${where}.`
+            : `Jumped out this way; next, ${where}.`;
+          n = log(n, `${KIND[lead.kind].name} worked${lead.kind === "bribe" ? ` (paid ${BRIBE_CR[s.size].toLocaleString()} Cr)` : ""}. Next lead: ${where}.`);
+        }
+        const chain = n.chain.map((l, i) => i === s.cur ? { ...l, done: true, reveal } : l);
+        return { ...n, chain, cur: s.cur + 1 };
+      }
+      case "goTarget": {
+        if (s.found && s.player.sector === targetSector(s)) return log(s, "You're on the target already.");
+        const t0 = s.t, from = s.player.sector, swi = s.beacon.kind === "swi";
+        let n = s, guard = 0;
+        while (n.phase === "track" && n.player.sector !== beaconSector(n) && guard++ < 20) {
+          const dir = beaconSector(n) > n.player.sector ? 1 : -1;
+          n = pass({ ...n, player: { sector: n.player.sector + dir, place: "space" } }, n.tu.jumpMin, "travel");
+          n = checkFind(n);
+        }
+        if (n.phase !== "track") return n;
+        if (!n.found) n = checkFind(pass({ ...n, player: { ...n.player, place: "space" } }, n.tu.approachMin, "travel"));
+        n = log(n, `Followed the beacon from ${SECTORS[from]} to ${SECTORS[n.player.sector]} (${(n.t - t0).toFixed(1)} min).`);
+        if (!n.found) n = log(n, swi
+          ? "Nothing here. SWI's sighting is stale; the target left long ago."
+          : "The beacon points here, but the target is gone: the hot trail ran out before you arrived. The trail is cold.");
+        return n;
+      }
+      case "identify": {
+        if (!s.found) return log(s, "Refused: SWI hasn't found the target yet, so a scan now wouldn't count.");
+        if (s.player.sector !== targetSector(s)) return log(s, "The target has moved out of your sector.");
+        let n = pass(s, s.tu.identifyMin, "working");
+        return log({ ...n, phase: "strike", identifiedAt: n.t }, "Target identified. Track is over; the wing roll and the strike begin.");
+      }
+      case "askContact": {
+        if (s.cur < s.chain.length) return log(s, "The contact says: you've still got a lead to follow.");
+        if (s.found) return log(s, "You've found the target already.");
+        if (s.chain.some(l => l.kind === "fresh")) return log(s, "Refused: the contact gives one fresh lead per hunt. You're on SWI's stale beacon now.");
+        const sec = Math.max(1, targetSector(s) - 1);
+        const fresh = { kind: "fresh", sector: sec, place: "gate", done: false, reveal: null };
+        return log({ ...s, chain: [...s.chain, fresh] }, `The contact sends one more lead: the jump record at ${placeName(sec, "gate")}.`);
+      }
+      case "wait": {
+        let n = pass(s, action.min, "waiting");
+        const wasHot = s.beacon.kind === "lead" && s.t < s.beacon.hotUntil;
+        const stillHot = wasHot && n.t < n.beacon.hotUntil;
+        n = log(n, `Killed ${action.min} min elsewhere.${stillHot ? " The trail is still hot, so the beacon keeps following the target." : wasHot ? " The hot trail ran out while you were away; the beacon froze where the target was then." : ""}`);
+        return n.phase === "track" ? checkFind(n) : n;
+      }
+    }
+    return s;
+  }
+
+  function budget(s) {
+    const trackMin = s.identifiedAt ?? s.t;
+    const strike = STRIKE[s.size];
+    const total = OVERHEAD.offer + trackMin + strike + OVERHEAD.escape + OVERHEAD.payout;
+    return {
+      trackMin, strike, total,
+      travelShare: s.travel / total,
+      trackStrikeShare: (trackMin + strike) / total,
+      waitedMin: s.waiting,
+    };
+  }
+
+  return { SECTORS, DEFAULT_TUNING, KIND, BRIBE_CR, accept, step, targetSector, beaconSector, hotLeft, placeName, budget, activityMin };
+})();
+
+/* ===== Throwaway page shell ===== */
+const $ = id => document.getElementById(id);
+let tuning = { ...ChainOfLeads.DEFAULT_TUNING };
+let state = ChainOfLeads.accept("M", 0, tuning);
+let prev = null;
+const fmt = m => `${Math.floor(m)}:${String(Math.round((m % 1) * 60)).padStart(2, "0")}`;
+
+function act(a) {
+  prev = state;
+  if (a.type === "accept") a = { ...a, tuning };
+  state = ChainOfLeads.step(state, a);
+  render();
+}
+const ACTIONS = {
+  accept: () => ({ type: "accept", size: $("size").value, standing: +$("standing").value }),
+  goLead: () => ({ type: "goLead" }), work: () => ({ type: "work" }), goTarget: () => ({ type: "goTarget" }),
+  identify: () => ({ type: "identify" }), askContact: () => ({ type: "askContact" }),
+  wait5: () => ({ type: "wait", min: 5 }), wait30: () => ({ type: "wait", min: 30 }), wait180: () => ({ type: "wait", min: 180 }),
+};
+document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => act(ACTIONS[b.dataset.act]()));
+
+function ch(cond, html) { return cond ? `<span class="changed">${html}</span>` : html; }
+
+function renderWindow(s) {
+  const C = ChainOfLeads, S = C.SECTORS;
+  const doneN = s.chain.filter(l => l.done).length;
+  let html = `<div class="window"><div class="head"><span>Contract: ${s.size} target and its wing</span><span>${s.phase === "track" ? `Track, lead ${Math.min(doneN + 1, s.chain.length)} of ${s.chain.length}` : s.phase === "strike" ? "Strike" : "Ended"}</span></div>`;
+  s.chain.forEach((l, i) => {
+    const where = C.placeName(l.sector, l.place);
+    if (l.done) html += `<div class="lead donel"><span class="tag">✓ ${C.KIND[l.kind].name}</span>${where}<div class="rev">${l.reveal}</div></div>`;
+    else if (i === s.cur) html += `<div class="lead current"><span class="tag">● ${C.KIND[l.kind].name}</span>${where}<div class="muted" style="font-size:13px">${C.KIND[l.kind].verb}, about ${C.activityMin(l.kind, s.tu)} min${l.kind === "bribe" ? `, ${C.BRIBE_CR[s.size].toLocaleString()} Cr` : ""}. [${l.place === "remote" ? "Ping now" : "Plot course"}]</div></div>`;
+  });
+  const left = s.chain.length - s.cur - 1;
+  if (left > 0) html += `<div class="lead muted"><span class="tag">?</span>${left} more lead${left > 1 ? "s" : ""}</div>`;
+  const bs = C.beaconSector(s);
+  const bLabel = s.beacon.kind === "swi" ? `last-known: ${S[bs]} (SWI's stale sighting)`
+    : C.hotLeft(s) > 0 ? `${S[bs]}, live (hot trail ${fmt(C.hotLeft(s))} left)` : `${S[bs]} (trail cold, ${fmt(s.t - s.beacon.hotUntil)} since)`;
+  html += `<p style="margin-top:8px"><b>Target position:</b> ${ch(prev && prev.beacon !== s.beacon || (prev && C.beaconSector(prev) !== bs), bLabel)}</p>`;
+  if (s.spent) html += `<p class="muted">Spent on leads: ${s.spent.toLocaleString()} Cr</p>`;
+  return html + `</div>`;
+}
+
+function renderState(s) {
+  const C = ChainOfLeads, S = C.SECTORS, ts = C.targetSector(s);
+  const p = prev;
+  let strip = `<div class="sector-strip">` + S.map((n, i) =>
+    `<span class="sec ${i === s.player.sector ? "p" : ""} ${i === ts ? "tg" : ""}">${n}${i === s.player.sector ? " · you" : ""}${i === ts ? " · target" : ""}</span>`).join("") + `</div>`;
+  const findLeft = Math.max(0, s.tu.findTimerMin - s.t);
+  return `${strip}<dl class="kv">
+    <dt>Hunt clock</dt><dd>${ch(p && p.t !== s.t, fmt(s.t) + " min since accept")}</dd>
+    <dt>You</dt><dd>${ch(p && (p.player.sector !== s.player.sector || p.player.place !== s.player.place), `${S[s.player.sector]} (${s.player.place})`)}</dd>
+    <dt>Target, really</dt><dd>${ch(p && C.targetSector(p) !== ts, S[ts])} <span class="muted">(moves on every ${s.tu.targetMinPerSector} min)</span></dd>
+    <dt>SWI find step</dt><dd>${ch(p && p.found !== s.found, s.found ? `<span class="ok">fired at ${fmt(s.foundAt)}</span>` : `waiting; timer ${s.phase === "expired" ? '<span class="bad">expired</span>' : fmt(findLeft) + " left"}`)}</dd>
+    <dt>Identify</dt><dd>${ch(p && p.identifiedAt !== s.identifiedAt, s.identifiedAt != null ? `<span class="ok">done at ${fmt(s.identifiedAt)}</span>` : "not yet")}</dd>
+    <dt>Phase</dt><dd>${ch(p && p.phase !== s.phase, s.phase)}</dd>
+    <dt>Minutes</dt><dd>travel ${s.travel.toFixed(1)} · leads and scans ${s.working.toFixed(1)} · killed elsewhere ${s.waiting}</dd>
+  </dl>`;
+}
+
+function renderBudget(s) {
+  const b = ChainOfLeads.budget(s);
+  const row = (label, val, good, pct, note) => `<div class="row" style="justify-content:space-between"><span>${label}</span><span class="${good ? "ok" : "bad"}">${val}</span></div><div class="bar"><span style="width:${Math.min(100, pct * 100)}%;background:${good ? "var(--ok)" : "var(--bad)"}"></span></div>${note ? `<p class="muted" style="font-size:12px;margin-top:-6px">${note}</p>` : ""}`;
+  const playTotal = b.total - b.waitedMin;
+  return row(`Hunt length (offer 2 + track ${b.trackMin.toFixed(1)} + strike ~${b.strike} + escape 3 + payout 2)`, `${b.total.toFixed(1)} min`, b.total >= 20 && b.total <= 40, b.total / 60, "Goal 20-40 min. Bar is out of 60." + (b.waitedMin ? ` Includes ${b.waitedMin} min spent elsewhere.` : "") + (s.phase === "track" ? " Track still running." : ""))
+    + row("Track + strike share", `${Math.round(b.trackStrikeShare * 100)}%`, b.trackStrikeShare >= 0.5, b.trackStrikeShare, "Goal: at least half.")
+    + row("Empty travel share", `${Math.round(b.travelShare * 100)}%`, b.travelShare < 0.25, b.travelShare / 0.5, "Goal: under 25%. Lead trips count as travel. Bar is out of 50%.");
+}
+
+function render() {
+  $("window").innerHTML = renderWindow(state);
+  $("state").innerHTML = renderState(state);
+  $("budget").innerHTML = renderBudget(state);
+  $("log").innerHTML = state.log.slice().reverse().map(e => `<div><span class="t">${fmt(e.t)}</span>${e.msg}</div>`).join("");
+}
+
+/* Tuning inputs */
+const TUNE_LABELS = { jumpMin: "Min per jump", approachMin: "Min per in-sector hop", sightingMin: "Sighting", informantMin: "Informant", bribeMin: "Bribe", jumpRecordMin: "Jump record", fobMin: "Fob ping", identifyMin: "Identify scan", targetMinPerSector: "Target min per sector", targetArrivedAgo: "Target arrived (min before accept)", hotTrailMin: "Hot trail min", fobTier: "Fob at standing tier" };
+$("tuning").innerHTML = Object.entries(TUNE_LABELS).map(([k, l]) => `<label>${l} <input type="number" step="0.5" min="0" data-k="${k}" value="${tuning[k]}"></label>`).join("") + `<button id="resetTune">Reset tuning</button>`;
+$("tuning").querySelectorAll("input").forEach(i => i.onchange = () => { tuning[i.dataset.k] = +i.value; prev = null; state = ChainOfLeads.accept(state.size, state.standing, tuning); render(); });
+$("resetTune").onclick = () => { tuning = { ...ChainOfLeads.DEFAULT_TUNING }; $("tuning").querySelectorAll("input").forEach(i => i.value = tuning[i.dataset.k]); prev = null; state = ChainOfLeads.accept(state.size, state.standing, tuning); render(); };
+
+/* Guided scenarios */
+const W = { goLead: ["Fly to the current lead", { type: "goLead" }], work: ["Work the lead", { type: "work" }], goTarget: ["Fly to the beacon", { type: "goTarget" }], identify: ["Scan the target", { type: "identify" }] };
+const chainSteps = n => Array.from({ length: n }, () => [W.goLead, W.work]).flat();
+const SCENARIOS = [
+  { name: "Happy path, S", size: "S", standing: 0,
+    desc: "An S target with two leads in one sector: who saw it at the spaceport, then where it went at the gate. Watch the beacon jump to the live sector when the last lead lands, and the budget at the end.",
+    steps: [...chainSteps(2), W.goTarget, W.identify] },
+  { name: "M with a bribe", size: "M", standing: 0,
+    desc: "Three leads across two sectors, one of them paid. Does a 3-lead chain still keep travel under a quarter?",
+    steps: [...chainSteps(3), W.goTarget, W.identify] },
+  { name: "Skip the chain", size: "M", standing: 0,
+    desc: "Ignore the leads and fly straight to SWI's last-known beacon. It points at the same place as lead 1, and the target is long gone. Then do the chain properly.",
+    steps: [W.goTarget, ...chainSteps(3), W.goTarget, W.identify] },
+  { name: "Hot trail follows a jump", size: "S", standing: 0,
+    desc: "Finish the leads, then dawdle 10 minutes. The target jumps on while the trail is still hot, so the beacon follows it. Watch 'Target, really' and the beacon change together.",
+    steps: [...chainSteps(2), ["Kill 5 min", { type: "wait", min: 5 }], ["Kill 5 more", { type: "wait", min: 5 }], W.goTarget, W.identify] },
+  { name: "Trail goes cold", size: "S", standing: 0,
+    desc: "Finish the leads, then go loot for 30 minutes. The hot trail runs out, the beacon freezes, and the target moves on. Recovery: ask the contact for one more lead.",
+    steps: [...chainSteps(2), ["Go loot: +30 min", { type: "wait", min: 30 }], W.goTarget, ["Ask the contact for a fresh lead", { type: "askContact" }], W.goLead, W.work, W.goTarget, W.identify] },
+  { name: "XL with the fob", size: "XL", standing: 3,
+    desc: "An XL target at standing tier 3: the contact's tracking fob replaces the last lead, so the jump-record stop becomes a remote ping. Compare with an XL at tier 0 in free play.",
+    steps: [...chainSteps(2), ["Ping the fob from the window", { type: "work" }], W.goTarget, W.identify] },
+  { name: "Traps and illegal moves", size: "M", standing: 0,
+    desc: "Try to work a lead from the wrong place, scan the target before SWI has found it, then sit out the 3-hour find timer. The hunt ends with no message, which is SWI's real behaviour.",
+    steps: [W.work, W.identify, ["Kill 3 hours", { type: "wait", min: 180 }], W.goLead] },
+];
+let scen = 0, scenStep = 0;
+function renderTabs() {
+  $("tabs").innerHTML = SCENARIOS.map((s, i) => `<button class="${i === scen ? "active" : ""}" data-i="${i}">${s.name}</button>`).join("");
+  $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => startScenario(+b.dataset.i));
+  const s = SCENARIOS[scen];
+  $("scenario").innerHTML = `<p>${s.desc}</p><p class="muted">Starts fresh with default tuning. Press the steps in order.</p><div>` +
+    s.steps.map(([label], i) => `<button class="${i < scenStep ? "done" : i === scenStep ? "primary" : ""}" data-i="${i}" ${i !== scenStep ? "disabled" : ""}>${i + 1}. ${label}</button>`).join("") +
+    `</div><button id="restart" style="margin-top:8px">Restart scenario</button>`;
+  $("scenario").querySelectorAll("button[data-i]").forEach(b => b.onclick = () => { act(SCENARIOS[scen].steps[+b.dataset.i][1]); scenStep++; renderTabs(); });
+  $("restart").onclick = () => startScenario(scen);
+}
+function startScenario(i) {
+  scen = i; scenStep = 0; tuning = { ...ChainOfLeads.DEFAULT_TUNING };
+  $("tuning").querySelectorAll("input").forEach(inp => inp.value = tuning[inp.dataset.k]);
+  $("size").value = SCENARIOS[i].size; $("standing").value = SCENARIOS[i].standing;
+  prev = null; state = ChainOfLeads.accept(SCENARIOS[i].size, SCENARIOS[i].standing, tuning);
+  render(); renderTabs();
+}
+startScenario(0);
+</script>
+</body>
+</html>
