@@ -37,7 +37,7 @@ One clue on the way to a hunt's target, such as a sighting, an informant or a ju
 _Avoid_: Clue, hint, last-known location (that's SWI's stale position)
 
 **Sighting**:
-One faction's report of the sector a target was seen in, and when. Each faction keeps its own, so contacts offering the same target can hold sightings of different ages; an offer shows its contact's newest one.
+A report of the sector a target was seen in, and when, kept by one faction or by the hunter. Each faction keeps its own, so contacts offering the same target can hold sightings of different ages; an offer shows its contact's newest one. The hunter gets their own when anything they own, other than the ship they fly, sees the target of an accepted hunt.
 _Avoid_: Last-known location, last seen, intel
 
 **Target**:
