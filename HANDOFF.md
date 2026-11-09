@@ -11,6 +11,7 @@ Read this first in a new session, then the docs it links. Update it or delete it
 - [test-plan.md](test-plan.md): 18 in-game tests (T01-T18) grouped into sessions, with a results table.
 - [playtests/stock-bounty-loop.md](playtests/stock-bounty-loop.md): the checklist and results sheet for the play session where you test the stock bounty loop (wayfinder ticket "Playtest the stock bounty loop", #4). In play since 2026-11-03 on branch `worktree-issue-4`; its "Resume here" block has where play stands.
 - An automated game-test harness: `make check` (offline) and `make game-test` (launches X4 8.00 NoSteam with SWI in test profile 90000201). See [tests/game/README.md](tests/game/README.md). It's modelled on `make game-test` in the [A Pirate's Life](https://github.com/ecarlste/x4-pirates-life-mod) repo.
+- Hand-flown M-rung loadout trials (#63, for #47): `make trials` installs a dev-only extension with one gamestart per wing config, M targets spawned from a wingman's comm menu, and a per-fight results table from the log. Built, not yet run in game: [tests/game/trials.md](tests/game/trials.md).
 
 ## Key findings so far
 

@@ -5,6 +5,7 @@ test.config
 tests/game/results.xml
 tests/game/report.md
 tests/game/debuglog.txt
+tests/game/trials-debuglog.txt
 
 # Python bytecode
 __pycache__/

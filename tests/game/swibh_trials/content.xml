@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dev-only trials extension for the SWI Bounty Hunter playthrough: never part of a recorded
+     episode. Hand-flown M-rung loadout trials (#47, #63): New Game > utility group > an "SWIBH
+     trial" start puts Bobby in his ship with a player-owned wing; comm a wingman to spawn an M
+     target; md/swibh_trials.xml logs "[swibh-trial]" lines per fight. No autostart, no auto-quit.
+     tools/run-trials.ps1 (make trials) installs it, starts X4 and removes it after. See
+     tests/game/trials.md.
+
+     It depends on SWI so it loads after it: SWI's libraries/gamestarts.xml does
+     <replace sel="//gamestarts">, which would wipe a gamestart added before it, and its
+     libraries/loadouts.xml adds the <loadouts> our loadouts go into. -->
+<content id="swibh_trials" name="SWI Bounty Hunter: trials" description="Hand-flown wing config fights for the SWI Bounty Hunter playthrough. Dev only." author="Erik S. Carlsten" version="100" date="2026-11-09" save="false" enabled="true">
+  <dependency version="800"/>
+  <dependency id="SW Interworlds" name="SW Interworlds"/>
+</content>
