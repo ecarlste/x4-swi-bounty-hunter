@@ -75,6 +75,11 @@ Decided 2026-11-06 (grilling, [Saving Shaddo: the scripted rescue](https://githu
   | Shaddo dies | cleared (nobody owes a dead Hutt) | his sibling or child, told by his henchmen what Bobby tried | none from Shaddo: Bobby captures an S on his first bounty and recruits its pilot |
   | Questline skipped | none | Shaddo or a random contact (a menu option) | none |
 
+- **Shaddo introduces Death Watch** (decided 2026-11-09, [First contact: Shaddo or a faction with a full bounty list](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/72)). The Hutt Cartel posts few hunts (its only war is with the Sith), so Shaddo stays the first contact and his thin list is canon: no padded offers. As the questline's last step, the Hutt contact (Shaddo or his heir) introduces Bobby to a Mandalorian Death Watch (`mandodw`) contact, a nod to the Clone Wars Shadow Collective. That contact carries most of stage 1's S work.
+  - **When:** ready for episode 3. Episode 2 keeps its plan; if Shaddo has no hunt to give, he says "nothing for you, but I know some people" and the introduction closes episode 2.
+  - **Where:** at the Mandalore shipyard (MDW's HQ), about 10 jumps from the start. The trip is an on-camera beat cut down in the edit, and stage 1's base moves toward MDW space, where its targets fly.
+  - **Fallback:** if MDW is hostile (SWI's pretender plot sets it to -1) or gone, the introduction points to the busiest poster the player isn't hostile with: the Empire, the Ascendancy, then the New Republic. The series avoids the pretender plot.
+  - **Skipped questline:** no introduction, since contacts start unlocked. How introductions work in general: [Contact introductions](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/82).
 - **Why Shaddo gives a wingman:** he wants Bobby alive and loyal, so Bobby will come again if he's ever in trouble. That's a hook for a later rescue from the nemesis.
 - **Bobby keeps the Fortitude.** The newbie flies the reward ship. Bobby's own upgrade comes from the Guild or from capture in stage 1.
 - **Episode 1 ends** with the newbie unnamed, as the cliffhanger and the casting call's opening, and a short tease of the contact UI. The capture fallback adds one quick stage 1 fight and makes the cut 5-10 min longer, but it ends at the same point.
