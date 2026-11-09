@@ -75,7 +75,7 @@ game-test:
 	@$(POWERSHELL) "$$(wslpath -w tools/run-game-tests.ps1)" $(ARGS)
 	@case "$(ARGS)" in *-Manual*) ;; *) node tools/log/game-check.ts tests/game/debuglog.txt ;; esac
 
-# Hand-flown M-rung loadout trials (tests/game/trials.md): installs the trials extension, starts X4
+# Hand-flown M-rung trials (tests/game/trials.md): installs the trials extension, starts X4
 # in the test profile and waits until you quit, removes the extension, then prints the results
 # table from the log. Close X4 first. ARGS=-KeepExtension leaves the extension installed
 trials:

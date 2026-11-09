@@ -1,4 +1,4 @@
-# M-rung loadout trials (hand-flown)
+# M-rung trials (hand-flown wing config fights)
 
 Status: **built, not yet run in game** (2026-11-09, [#63](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/63)). The offline checks pass (`make check`: ids, loadouts, 8.00 XSDs), but nothing here has been tried in X4 yet. See "Unverified" below.
 
@@ -42,7 +42,9 @@ If a run is killed and the extension stays installed, nothing changes in other g
    | New Republic CR-90 | `cr90_01a_macro`, newrepublic | 3 X-wings | `newrepublic_cr90_patrol_m_sector` |
    | New Republic GS-80 | `gs80_macro`, newrepublic | 3 X-wings | `newrepublic_cr90_patrol_m_sector` (its group also flies GS-80s) |
 
-   These are SWI 0.90 jobs that put M ships, and so M hunt targets, into the bounty tracker, with each job's usual escorts. Targets and escorts get the jobs' `level 1.0` loadout. Sources: [research/trials-ships.md](../../research/trials-ships.md) section 2.
+   These come from SWI 0.90's `jobs.xml`, not from the hunt code: hunts pick their targets from the bounty tracker, which records any NPC that kills while on an Attack order, so M hunt targets are the armed M job ships ([research/swi-bounty.md](../../research/swi-bounty.md) section 1). Each gets its job's usual escorts and `level 1.0` loadout. The GS-80 has no job of its own: it appears in New Republic's CR-90 patrol group, so it borrows that job's 3 X-wings. Sources: [research/trials-ships.md](../../research/trials-ships.md) section 2.
+
+   In the top config, the spec's "4 corvettes/corsairs (Weequay, C-ROC, Gozanti)" is read as 2 Weequay, 1 C-ROC and 1 Gozanti; change `$WingSpec` in the MD for another mix.
 
 3. **A fight ends** when the target dies (`killed`, a win, whoever killed it) or Bobby's ship is destroyed (`ship_lost`). A notification shows the result.
 
@@ -57,6 +59,12 @@ Every trial line in `debuglog.txt` is `[swibh-trial] <event> key=value ...`, wit
 | `wingman` | Right after `fight.start`, one per ship under Bobby's at that moment, sub-wings included | `fight`, `ship` (ID code), `macro`, `lead` (its commander's ID code) |
 | `wingman.lost` | A wingman from the spawn is destroyed during the fight | `fight`, `t`, `ship`, `macro` |
 | `fight.end` | The fight ends | `fight`, `t`, `result` (`killed`, `ship_lost` or `abandoned`) |
+
+**Not log events.** These lines are harness lines, like `[swibh-test]`, so [ADR 0001](../../docs/adr/0001-one-schema-for-log-events.md)'s schema and its one parser don't apply: the format is defined only here, in the comment at the top of `swibh_trials/md/swibh_trials.xml`, and in `tools/trial-log/trials.ts`. Change all three together.
+
+**Words.** A trial *fight* runs from the target's spawn to its death, the loss of Bobby's ship, or the next spawn. It is not an [engagement](../../GLOSSARY.md) (that's a stretch of combat ended by a quiet gap) and isn't in the glossary: it only exists in the trials. A trial *session* is one new game, not a `session.start` load. What the trials compare are wing configs; "loadout trials" is just #47's title.
+
+**What counts.** Only wingmen under Bobby at the spawn, lost before the fight ends, count as lost; one that dies after the target (its escorts stay) doesn't. Losing Bobby's ship most likely ends the game, so expect at most one `ship_lost` fight per new game, as the last row.
 
 `tools/trial-log.ts` turns them into one row per fight: session (1 per new game in the log), fight, config, target and escorts, game time of the spawn, result, win, wingmen lost (of how many, by model), time to kill (spawn to the target's death; only for a win) and the wing as it was arranged (who led whom). A fight with no `fight.end` shows as `unfinished`. Bad lines are listed on stderr by line number. Tests: `tools/trial-log/*.test.ts`.
 

@@ -9,6 +9,7 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { updateHuntLog } from "./hunt-log/update.ts";
+import { fromWindows } from "./wsl-path.ts";
 
 const usage = "Usage: node tools/hunt-log.ts <debuglog.txt> [--data <folder>]";
 
@@ -20,12 +21,6 @@ if (positionals.length !== 1) {
   console.error(usage);
   process.exit(2);
 }
-
-// E:\path\debuglog.txt -> /mnt/e/path/debuglog.txt when run from WSL, as test.config allows
-const fromWindows = (path: string) =>
-  process.platform === "linux" && /^[A-Za-z]:[\\/]/.test(path)
-    ? `/mnt/${path[0].toLowerCase()}/${path.slice(3).replace(/\\/g, "/")}`
-    : path;
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 

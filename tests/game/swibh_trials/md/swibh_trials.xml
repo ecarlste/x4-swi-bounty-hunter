@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- M-rung loadout trials (#47, #63): hand-flown fights between a wing config and an M target.
+<!-- M-rung trials (#47, #63): hand-flown fights between a wing config and an M target.
      Runs only in the swibh_trial_m_* gamestarts (libraries/gamestarts.xml). No autostart, no quit.
 
      At game start it gives Bobby the config's wing: player-owned ships with pilots, each assigned

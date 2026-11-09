@@ -259,8 +259,6 @@ def check_ids(kind, names, unpacked, swi):
         return ['%ss not checked: X4_UNPACKED and SWI_UNPACKED not found' % kind], []
     # Our extensions' own libraries (the trials' loadouts) count too
     dirs += [os.path.join(ext, 'libraries') for ext in EXTENSIONS if os.path.isdir(os.path.join(ext, 'libraries'))]
-    if not dirs:
-        return ['%ss not checked: X4_UNPACKED and SWI_UNPACKED not found' % kind], []
     ids = library_ids(dirs, kind + 's.xml', kind)
     notes, bad = [], []
     for name in sorted(names):
