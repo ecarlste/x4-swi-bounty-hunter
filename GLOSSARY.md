@@ -41,8 +41,12 @@ A report of the sector a target was seen in, and when, kept by one faction or by
 _Avoid_: Last-known location, last seen, intel
 
 **Target**:
-The ship a hunt names to be killed; "bounty target" in full. A target is wanted for the ships it has killed, and every contact whose faction it has hurt offers a hunt on it; the first hunt to finish claims it.
+The ship a hunt names to be killed; "bounty target" in full. A target is wanted for the ships it has killed, and every contact whose faction it has hurt offers a hunt on it. Its death or capture ends every hunt on it, and each hunt the player holds on it pays.
 _Avoid_: Mark, bounty (alone: that's the pay), wanted ship
+
+**Most Wanted**:
+The few targets in the galaxy with the most kills. Unlike other targets, they stay wanted however long they go without a kill, until they die or are pushed off the list.
+_Avoid_: Wanted list, top bounties
 
 **Sanction**:
 A permit, bought from the Bounty Hunters trade NPC, that lets the player attack a hunt's target. Partial stops the police response; Full also removes the relation loss for attacking the target.
