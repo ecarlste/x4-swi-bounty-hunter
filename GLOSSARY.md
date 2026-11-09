@@ -21,8 +21,12 @@ A sector bounty with no time limit, offered by a contact at a high standing tier
 _Avoid_: Standing sector bounty, standing bounty
 
 **Contact**:
-A named person who represents one faction and offers the hunter contracts. The hunter meets them once in person at the faction's HQ and can reach them remotely from then on.
+A named person who represents one faction and offers the hunter contracts. The hunter meets them once in person at the faction's HQ, with or without an introduction, and can reach them remotely from then on.
 _Avoid_: Client, quest giver, faction (when the person is meant)
+
+**Introduction**:
+One contact naming another to the hunter. The named contact is listed in the bounty-hunter window with a waypoint to their HQ, where the hunter still has to meet them. It only shows who and where; standing still starts from nothing.
+_Avoid_: Referral
 
 **Bounty-hunter window**:
 The one place the hunter sees and manages their bounty work: contacts, their offers with sightings, and the hunts in progress. Every other way in, such as talking to a contact, only opens it.
