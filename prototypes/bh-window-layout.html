@@ -1,0 +1,377 @@
+<title>Bounty-hunter window layouts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@400;500;600;700&family=Saira+Condensed:wght@500;700&display=swap">
+<!--
+  PROTOTYPE, throwaway. Wayfinder ticket "Bounty-hunter window: layout" (ecarlste/x4-swi-bounty-hunter#88).
+  Three structurally different layouts of the "Bounty Hunting" tab in X4's Diplomacy menu (N),
+  switchable with the bottom bar, the arrow keys, or #a / #b / #c. Sample data only; nothing is real game state.
+-->
+<style>
+/* Layout: a mock X4 Diplomacy menu frame (left icon bar + content), one variant rendered inside it. Single dark theme on purpose: it imitates the game UI. */
+:root {
+  color-scheme: dark;
+  --void: #060b12;        /* page behind the menu */
+  --panel: #0c1724;       /* menu body */
+  --panel-2: #112136;     /* rows, sub-panels */
+  --panel-3: #18304d;     /* hover / selected */
+  --line: #24405f;
+  --ink: #d6e4f0;
+  --ink-dim: #7f97ad;
+  --cyan: #4fc8ef;        /* X4 highlight */
+  --gold: #e8b64c;        /* pay */
+  --good: #6fd18a;
+  --warn: #f0a04b;
+  --bad: #e5675e;
+  --display: "Saira Condensed", "Arial Narrow", sans-serif;
+  --body: "Saira Semi Condensed", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { background: var(--void); color: var(--ink); font-family: var(--body); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 88px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.num { font-variant-numeric: tabular-nums; }
+.note { max-width: 1180px; margin: 0 auto 12px; color: var(--ink-dim); font-size: 13px; line-height: 1.5; }
+.note b { color: var(--ink); }
+.scroller { overflow-x: auto; max-width: 1180px; margin: 0 auto; }
+.menu { min-width: 980px; background: var(--panel); border: 1px solid var(--line); }
+.menu-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, #0f2238, var(--panel)); }
+.menu-top h1 { margin: 0; font: 700 20px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.menu-top .x { color: var(--ink-dim); font-size: 13px; letter-spacing: .06em; }
+.menu-body { display: grid; grid-template-columns: 52px 1fr; min-height: 600px; }
+.iconbar { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; padding: 8px 6px; }
+.iconbar div { height: 40px; display: grid; place-items: center; border: 1px solid transparent; color: var(--ink-dim); font-size: 18px; position: relative; }
+.iconbar div.on { border-color: var(--cyan); color: var(--cyan); background: var(--panel-2); }
+.iconbar div span { position: absolute; left: 46px; white-space: nowrap; font-size: 11px; background: #000c; padding: 2px 6px; display: none; z-index: 2; }
+.iconbar div:hover span { display: block; }
+.content { padding: 12px 14px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+
+h2 { margin: 0; font: 700 15px/1.2 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--cyan); }
+h3 { margin: 0; font: 700 22px/1.1 var(--display); letter-spacing: .03em; }
+.sub { color: var(--ink-dim); font-size: 12.5px; }
+.box { background: var(--panel-2); border: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 8px; }
+.split { display: grid; gap: 12px; align-items: start; }
+.tag { display: inline-block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border: 1px solid var(--line); color: var(--ink-dim); white-space: nowrap; }
+.tag.mw { border-color: var(--bad); color: var(--bad); }
+.tag.doa { border-color: var(--good); color: var(--good); }
+.tag.held { border-color: var(--cyan); color: var(--cyan); }
+.tag.intro { border-color: var(--warn); color: var(--warn); }
+.pay { color: var(--gold); font-weight: 600; }
+.fresh-0 { color: var(--good); } .fresh-1 { color: var(--ink); } .fresh-2 { color: var(--warn); } .fresh-3 { color: var(--bad); }
+.btn { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 3px 10px; font-size: 12.5px; letter-spacing: .04em; white-space: nowrap; }
+.btn:hover { background: var(--panel-3); }
+.btn.ghost { border-color: var(--line); color: var(--ink); }
+.btn[disabled] { border-color: var(--line); color: var(--ink-dim); cursor: not-allowed; background: transparent; }
+.row-sel { cursor: pointer; }
+.row-sel:hover { background: var(--panel-3); }
+.row-sel.sel { background: var(--panel-3); box-shadow: inset 3px 0 0 var(--cyan); }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font: 600 11px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.sortable { cursor: pointer; } th.sortable:hover { color: var(--ink); } th.on { color: var(--cyan); }
+td { padding: 7px 8px; border-bottom: 1px solid #1a2f48; vertical-align: middle; }
+td.r, th.r { text-align: right; }
+
+.pips { display: inline-flex; gap: 3px; vertical-align: middle; }
+.pips i { width: 14px; height: 6px; background: #1d3554; }
+.pips i.f { background: var(--cyan); }
+.bar { height: 6px; background: #1d3554; position: relative; } .bar i { position: absolute; inset: 0 auto 0 0; background: var(--cyan); }
+
+.steps { display: flex; gap: 2px; }
+.steps div { flex: 1; text-align: center; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 4px 2px; background: #15283f; color: var(--ink-dim); }
+.steps div.done { background: #1b3a4a; color: var(--ink); }
+.steps div.now { background: var(--cyan); color: #04121c; font-weight: 700; }
+.leads { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.leads li { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.leads li b { width: 18px; height: 18px; display: grid; place-items: center; border: 1px solid var(--line); font-size: 11px; flex: none; }
+.leads li.done b { border-color: var(--good); color: var(--good); }
+.leads li.next b { border-color: var(--cyan); color: var(--cyan); }
+.leads li.locked { color: var(--ink-dim); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 13px; }
+.kv dt { color: var(--ink-dim); } .kv dd { margin: 0; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chip { border: 1px solid var(--line); background: transparent; padding: 2px 9px; font-size: 12px; }
+.chip.on { border-color: var(--cyan); color: var(--cyan); }
+.portrait { width: 56px; height: 56px; border: 1px solid var(--line); background: repeating-linear-gradient(135deg, #132840 0 6px, #0f2036 6px 12px); display: grid; place-items: center; font: 700 22px var(--display); color: var(--ink-dim); flex: none; }
+.hdr { display: flex; gap: 12px; align-items: center; }
+.muted { color: var(--ink-dim); }
+.flag { font-size: 11px; color: var(--warn); }
+
+.switcher { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  display: flex; align-items: center; gap: 4px; background: #f2f5f8; color: #0b1622; border-radius: 999px; padding: 5px; box-shadow: 0 6px 24px #000a;
+  font-family: system-ui, sans-serif; font-size: 13px; max-width: calc(100vw - 32px); }
+.switcher button { border: 0; background: #0b1622; color: #f2f5f8; width: 32px; height: 32px; border-radius: 50%; font-size: 15px; flex: none; }
+.switcher span { padding: 0 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (prefers-reduced-motion: no-preference) { .row-sel { transition: background .12s; } }
+</style>
+
+<p class="note"><b>Prototype, throwaway.</b> Three layouts of the <b>Bounty Hunting</b> tab (Diplomacy menu, <kbd>N</kbd>). Flip with the bar at the bottom or the ← → keys. Every name, ship and number is sample data. Things to react to: what's the left list (contacts, offers or targets), where the hunt in progress sits, and how standing shows.</p>
+<div class="scroller">
+  <div class="menu">
+    <div class="menu-top"><h1>Diplomacy</h1><span class="x">ESC ✕</span></div>
+    <div class="menu-body">
+      <div class="iconbar" aria-hidden="true">
+        <div>⚑<span>Factions and Relations</span></div>
+        <div>★<span>Reputations (SWI)</span></div>
+        <div class="on">◎<span>Bounty Hunting</span></div>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+</div>
+<div class="switcher" role="group" aria-label="Prototype variant">
+  <button id="prev" aria-label="Previous variant">←</button>
+  <span id="vlabel"></span>
+  <button id="next" aria-label="Next variant">→</button>
+</div>
+
+<script>
+// ---------- sample data (fake) ----------
+const NOTORIETY = { tier: 1, names: ["Nobody", "Known", "Notorious", "Feared", "Legendary"], hunts: 4, nextAt: 10 };
+const contacts = [
+  { id: "shaddo", name: "Shaddo", faction: "Hutt Cartel", hq: "Nal Hutta", met: true, tier: 1, tierName: "Associate", tiers: 4, progress: 3, nextAt: 5, bonus: 10,
+    perks: ["Refit at the Hutt wharf", "Hutt ships for sale, no licence", "Introductions unlocked"], nextPerk: "Tier 2: bigger rungs, +20% pay" },
+  { id: "dw", name: "Ardo Kesh", faction: "Death Watch", hq: "Mandalore shipyard", met: true, tier: 0, tierName: "Stranger", tiers: 4, progress: 1, nextAt: 3, bonus: 0,
+    perks: [], nextPerk: "Tier 1: refit, ships for sale, introductions" },
+  { id: "imp", name: "Imperial contact", faction: "Galactic Empire", hq: "Imperial HQ", met: false, tier: 0, tierName: "Not met", tiers: 4, progress: 0, nextAt: 3, bonus: 0,
+    perks: [], introducedBy: "Shaddo", jumps: 7 },
+];
+const targets = {
+  vel:   { name: "Vel Odrin",   ship: "Z-95 Headhunter",  size: "S", kills: 2 },
+  teff:  { name: "Gorran Teff", ship: "R-41 Starchaser",  size: "S", kills: 3 },
+  rook:  { name: "Kaeda Rook",  ship: "HWK-290",          size: "M", kills: 4 },
+  vosk:  { name: "Tarrek Vosk", ship: "CloakShape",       size: "S", kills: 1 },
+  dax:   { name: "Dax Morrow",  ship: "Firespray",        size: "M", kills: 11, mw: 7 },
+};
+// one offer = one contact's hunt on one target, with that contact's faction's newest sighting
+const offers = [
+  { c: "shaddo", t: "vel",  pay: 42240,  sector: "Ylesia",       ageMin: 18,  jumps: 2, doa: true },
+  { c: "shaddo", t: "dax",  pay: 453200, sector: "Corellia",     ageMin: 190, jumps: 6, doa: true },
+  { c: "dw",     t: "rook", pay: 184000, sector: "Concord Dawn", ageMin: 6,   jumps: 1, doa: true },
+  { c: "dw",     t: "vel",  pay: 38400,  sector: "Nar Shaddaa",  ageMin: 125, jumps: 3, doa: true },
+  { c: "dw",     t: "vosk", pay: 21000,  sector: "Mandalore",    ageMin: 52,  jumps: 0, doa: false },
+  { c: "dw",     t: "dax",  pay: 412000, sector: "Corellia",     ageMin: 41,  jumps: 5, doa: true },
+];
+const sectorBounties = [
+  { c: "shaddo", vs: "Sith Empire", sectors: ["Nal Hutta", "Kwenn Space Station"], mins: 60, rates: { S: 2500, M: 7800, L: 31000 } },
+  { c: "dw",     vs: "Mandalorian Protectors", sectors: ["Concord Dawn"], mins: 60, rates: { S: 2200, M: 6900, L: 27500 } },
+];
+// hunts in progress (one per contact at most)
+const held = [
+  { c: "shaddo", t: "teff", step: 1, payNow: 71500, sector: "Ylesia", ageMin: 9, jumps: 2, doa: true,
+    leads: [ { txt: "Ylesia Trade Station: dock and ask the harbour master", s: "done" },
+             { txt: "Gate jump record at the Ylesia west gate", s: "next" } ],
+    after: "Last lead moves SWI's beacon to the live sector, then a 10-min hot trail", freshLead: true },
+];
+const STEPS = ["Offer", "Track", "Strike", "Escape", "Payout"];
+
+// ---------- helpers ----------
+const $ = (s, r = document) => r.querySelector(s);
+const cr = n => n.toLocaleString("en-US") + " Cr";
+const C = id => contacts.find(c => c.id === id);
+const age = m => m < 60 ? m + " min" : Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0");
+const freshCls = m => m < 20 ? "fresh-0" : m < 60 ? "fresh-1" : m < 150 ? "fresh-2" : "fresh-3";
+const pips = (n, of) => `<span class="pips">${Array.from({ length: of }, (_, i) => `<i class="${i < n ? "f" : ""}"></i>`).join("")}</span>`;
+const holds = cid => held.find(h => h.c === cid);
+const leadCount = t => targets[t].size === "S" ? 2 : 3;
+const tTags = t => (targets[t].mw ? `<span class="tag mw">Most Wanted #${targets[t].mw}</span> ` : "");
+const accept = o => holds(o.c)
+  ? `<button class="btn" disabled title="One hunt per contact: finish ${targets[holds(o.c).t].name} first">Accept</button>`
+  : `<button class="btn">Accept</button>`;
+const mapBtn = `<button class="btn ghost" title="Opens the map on the sighting's sector">Show on map</button>`;
+let sortKey = "pay";
+const sorters = { pay: (a, b) => b.pay - a.pay, age: (a, b) => a.ageMin - b.ageMin, jumps: (a, b) => a.jumps - b.jumps };
+const sortTh = (k, label, r) => `<th class="sortable ${r ? "r" : ""} ${sortKey === k ? "on" : ""}" data-sort="${k}">${label}${sortKey === k ? " ▾" : ""}</th>`;
+
+function notorietyStrip() {
+  const n = NOTORIETY;
+  return `<div class="box" style="grid-template-columns:auto 1fr auto;align-items:center">
+    <h2>Notoriety</h2>
+    <div class="bar" title="${n.hunts} of ${n.nextAt} hunts to ${n.names[n.tier + 1]}"><i style="width:${n.hunts / n.nextAt * 100}%"></i></div>
+    <span><b>${n.names[n.tier]}</b> <span class="sub">${n.hunts}/${n.nextAt} hunts to ${n.names[n.tier + 1]}</span></span></div>`;
+}
+function standingBlock(c, compact) {
+  if (!c.met) return `<div class="sub">Introduced by ${c.introducedBy}. Meet them at ${c.hq} (${c.jumps} jumps) to see their contracts.</div>
+    <div class="chips"><button class="btn">Set waypoint to HQ</button></div>`;
+  return `<div style="display:grid;gap:6px">
+    <div class="chips"><b>Standing: tier ${c.tier} · ${c.tierName}</b> ${pips(c.tier, c.tiers)} <span class="pay">+${c.bonus}% pay</span></div>
+    <div class="bar"><i style="width:${c.progress / c.nextAt * 100}%"></i></div>
+    <div class="sub">${c.progress}/${c.nextAt} hunts to next tier · ${c.nextPerk}</div>
+    ${compact || !c.perks.length ? "" : `<div class="chips">${c.perks.map(p => `<span class="tag">${p}</span>`).join("")}</div>`}
+  </div>`;
+}
+function huntCard(h, opts = {}) {
+  const t = targets[h.t], c = C(h.c);
+  return `<div class="box" style="border-color:var(--cyan)">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap">
+      <h2>Hunt in progress${opts.showContact ? " · " + c.name : ""}</h2>
+      <span class="pay num">${cr(h.payNow)} <span class="sub">now, rises with kills · incl. +${c.bonus}% standing</span></span></div>
+    <div class="hdr"><div class="portrait">${t.size}</div><div><h3>${t.name}</h3>
+      <div class="sub">${t.ship} · ${t.kills} kills ${h.doa ? '· <span class="tag doa">Dead or Alive +50%</span>' : ""}</div></div></div>
+    <div class="steps">${STEPS.map((s, i) => `<div class="${i < h.step ? "done" : i === h.step ? "now" : ""}">${s}</div>`).join("")}</div>
+    <div class="split" style="grid-template-columns:1.4fr 1fr">
+      <div style="display:grid;gap:6px"><div class="sub">Leads ${h.leads.filter(l => l.s === "done").length}/${h.leads.length} · all in ${h.sector}</div>
+        <ul class="leads">${h.leads.map((l, i) => `<li class="${l.s}"><b>${l.s === "done" ? "✓" : i + 1}</b>${l.txt}</li>`).join("")}
+        <li class="locked"><b>→</b>${h.after}</li></ul></div>
+      <dl class="kv"><dt>Sighting</dt><dd>${h.sector}, <span class="${freshCls(h.ageMin)}">${age(h.ageMin)} ago</span>, ${h.jumps} jumps</dd>
+        <dt>Cold trail</dt><dd>${h.freshLead ? "1 free fresh lead left" : "Fresh lead used"}</dd>
+        <dt>Contact</dt><dd>${c.name} (${c.faction})</dd></dl>
+    </div>
+    <div class="chips">${mapBtn}<button class="btn ghost">Set guidance</button><button class="btn ghost">Abort hunt</button></div>
+  </div>`;
+}
+function sectorBountyTable(list, showContact) {
+  if (!list.length) return "";
+  return `<div class="box"><h2>Sector bounties</h2><table>
+    <tr>${showContact ? "<th>Contact</th>" : ""}<th>Kill</th><th>In</th><th class="r">Per kill S / M / L</th><th class="r">Time</th><th></th></tr>
+    ${list.map(s => `<tr>${showContact ? `<td>${C(s.c).name}</td>` : ""}<td>${s.vs} <span class="sub">military and pirate</span></td><td>${s.sectors.join(", ")}</td>
+      <td class="r num pay">${s.rates.S.toLocaleString()} / ${s.rates.M.toLocaleString()} / ${s.rates.L.toLocaleString()}</td><td class="r">${s.mins} min</td>
+      <td class="r"><span class="chips" style="justify-content:flex-end">${mapBtn}<button class="btn">Accept</button></span></td></tr>`).join("")}
+  </table></div>`;
+}
+
+// ---------- Variant A: contact first (Factions and Relations style) ----------
+let selContact = "shaddo";
+function variantA() {
+  const c = C(selContact);
+  const mine = offers.filter(o => o.c === c.id).sort(sorters[sortKey]);
+  const h = holds(c.id);
+  return `${notorietyStrip()}
+  <div class="split" style="grid-template-columns:300px 1fr">
+    <div class="box" style="padding:0;gap:0">
+      <div style="padding:10px 12px"><h2>Contacts</h2></div>
+      ${contacts.map(k => `<div class="row-sel ${k.id === selContact ? "sel" : ""}" data-contact="${k.id}" tabindex="0" style="padding:9px 12px;border-top:1px solid #1a2f48;display:grid;gap:4px">
+        <div style="display:flex;justify-content:space-between;gap:6px"><b>${k.name}</b>${k.met ? pips(k.tier, k.tiers) : '<span class="tag intro">Introduced</span>'}</div>
+        <div class="sub">${k.faction}${k.met ? ` · ${offers.filter(o => o.c === k.id).length} offers` : ` · ${k.jumps} jumps to HQ`}${holds(k.id) ? ' · <span class="tag held">Hunting</span>' : ""}</div>
+      </div>`).join("")}
+    </div>
+    <div style="display:grid;gap:12px;min-width:0">
+      <div class="box"><div class="hdr"><div class="portrait">${c.name[0]}</div><div><h3>${c.name}</h3><div class="sub">${c.faction} · met at ${c.hq}</div></div></div>${standingBlock(c)}</div>
+      ${c.met ? `${h ? huntCard(h) : ""}
+      <div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Hunts offered</h2><span class="sub">${h ? "One hunt per contact: finish the one in progress to accept another" : "Pick one"}</span></div>
+      <table><tr><th>Target</th><th>Ship</th><th class="r">Kills</th>${sortTh("pay", "Pay", 1)}<th>Sighting</th>${sortTh("age", "Age", 1)}${sortTh("jumps", "Jumps", 1)}<th class="r">Leads</th><th></th></tr>
+      ${mine.map(o => { const t = targets[o.t]; return `<tr><td><b>${t.name}</b> ${tTags(o.t)}${o.doa ? '<span class="tag doa">D or A</span>' : ""}</td><td>${t.ship} <span class="muted">${t.size}</span></td>
+        <td class="r num">${t.kills}</td><td class="r num pay">${cr(o.pay)}</td><td>${o.sector}</td><td class="r num ${freshCls(o.ageMin)}">${age(o.ageMin)}</td><td class="r num">${o.jumps}</td><td class="r num">${leadCount(o.t)}</td>
+        <td class="r"><span class="chips" style="justify-content:flex-end">${mapBtn}${accept(o)}</span></td></tr>`; }).join("")}
+      </table></div>
+      ${sectorBountyTable(sectorBounties.filter(s => s.c === c.id), false)}` : ""}
+    </div>
+  </div>`;
+}
+
+// ---------- Variant B: board first (every offer in one table, hunts pinned on top) ----------
+let filterC = "all", selOffer = 2;
+function variantB() {
+  const list = offers.map((o, i) => ({ ...o, i })).filter(o => filterC === "all" || o.c === filterC).sort(sorters[sortKey]);
+  const so = offers[selOffer]; const st = targets[so.t]; const sc = C(so.c);
+  const others = offers.filter(o => o.t === so.t && o !== so);
+  return `<div style="display:grid;gap:8px">${held.map(h => { const t = targets[h.t]; return `<div class="box" style="grid-template-columns:auto 1fr auto auto;align-items:center;border-color:var(--cyan)">
+      <span class="tag held">Hunting</span>
+      <div><b>${t.name}</b> <span class="sub">${t.ship} · for ${C(h.c).name} · lead ${h.leads.findIndex(l => l.s === "next") + 1}/${h.leads.length}: ${h.leads.find(l => l.s === "next").txt}</span></div>
+      <div class="steps" style="width:330px">${STEPS.map((s, i) => `<div class="${i < h.step ? "done" : i === h.step ? "now" : ""}">${s}</div>`).join("")}</div>
+      <span class="chips"><span class="pay num">${cr(h.payNow)}</span>${mapBtn}</span></div>`; }).join("")}</div>
+  <div class="split" style="grid-template-columns:200px 1fr 290px">
+    <div class="box" style="gap:6px">
+      <h2>Contacts</h2>
+      <button class="chip ${filterC === "all" ? "on" : ""}" data-filter="all" style="text-align:left">All met contacts</button>
+      ${contacts.map(k => k.met
+        ? `<button class="chip ${filterC === k.id ? "on" : ""}" data-filter="${k.id}" style="text-align:left;display:grid;gap:3px;padding:6px 9px"><span>${k.name}</span><span class="sub">${pips(k.tier, k.tiers)} +${k.bonus}%</span></button>`
+        : `<div class="sub" style="padding:4px 2px"><span class="tag intro">Introduced</span> ${k.name}, ${k.jumps} jumps</div>`).join("")}
+      <div style="border-top:1px solid var(--line);padding-top:8px;display:grid;gap:4px"><h2>Notoriety</h2><b>${NOTORIETY.names[NOTORIETY.tier]}</b>
+        <div class="bar"><i style="width:${NOTORIETY.hunts / NOTORIETY.nextAt * 100}%"></i></div><span class="sub">${NOTORIETY.hunts}/${NOTORIETY.nextAt} hunts</span></div>
+    </div>
+    <div class="box" style="min-width:0"><div style="display:flex;justify-content:space-between"><h2>Contracts</h2><span class="sub">${list.length} hunts · sort by column</span></div>
+      <table><tr><th>Target</th><th>Contact</th>${sortTh("pay", "Pay", 1)}<th>Sighting</th>${sortTh("age", "Age", 1)}${sortTh("jumps", "Jumps", 1)}</tr>
+      ${list.map(o => { const t = targets[o.t]; return `<tr class="row-sel ${o.i === selOffer ? "sel" : ""}" data-offer="${o.i}" tabindex="0"><td><b>${t.name}</b> <span class="muted">${t.size}</span> ${t.mw ? '<span class="tag mw">MW</span>' : ""}</td>
+        <td>${C(o.c).name}${holds(o.c) ? ' <span class="flag" title="Already hunting for this contact">●</span>' : ""}</td><td class="r num pay">${cr(o.pay)}</td><td>${o.sector}</td>
+        <td class="r num ${freshCls(o.ageMin)}">${age(o.ageMin)}</td><td class="r num">${o.jumps}</td></tr>`; }).join("")}
+      </table>
+      ${sectorBountyTable(sectorBounties.filter(s => filterC === "all" || s.c === filterC), true).replace('class="box"', 'style="display:grid;gap:8px;margin-top:8px"')}
+    </div>
+    <div class="box">
+      <h2>Selected</h2>
+      <div class="hdr"><div class="portrait">${st.size}</div><div><h3>${st.name}</h3><div class="sub">${st.ship} · ${st.kills} kills</div></div></div>
+      <div class="chips">${tTags(so.t)}${so.doa ? '<span class="tag doa">Dead or Alive +50% on delivery</span>' : ""}</div>
+      <dl class="kv"><dt>Contact</dt><dd>${sc.name}, ${sc.faction}</dd><dt>Pay</dt><dd class="pay num">${cr(so.pay)}</dd><dt></dt><dd class="sub">incl. +${sc.bonus}% standing; rises with kills</dd>
+        <dt>Sighting</dt><dd>${so.sector}, <span class="${freshCls(so.ageMin)}">${age(so.ageMin)} ago</span></dd><dt>Distance</dt><dd>${so.jumps} jumps</dd><dt>Leads</dt><dd>${leadCount(so.t)}</dd></dl>
+      ${others.length ? `<div class="sub">Also offered by ${others.map(o => `${C(o.c).name} (${cr(o.pay)}, ${age(o.ageMin)} old)`).join(", ")}. One kill pays every hunt you hold on it.</div>` : ""}
+      <div class="chips">${mapBtn}${accept(so)}</div>
+      ${holds(so.c) ? `<div class="flag">${sc.name} already has you on ${targets[holds(so.c).t].name}.</div>` : ""}
+    </div>
+  </div>`;
+}
+
+// ---------- Variant C: target first (dossiers; contacts as a header strip) ----------
+let selTarget = "dax";
+function variantC() {
+  const ids = Object.keys(targets).filter(k => offers.some(o => o.t === k) || held.some(h => h.t === k));
+  const best = k => Math.max(0, ...offers.filter(o => o.t === k).map(o => o.pay));
+  const freshest = k => Math.min(...offers.filter(o => o.t === k).map(o => o.ageMin), ...held.filter(h => h.t === k).map(h => h.ageMin));
+  ids.sort((a, b) => (targets[b].mw ? 1 : 0) - (targets[a].mw ? 1 : 0) || (held.some(h => h.t === b) ? 1 : 0) - (held.some(h => h.t === a) ? 1 : 0) || best(b) - best(a));
+  const t = targets[selTarget]; const h = held.find(x => x.t === selTarget);
+  const its = offers.filter(o => o.t === selTarget).sort(sorters[sortKey]);
+  return `<div class="box" style="grid-template-columns:repeat(${contacts.length + 1},1fr);align-items:start">
+    ${contacts.map(k => `<div style="display:grid;gap:3px"><b>${k.name}</b><span class="sub">${k.faction}</span>
+      ${k.met ? `<span>${pips(k.tier, k.tiers)} <span class="sub">${k.tierName} · +${k.bonus}%</span></span>${holds(k.id) ? '<span class="tag held" style="justify-self:start">Hunting</span>' : ""}`
+              : `<span><span class="tag intro">Introduced</span> <button class="btn ghost" style="padding:0 6px">Waypoint</button></span>`}</div>`).join("")}
+    <div style="display:grid;gap:3px;border-left:1px solid var(--line);padding-left:10px"><b>Notoriety</b><span>${NOTORIETY.names[NOTORIETY.tier]}</span><span class="sub">${NOTORIETY.hunts}/${NOTORIETY.nextAt} hunts</span></div>
+  </div>
+  <div class="split" style="grid-template-columns:280px 1fr">
+    <div class="box" style="padding:0;gap:0"><div style="padding:10px 12px"><h2>Targets</h2><div class="sub">Each target once, with every contact who wants it</div></div>
+      ${ids.map(k => { const x = targets[k]; const n = offers.filter(o => o.t === k).length; const isHeld = held.some(q => q.t === k); return `<div class="row-sel ${k === selTarget ? "sel" : ""}" data-target="${k}" tabindex="0" style="padding:9px 12px;border-top:1px solid #1a2f48;display:grid;gap:3px">
+        <div style="display:flex;justify-content:space-between;gap:6px"><b>${x.name}</b><span class="pay num">${isHeld ? "" : cr(best(k))}</span></div>
+        <div class="sub">${x.ship} ${x.size} · ${x.kills} kills · ${isHeld ? '<span class="tag held">Hunting</span>' : `${n} contact${n > 1 ? "s" : ""}`} ${x.mw ? `<span class="tag mw">MW #${x.mw}</span>` : ""} · <span class="${freshCls(freshest(k))}">${age(freshest(k))}</span></div></div>`; }).join("")}
+    </div>
+    <div style="display:grid;gap:12px;min-width:0">
+      ${h ? huntCard(h, { showContact: true }) : `<div class="box"><div class="hdr"><div class="portrait">${t.size}</div><div><h3>${t.name}</h3>
+        <div class="sub">${t.ship} · ${t.kills} kills · wanted by ${its.length} contact${its.length > 1 ? "s" : ""}</div></div></div>
+        <div class="chips">${tTags(selTarget)}</div>
+        ${t.mw ? `<div class="sub">Most Wanted targets never go cold: their pay doesn't decay while they go without a kill.</div>` : ""}</div>`}
+      ${its.length ? `<div class="box"><div style="display:flex;justify-content:space-between"><h2>Who pays for ${t.name}</h2><span class="sub">Hold several: one kill pays each hunt you hold</span></div>
+        <table><tr><th>Contact</th><th>Standing</th>${sortTh("pay", "Pay", 1)}<th>Their sighting</th>${sortTh("age", "Age", 1)}${sortTh("jumps", "Jumps", 1)}<th></th></tr>
+        ${its.map(o => { const k = C(o.c); return `<tr><td><b>${k.name}</b> <span class="sub">${k.faction}</span></td><td>${pips(k.tier, k.tiers)} <span class="sub">+${k.bonus}%</span></td>
+          <td class="r num pay">${cr(o.pay)}</td><td>${o.sector}</td><td class="r num ${freshCls(o.ageMin)}">${age(o.ageMin)}</td><td class="r num">${o.jumps}</td>
+          <td class="r"><span class="chips" style="justify-content:flex-end">${mapBtn}${accept(o)}</span></td></tr>`; }).join("")}</table></div>` : ""}
+      ${sectorBountyTable(sectorBounties, true)}
+    </div>
+  </div>`;
+}
+
+// ---------- switcher ----------
+const VARIANTS = [
+  { k: "a", name: "A · Contacts first", fn: variantA },
+  { k: "b", name: "B · One contract board", fn: variantB },
+  { k: "c", name: "C · Targets first", fn: variantC },
+];
+let vi = 0;
+function render() {
+  const v = VARIANTS[vi];
+  $("#content").innerHTML = v.fn();
+  $("#vlabel").textContent = v.name;
+}
+function go(i) { vi = (i + VARIANTS.length) % VARIANTS.length; if (location.hash !== "#" + VARIANTS[vi].k) history.replaceState(null, "", "#" + VARIANTS[vi].k); render(); }
+function fromHash() { const i = VARIANTS.findIndex(v => "#" + v.k === location.hash); vi = i < 0 ? 0 : i; render(); }
+$("#prev").onclick = () => go(vi - 1);
+$("#next").onclick = () => go(vi + 1);
+addEventListener("hashchange", fromHash);
+addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input,textarea,[contenteditable]")) return;
+  if (e.key === "ArrowLeft") go(vi - 1);
+  if (e.key === "ArrowRight") go(vi + 1);
+  if (e.key === "Enter" && e.target.matches("[tabindex]")) e.target.click();
+});
+$("#content").addEventListener("click", e => {
+  const el = e.target.closest("[data-sort],[data-contact],[data-filter],[data-offer],[data-target]");
+  if (!el) return;
+  const d = el.dataset;
+  if (d.sort) sortKey = d.sort;
+  if (d.contact) selContact = d.contact;
+  if (d.filter) filterC = d.filter;
+  if (d.offer) selOffer = +d.offer;
+  if (d.target) selTarget = d.target;
+  render();
+});
+fromHash();
+</script>
