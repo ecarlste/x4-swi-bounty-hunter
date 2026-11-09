@@ -41,7 +41,7 @@ This applies on **every** hunt whose target leads a wing, with or without a sanc
 
   The roll and its inputs are logged.
 - **Deserters:** stop firing, fly to another sector and carry on with their normal orders there. They stay in the universe and can be met again. They stay neutral, so shooting one anyway costs the usual relation.
-- **Loyal wingmen:** made hostile to the player individually, with relation behaviour disabled (as Head Hunter does with its hunters), so attacking and killing them costs nothing with their faction. Each one *killed* adds 50% of a new reward roll for its own class to the hunt's pay. Survivors, and those who desert mid-fight, pay nothing.
+- **Loyal wingmen:** made hostile to the player individually, with relation behaviour disabled (as Head Hunter does with its hunters), so attacking and killing them costs nothing with their faction. Each one *killed* adds 50% of a new reward roll for its own class to the hunt's pay. It counts whoever lands the kill, if the player or any player-owned ship damaged it in the last 10 minutes (a guess to tune; check Better Kill Credit doesn't double-count) ([Head Hunter: general kill bounty](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/58)). Survivors, and those who desert mid-fight, pay nothing.
 - **Mechanics** ([research/wing-split-facts.md](research/wing-split-facts.md)):
   - Removing the commander isn't enough, because an escort's order re-attaches it to its leader. Each wingman needs new orders.
   - Escorts of escorts follow their own leader.
