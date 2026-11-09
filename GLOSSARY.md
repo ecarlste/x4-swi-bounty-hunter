@@ -36,6 +36,10 @@ _Avoid_: Fame, reputation, renown
 One clue on the way to a hunt's target, such as a sighting, an informant or a jump record. Each lead points at the next, and the last gives a fresh position.
 _Avoid_: Clue, hint, last-known location (that's SWI's stale position)
 
+**Sighting**:
+One faction's report of the sector a target was seen in, and when. Each faction keeps its own, so contacts offering the same target can hold sightings of different ages; an offer shows its contact's newest one.
+_Avoid_: Last-known location, last seen, intel
+
 **Target**:
 The ship a hunt names to be killed; "bounty target" in full. A target is wanted for the ships it has killed, and every contact whose faction it has hurt offers a hunt on it; the first hunt to finish claims it.
 _Avoid_: Mark, bounty (alone: that's the pay), wanted ship
