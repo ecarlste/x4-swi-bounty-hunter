@@ -8,8 +8,20 @@ Bounty hunting in Star Wars Interworlds 0.90 on X4 8.00: a YouTube series played
 A bounty contract to find and kill one target ship for pay, offered by a contact (from SWI's Emergent Missions, or later from the extension itself) or found on a SWI wharf board. Its steps are Offer, Track, Strike, Escape and Payout.
 _Avoid_: Bounty mission, contract (when the Hunt mission type is meant)
 
+**Contract**:
+Any paid job a contact gives the hunter for specific work: a hunt, a sector bounty or a dirty job. No kill pays without one, and one kill pays every contract it qualifies for.
+_Avoid_: General bounty, job, mission (when a contact's offer is meant)
+
+**Sector bounty**:
+A contract to kill ships of one named faction inside named sectors, at a fixed rate per kill for each ship class, until a time limit runs out. It names no target.
+_Avoid_: General bounty, patrol, kill mission
+
+**Retainer**:
+A sector bounty with no time limit, offered by a contact at a high standing tier against a pirate faction in the contact's own space. It is accepted once and runs until cancelled.
+_Avoid_: Standing sector bounty, standing bounty
+
 **Contact**:
-A named person who represents one faction and offers the hunter hunts. The hunter meets them once in person at the faction's HQ and can reach them remotely from then on.
+A named person who represents one faction and offers the hunter contracts. The hunter meets them once in person at the faction's HQ and can reach them remotely from then on.
 _Avoid_: Client, quest giver, faction (when the person is meant)
 
 **Standing**:
