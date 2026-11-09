@@ -104,7 +104,7 @@ Ordered by importance. "Way" = how to reach the test conditions (a, b, c above).
 | T05 | Police licence kill bounty in Hutt space | b or a + c (H2-H4, H9) | S3 |
 | T06 | Named hunters: appear, and go after the player's AI ships | a, then c (H5, H10c-d) | S1, S4 |
 | T07 | BHG start's two R-41s | a | S1 |
-| T08 | Map tab on SWI's menus (UI spike) | b + spike | S5 |
+| T08 | Diplomacy tab on SWI's menus (UI spike) | b + spike | S1 (`N` only), S5 |
 | T09 | Options submenu through `displayOptions_modifyOptions` (UI spike) | b + spike | S5 |
 | T10 | Warp and Attack a live named hunter on the player | c (H10a, H10c) | S4 |
 | T11 | `create_ship` for `indibhg` from MD | c (H10b) | S4 |
@@ -130,7 +130,7 @@ Run order differs from importance: S0 first, because the helper's logging and pa
 | Session | Start from | Tests | Saves to make |
 | --- | --- | --- | --- |
 | S0 Environment | Custom start, anywhere | T12, T17 (file writing only) | none |
-| S1 Stock BHG start | New Bankrupt Bounty Hunter game, helper loaded but only read-only cues (H8, H9, H13) | T07, T15, T06 part 1, T17, T18, T21, T03 if a wharf is in reach | `test-S1-start` (right after load), `test-S1-60min`, `test-S1-120min` |
+| S1 Stock BHG start | New Bankrupt Bounty Hunter game, helper loaded but only read-only cues (H8, H9, H13) | T07, T08 (`N` only), T15, T06 part 1, T17, T18, T21, T03 if a wharf is in reach | `test-S1-start` (right after load), `test-S1-60min`, `test-S1-120min` |
 | S2 Guild hunts | Custom start in Milagro (Bounty Hunters HQ), see S2 setup | T03, T02, T04, T16, T19, T20, T01, T13, T18 | `test-S2-start`, `test-S2-offers`, `test-S2-SM-accepted`, `test-S2-L-accepted`, `test-S2-L-destroyed` |
 | S3 Police bounty | Custom start in Hutt Cartel space (or `test-S1-60min` + H2/H3) | T05 | `test-S3-start`, `test-S3-licence` |
 | S4 Hunter spawns | `test-S2-start` (or `test-S1-60min`) + helper | T10, T11, T06 part 2 | `test-S4-start` |
@@ -223,14 +223,18 @@ Run order differs from importance: S0 first, because the helper's logging and pa
 - **Expected (code):** 10 s after start, 2 `r41_macro` owned by `huttpirates` at sector position (15 km, -500 km) in Lannik, Attack order on `player.ship` with pursue and no relation check, relation behaviour disabled (`ext/md/setup_gamestarts_sw.xml` `SW_Start_bhg` 1544-1600). Nothing else follows. Source: [swi-bounty.md](research/swi-bounty.md) §6.3.
 - **Pass:** keep it as the opening; note how long it takes. **Fail:** episode 1 needs a scripted wave (part of our "player is hunted" work).
 
-### T08 Map tab on SWI's menus (UI spike)
+### T08 Diplomacy tab on SWI's menus (UI spike)
 
-- **Question:** can our own map right-sidebar tab load on SWI's 8.00 menus with the 8.00 replacements? Gap #8 (Wanted Board).
-- **Setup:** S5. Spike extension `swibh_spike_maptab`: `ui.xml` depending on `ego_detailmonitor` and `ego_detailmonitorhelper` only; Lua registers `createRightBar_on_start`, `createInfoFrame2_on_menu_infoModeRight`, `refreshInfoFrame2_on_start`, `ic_onSelectElement`, `ic_onRowChanged` and builds a static 3-row table with a sort header using `Helper.standardTextHeight`, no `addFrameBorder`, `updateInputBar` guarded.
-- **Steps:** open the map, find the tab, open it, click a header and a row, close and reopen, save and load, open again.
+- **Question:** can our own left-bar tab load in SWI's 8.00 Diplomacy menu, open from MD, and reach a fresh start? The bounty-hunter window lives there ([Bounty-hunter window: where it lives in the UI](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/80)).
+- **Setup:** S5. Spike extension `swibh_spike_diplotab`: `ui.xml` depending on `ego_detailmonitor` and `ego_detailmonitorhelper` only; Lua on `Helper.getMenu("DiplomacyMenu")` registers `buttonTogglePlayerInfo_on_start`, `createPlayerInfo_on_start`, `createInfoFrame_on_start`, `createInfoFrame_on_info_frame_mode` and `cleanup` (id `swibh_...`), appends a "Bounty Hunting" entry (mode `swibh_contacts`, a vanilla icon) last in `config.leftBar` if missing, and draws a static 3-row table with a sort header. `config` comes from the callback arguments (0.90 has no `uix_getConfig`).
+- **Steps:**
+  1. Press `N`. Is the tab there on the first open, last in the bar? Open it, click a header and a row, close and reopen.
+  2. From MD, `<open_menu menu="DiplomacyMenu" param="[0, 0, 'swibh_contacts']"/>`. Does it land on the tab?
+  3. Save and load, open again; `/reloadui`, and check for a duplicate tab.
+  4. In S1 (a fresh Bankrupt Bounty Hunter start, before the diplomacy story unlocks), press `N`. Does Diplomacy open? (Already true on save_007, which shows only Factions and Relations and Reputations.)
 - **Record:** screenshots; every `[=ERROR=]` and "Widget setup error" line in `debuglog.txt`.
-- **Expected (code):** SWI's `subst02/ui/addons/ego_detailmonitor/menu_map.xpl` calls all five callbacks (20139, 19946, 7193, 27274, 27489; `registerCallback` 31575); a missing `ui.xml` dependency would stop the addon loading (`ui/core/addon.xsd` 61-64). Source: [bounty-research.md](bounty-research.md#map-tab-on-swis-800-menus), [headhunter.md](research/headhunter.md) feature 8.
-- **Pass:** the Wanted Board can be built as planned. **Fail:** record the error line; check the callback name and the `ui.xml` load.
+- **Expected (code):** SWI's `menu_diplomacy.xpl` calls all five callbacks (0.91 HF1: 383, 1114, 1173, 1222, 348); `onShowMenu` takes the mode from `param[3]` (712). The left bar is sized before `createPlayerInfo_on_start`, so the first open may miss the entry. SWI's bundled Reputations tab is the precedent. Source: [research/bh-window-entry.md](https://github.com/ecarlste/x4-swi-bounty-hunter/blob/research/bh-window-entry/research/bh-window-entry.md) section 2.
+- **Pass:** the window can be built as planned. **Fail:** record the error line; check the callback name and the `ui.xml` load. If `N` is gated on a fresh start, use a Player Info tab instead (same callbacks on `PlayerInfoMenu`).
 
 ### T09 Options submenu (UI spike)
 

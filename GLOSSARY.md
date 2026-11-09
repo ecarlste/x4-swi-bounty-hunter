@@ -24,6 +24,10 @@ _Avoid_: Standing sector bounty, standing bounty
 A named person who represents one faction and offers the hunter contracts. The hunter meets them once in person at the faction's HQ and can reach them remotely from then on.
 _Avoid_: Client, quest giver, faction (when the person is meant)
 
+**Bounty-hunter window**:
+The one place the hunter sees and manages their bounty work: contacts, their offers with sightings, and the hunts in progress. Every other way in, such as talking to a contact, only opens it.
+_Avoid_: Wanted Board, contracts menu, bounty board
+
 **Standing**:
 How far the hunter has come with one contact, in tiers earned by hunts done for them. It's separate from the relation with the contact's faction, which only decides whether the contact will deal with the hunter.
 _Avoid_: Reputation, relation, rank
