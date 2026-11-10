@@ -26,9 +26,15 @@
         <check_value value="['swibh_trial_m_entry', 'swibh_trial_m_entry_n1', 'swibh_trial_m_established', 'swibh_trial_m_top'].indexof.{player.module}"/>
       </conditions>
       <actions>
-        <!-- Wingmen's piloting and morale (0-15; 15 is five stars). The same in every config, so
-             configs compare on ships alone -->
+        <!-- Piloting and morale (0-15; 15 is five stars) of every pilot, wingmen and targets alike,
+             so fights compare on ships alone: a target pilot picked with no skill is random
+             (pinned 2026-11-10, after an entry vs CR-90 wipe) -->
         <set_value name="$PilotSkill" exact="9"/>
+        <!-- Every ship, wingmen and targets, gets a full crew: with only a pilot (create_ship adds
+             no crew by default) a ship's crew bails on the first check, an M ship's most of all
+             (asked 2026-11-10). SWI 0.90 has no player crew set, so the wing takes Hutt Cartel
+             military crew, Bobby's employer's. -->
+        <set_value name="$WingCrew" exact="'huttcartel_military_crew'"/>
         <set_value name="$Distance" exact="15km"/>
 
         <!-- The wing: [macro, loadout id] per wingman -->
@@ -57,11 +63,11 @@
 
         <!-- The M targets: SWI jobs (jobs.xml, research/trials-ships.md section 2) -->
         <set_value name="$Targets" exact="[
-          table[$name = 'Black Sun Weequay + 3 R-41', $faction = faction.blacksun, $macro = macro.weequay_macro, $escorts = [macro.r41_macro, macro.r41_macro, macro.r41_macro]],
-          table[$name = 'Hutt pirate C-ROC + Weequay + 2 R-41', $faction = faction.huttpirates, $macro = macro.gozanti_croc_raider_macro, $escorts = [macro.weequay_macro, macro.r41_macro, macro.r41_macro]],
-          table[$name = 'Imperial Gozanti + 4 TIE fighters', $faction = faction.galempire, $macro = macro.impgozanti_cr_macro, $escorts = [macro.tie_fighter_macro, macro.tie_fighter_macro, macro.tie_fighter_macro, macro.tie_fighter_macro]],
-          table[$name = 'New Republic CR-90 + 3 X-wings', $faction = faction.newrepublic, $macro = macro.cr90_01a_macro, $escorts = [macro.t65b_xwing_macro, macro.t65b_xwing_macro, macro.t65b_xwing_macro]],
-          table[$name = 'New Republic GS-80 + 3 X-wings', $faction = faction.newrepublic, $macro = macro.gs80_macro, $escorts = [macro.t65b_xwing_macro, macro.t65b_xwing_macro, macro.t65b_xwing_macro]]
+          table[$name = 'Black Sun Weequay + 3 R-41', $faction = faction.blacksun, $crew = 'blacksun_military_crew', $macro = macro.weequay_macro, $escorts = [macro.r41_macro, macro.r41_macro, macro.r41_macro]],
+          table[$name = 'Hutt pirate C-ROC + Weequay + 2 R-41', $faction = faction.huttpirates, $crew = 'huttpirates_military_crew', $macro = macro.gozanti_croc_raider_macro, $escorts = [macro.weequay_macro, macro.r41_macro, macro.r41_macro]],
+          table[$name = 'Imperial Gozanti + 4 TIE fighters', $faction = faction.galempire, $crew = 'galempire_military_crew', $macro = macro.impgozanti_cr_macro, $escorts = [macro.tie_fighter_macro, macro.tie_fighter_macro, macro.tie_fighter_macro, macro.tie_fighter_macro]],
+          table[$name = 'New Republic CR-90 + 3 X-wings', $faction = faction.newrepublic, $crew = 'newrepublic_military_crew', $macro = macro.cr90_01a_macro, $escorts = [macro.t65b_xwing_macro, macro.t65b_xwing_macro, macro.t65b_xwing_macro]],
+          table[$name = 'New Republic GS-80 + 3 X-wings', $faction = faction.newrepublic, $crew = 'newrepublic_military_crew', $macro = macro.gs80_macro, $escorts = [macro.t65b_xwing_macro, macro.t65b_xwing_macro, macro.t65b_xwing_macro]]
         ]"/>
 
         <set_value name="$Fight" exact="0"/>
@@ -100,6 +106,9 @@
                     <skill type="morale" exact="$PilotSkill"/>
                   </skills>
                 </pilot>
+                <people ref="$WingCrew">
+                  <fillpercent exact="100"/>
+                </people>
                 <loadout ref="$WingSpec.{$i}.{2}"/>
                 <safepos object="player.occupiedship" x="-1500m + ($i * 300m)" z="-1500m" allowyaxis="false"/>
               </create_ship>
@@ -246,7 +255,14 @@
               <owner exact="$T.$faction"/>
               <pilot>
                 <select faction="$T.$faction" tags="tag.aipilot"/>
+                <skills>
+                  <skill type="piloting" exact="$PilotSkill"/>
+                  <skill type="morale" exact="$PilotSkill"/>
+                </skills>
               </pilot>
+              <people ref="$T.$crew">
+                <fillpercent exact="100"/>
+              </people>
               <loadout>
                 <level exact="1.0"/>
               </loadout>
@@ -259,7 +275,14 @@
                 <owner exact="$T.$faction"/>
                 <pilot>
                   <select faction="$T.$faction" tags="tag.aipilot"/>
+                  <skills>
+                    <skill type="piloting" exact="$PilotSkill"/>
+                    <skill type="morale" exact="$PilotSkill"/>
+                  </skills>
                 </pilot>
+                <people ref="$T.$crew">
+                  <fillpercent exact="100"/>
+                </people>
                 <loadout>
                   <level exact="1.0"/>
                 </loadout>
