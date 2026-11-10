@@ -71,6 +71,18 @@
         <debug_text text="'[swibh-trial] session config=%s t=%s'.[$Config, (player.age)f]" context="false" filter="general"/>
       </actions>
       <cues>
+        <!-- Defence on each wing group, set once through its first member -->
+        <library name="SetGroupAssignments">
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Groups.indexof.{$Groups.{$i}} == $i">
+                <set_subordinate_group_assignment object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Groups.{$i}" assignment="assignment.defence"/>
+              </do_if>
+            </do_all>
+          </actions>
+        </library>
+
+
         <!-- After the game has settled: the wing, assigned to Bobby's ship (defence). A wing with M
              ships puts them in alpha and its S ships in beta, so each can be ordered on its own;
              an all-S wing is all alpha -->
@@ -99,10 +111,86 @@
                 <set_value name="$HasMedium" exact="true"/>
               </do_if>
             </do_all>
+            <set_value name="$Groups" exact="[]"/>
             <do_all exact="$Created.count" counter="$i">
-              <set_value name="$Group" exact="if $HasMedium and not $Created.{$i}.isclass.ship_m then 2 else 1"/>
-              <set_object_commander object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Group"/>
-              <set_subordinate_group_assignment object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Group" assignment="assignment.defence"/>
+              <append_to_list name="$Groups" exact="if $HasMedium and not $Created.{$i}.isclass.ship_m then 2 else 1"/>
+            </do_all>
+          </actions>
+        </cue>
+
+        <!-- The wing is set up in steps, each its own cue, chained by event_cue_completed so each
+             delay starts when the step before has run. (Sub-cues' delays start when the parent is
+             triggered, not after its actions: an AssignWing sub-cue ran before the wing existed.)
+             Seen 2026-11-10, top config: a commander set in the frame a ship is created didn't
+             stick; set_object_commander seems to apply a frame later (.commander still null
+             right after); and an Escort default order given in the same frame as the commander
+             put every wingman in alpha -->
+        <cue name="AssignWing">
+          <conditions>
+            <event_cue_completed cue="CreateWing"/>
+          </conditions>
+          <delay exact="1s"/>
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <set_object_commander object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Groups.{$i}"/>
+            </do_all>
+            <include_actions ref="SetGroupAssignments"/>
+          </actions>
+        </cue>
+
+        <!-- Second pass: setting a group's assignment drops the ships already in it (every run on
+             2026-11-10: per-ship, the first of each group was dropped; all at once, all were), and
+             ships that join once the group has its assignment keep it. So AssignWing sets the
+             groups to Defence and this re-adds the dropped wingmen; setting the assignments
+             again changes nothing by then -->
+        <cue name="CheckWing">
+          <conditions>
+            <event_cue_completed cue="AssignWing"/>
+          </conditions>
+          <delay exact="2s"/>
+          <actions>
+            <set_value name="$Readded" exact="0"/>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Created.{$i}.exists and $Created.{$i}.commander != player.occupiedship">
+                <debug_text text="'swibh_trials: %s (%s) joins group %s on the second pass (commander was %s)'.[$Created.{$i}.idcode, $Created.{$i}.macro.id, $Groups.{$i}, @$Created.{$i}.commander.idcode]" context="false" filter="general"/>
+                <set_object_commander object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Groups.{$i}"/>
+                <set_value name="$Readded" operation="add"/>
+              </do_if>
+            </do_all>
+            <do_if value="$Readded">
+              <include_actions ref="SetGroupAssignments"/>
+            </do_if>
+            <debug_text text="'swibh_trials: wing second pass: %s of %s joined'.[$Readded, $Created.count]" context="false" filter="general"/>
+          </actions>
+        </cue>
+
+        <!-- Last, once commanders and groups have settled: Escort Bobby as each wingman's default
+             order, which the UI gives a defence subordinate (vanilla cpu_ship_manager.xml does the
+             same); without it they sat on an idle "Hold Position". Then log where each one is -->
+        <cue name="EscortWing">
+          <conditions>
+            <event_cue_completed cue="CheckWing"/>
+          </conditions>
+          <delay exact="1s"/>
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Created.{$i}.exists and $Created.{$i}.commander == player.occupiedship">
+                <create_order object="$Created.{$i}" id="'Escort'" default="true">
+                  <param name="target" value="player.occupiedship"/>
+                </create_order>
+              </do_if>
+            </do_all>
+          </actions>
+        </cue>
+
+        <cue name="LogWing">
+          <conditions>
+            <event_cue_completed cue="EscortWing"/>
+          </conditions>
+          <delay exact="1s"/>
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <debug_text text="'swibh_trials: wing %s (%s): commander %s, group %s (wanted %s), assignment %s, default order %s'.[$Created.{$i}.idcode, $Created.{$i}.macro.id, @$Created.{$i}.commander.idcode, @$Created.{$i}.subordinategroupid, $Groups.{$i}, @$Created.{$i}.assignment, @$Created.{$i}.defaultorder.id]" context="false" filter="general"/>
             </do_all>
           </actions>
         </cue>
