@@ -3,7 +3,7 @@
      Runs only in the swibh_trial_m_* gamestarts (libraries/gamestarts.xml). No autostart, no quit.
 
      At game start it gives Bobby the config's wing: player-owned ships with pilots, each assigned
-     straight to his ship (defence). Rearrange them in game as you like (Behaviour > Subordinates);
+     straight to his ship (defence): M ships in alpha and S ships in beta when the wing has both. Rearrange them in game as you like (Behaviour > Subordinates);
      the wing as it stands at each spawn is logged. Comm any wingman, "More..." > "Trials...", for the M
      targets; picking one spawns it, hostile, 15 km from Bobby, with its escorts. Spawning while a
      fight is on ends that fight as abandoned.
@@ -71,10 +71,13 @@
         <debug_text text="'[swibh-trial] session config=%s t=%s'.[$Config, (player.age)f]" context="false" filter="general"/>
       </actions>
       <cues>
-        <!-- After the game has settled: the wing, each assigned to Bobby's ship -->
+        <!-- After the game has settled: the wing, assigned to Bobby's ship (defence). A wing with M
+             ships puts them in alpha and its S ships in beta, so each can be ordered on its own;
+             an all-S wing is all alpha -->
         <cue name="CreateWing">
           <delay exact="2s"/>
           <actions>
+            <set_value name="$Created" exact="[]"/>
             <do_all exact="$WingSpec.count" counter="$i">
               <create_ship name="$Ship" macro="$WingSpec.{$i}.{1}" sector="player.sector">
                 <owner exact="faction.player" overridenpc="true"/>
@@ -88,7 +91,18 @@
                 <loadout ref="$WingSpec.{$i}.{2}"/>
                 <safepos object="player.occupiedship" x="-1500m + ($i * 300m)" z="-1500m" allowyaxis="false"/>
               </create_ship>
-              <set_object_commander object="$Ship" commander="player.occupiedship" assignment="assignment.defence"/>
+              <append_to_list name="$Created" exact="$Ship"/>
+            </do_all>
+            <set_value name="$HasMedium" exact="false"/>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Created.{$i}.isclass.ship_m">
+                <set_value name="$HasMedium" exact="true"/>
+              </do_if>
+            </do_all>
+            <do_all exact="$Created.count" counter="$i">
+              <set_value name="$Group" exact="if $HasMedium and not $Created.{$i}.isclass.ship_m then 2 else 1"/>
+              <set_object_commander object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Group"/>
+              <set_subordinate_group_assignment object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Group" assignment="assignment.defence"/>
             </do_all>
           </actions>
         </cue>

@@ -96,7 +96,8 @@
       </virtualmacros>
     </loadout>
 
-    <!-- Firespray-31: Bobby's ship in the top config. Class ship_m, with small shield slots -->
+    <!-- Firespray-31: Bobby's ship in the top config. Class ship_m, but small shield slots and small
+         thrusters (its macro: <thruster tags="small"/>; an M thruster left it with none, 2026-11-10) -->
     <loadout id="swibh_trial_firespray" description="" macro="firespray_macro">
       <macros>
         <engine macro="engine_slave_macro" path="../con_engine_01"/>
@@ -128,7 +129,7 @@
         <software ware="software_targetmk1"/>
       </software>
       <virtualmacros>
-        <thruster macro="thruster_gen_m_allround_01_mk1_macro"/>
+        <thruster macro="thruster_gen_s_allround_01_mk2_macro"/>
       </virtualmacros>
     </loadout>
 
@@ -183,6 +184,8 @@
         <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_02" optional="true"/>
         <turret macro="turret_m_ag1g_macro" path="../con_turret_01" optional="true"/>
         <turret macro="turret_m_quadlaser_red_macro" path="../con_turret_02" optional="true"/>
+        <turret macro="turret_m_llaser_red_macro" path="../con_m_turret_3" optional="true"/>
+        <turret macro="turret_m_llaser_red_macro" path="../con_m_turret_4" optional="true"/>
         <shield macro="shield_s_gnkastro_macro" path="../con_shield_01" optional="true"/>
         <shield macro="shield_s_gnkastro_macro" path="../con_shield_02" optional="true"/>
         <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_03" optional="true"/>

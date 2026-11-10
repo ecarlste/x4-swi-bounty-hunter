@@ -30,7 +30,7 @@ If a run is killed and the extension stays installed, nothing changes in other g
    | `swibh_trial_m_established` | `established` | HWK-290 | 3 HWK-290, 4 R-41 |
    | `swibh_trial_m_top` | `top` | Firespray | 2 Weequay, 1 C-ROC Corsair, 1 Imperial Gozanti cruiser, 4 HWK-290, 4 R-41 |
 
-   Two seconds in, the wing appears behind Bobby. Every wingman is player-owned, has a pilot (piloting and morale 9 of 15, the same in every config) and is assigned to Bobby's ship (defence). That's a plain wing assignment, not a scripted order, so you can rearrange the sub-wings in game (for example, put the R-41s under the HWKs, or set the HWKs to attack to strip shields). The wing as it stands at each spawn is logged.
+   Two seconds in, the wing appears behind Bobby. Every wingman is player-owned, has a pilot (piloting and morale 9 of 15, the same in every config) and is assigned to Bobby's ship (defence). When the wing has M and S ships, the M ships are in alpha and the S ships in beta, so you can order each on its own (asked for 2026-11-10); an all-S wing is all alpha. That's a plain wing assignment, not a scripted order, so you can rearrange the sub-wings in game (for example, put the R-41s under the HWKs, or set the HWKs to attack to strip shields). The wing as it stands at each spawn is logged.
 
 2. **Spawn a target:** comm any wingman, then pick **More... > Trials... > Spawn: ...**. The target spawns 15 km from Bobby, its faction is set hostile to you, and its escorts are assigned to it (defence). It gets no orders, so fly to it. Spawning a new target while a fight is on ends that fight as `abandoned` (the old ships stay).
 
@@ -81,12 +81,22 @@ Every trial line in `debuglog.txt` is `[swibh-trial] <event> key=value ...`, wit
 
 `make check` covers the extension too: well-formed XML, every macro, faction, ware and loadout id exists (our own loadouts included), and the 8.00 XSDs.
 
+## Results
+
+Hand-flown fights so far, from `make trials` (pilot skill 9; targets spawned 15 km out):
+
+| Date | Config | Target | Result | Time to kill | Wingmen lost |
+| --- | --- | --- | --- | --- | --- |
+| 2026-11-10 | entry (4 R-41) | Imperial Gozanti + 4 TIEs | crew bailed (logged `unfinished`: before the `bailed` fix) | - | 0 of 4 |
+| 2026-11-10 | entry_n1 (4 N-1) | Hutt C-ROC + Weequay + 2 R-41 | `bailed` | 2:58 | 0 of 4 |
+| 2026-11-10 | top (12 wingmen; Firespray with no thrusters, so the wing fought alone) | New Republic GS-80 + 3 X-wings | `killed` | 1:47 | 0 of 12 |
+
 ## Unverified
 
 To check on the first run, and record here:
 
-- The loadouts fit: engines on every player ship, and the weapons, launchers, turrets and shields picked by slot tag (all `optional`, so a wrong pick leaves the slot empty rather than failing). Confirmed 2026-11-10: the R-41's four lasers and engines, and the N-1's Krupx launcher and missiles. Still to check: the R-41's HM-6 launchers, and the HWK, Firespray, Weequay, C-ROC (GNK droids) and Gozanti.
-- Back from the "Trials..." menu returns to "More...". (Found 2026-11-10: the main comm menu has no free slot, since vanilla puts "Work somewhere else for me" at `top_right`, so "Trials..." sits at `left` in vanilla's `g_mainmore`.)
+- The loadouts fit: engines on every player ship, and the weapons, launchers, turrets and shields picked by slot tag (all `optional`, so a wrong pick leaves the slot empty rather than failing). Confirmed 2026-11-10: the R-41's four lasers and engines, the N-1's Krupx launcher and missiles, and the top config's ships otherwise. Fixed after the top run, still to see in game: the Firespray had no thrusters (an M ship with small thrusters, given an M one) and the C-ROC's two `con_m_turret` laser turrets were empty.
+- Back from the "Trials..." menu returns to "More...". The five spawn choices use slot numbers 1-5 (a name string logged "not numeric"; fixed and clean in the 2026-11-10 top run). (Found 2026-11-10: the main comm menu has no free slot, since vanilla puts "Work somewhere else for me" at `top_right`, so "Trials..." sits at `left` in vanilla's `g_mainmore`.)
 - `event_player_owned_destroyed` fires for Bobby's own ship as well as the wingmen, with the ship as `event.param`.
 - The target and escorts, with no orders, fight back when the wing arrives, and their faction stays hostile (`set_faction_relation` to -1).
 - The wing spawns clear of Bobby's ship (`safepos` 1.5 km behind and to the side).
