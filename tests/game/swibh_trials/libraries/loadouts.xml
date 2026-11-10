@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Full combat loadouts for the player's wing in the trials. SWI has no named loadout for these
+     ships, and a <level> loadout on a player-owned ship gets no engines (the player faction owns no
+     SWI equipment). Slots, tags and equipment from research/trials-ships.md section 1: engines are
+     the ship's own; weapons, turrets and shields were picked by matching slot tags and are optional,
+     so a slot that doesn't take one is left empty instead of failing. Missile launchers are
+     filled too (2026-11-10, after a run showed the R-41's two HM-6 slots empty), with as many
+     missiles as the ship stores. -->
+<diff>
+  <add sel="//loadouts">
+    <!-- HWK-290: Bobby's ship (entry, established) and the HWK wingmen -->
+    <loadout id="swibh_trial_hwk" description="" macro="hwk_290_01_macro">
+      <macros>
+        <engine macro="engine_hwk_macro" path="../con_engine_01"/>
+        <weapon macro="weapon_ga60_m_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_ga60_m_laser_macro" path="../con_weapon_02" optional="true"/>
+        <weapon macro="weapon_a2_s_laser_macro" path="../con_weapon_03" optional="true"/>
+        <weapon macro="weapon_a2_s_laser_macro" path="../con_weapon_04" optional="true"/>
+        <weapon macro="weapon_a2_s_laser_macro" path="../con_weapon_05" optional="true"/>
+        <weapon macro="weapon_a2_s_laser_macro" path="../con_weapon_06" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_01" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_02" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_03" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_04" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_05" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="countermeasure_flares_01_macro" exact="8"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_s_allround_01_mk2_macro"/>
+      </virtualmacros>
+    </loadout>
+
+    <!-- R-41 Starchaser wingmen. KX5 in the four laser slots (TGM sells it with the A-2), HM-6 launchers in 5 and 6 -->
+    <loadout id="swibh_trial_r41" description="" macro="r41_macro">
+      <macros>
+        <engine macro="engine_incom_macro" path="../con_engine_01"/>
+        <engine macro="engine_incom_macro" path="../con_engine_02"/>
+        <engine macro="engine_incom_macro" path="../con_engine_03"/>
+        <engine macro="engine_incom_macro" path="../con_engine_04"/>
+        <weapon macro="weapon_kx5_s_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_kx5_s_laser_macro" path="../con_weapon_02" optional="true"/>
+        <weapon macro="weapon_kx5_s_laser_macro" path="../con_weapon_03" optional="true"/>
+        <weapon macro="weapon_kx5_s_laser_macro" path="../con_weapon_04" optional="true"/>
+        <weapon macro="weapon_hm6launcher_macro" path="../con_weapon_05" optional="true"/>
+        <weapon macro="weapon_hm6launcher_macro" path="../con_weapon_06" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_01" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_02" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="missile_concussion_light_macro" exact="8"/>
+        <ammunition macro="countermeasure_flares_01_macro" exact="8"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_s_allround_01_mk2_macro"/>
+      </virtualmacros>
+    </loadout>
+
+    <!-- N-1 Modified wingmen (the entry variant) -->
+    <loadout id="swibh_trial_n1" description="" macro="ship_mando_s_n1_macro">
+      <macros>
+        <engine macro="engine_mando_s_n1_macro" path="../con_engine_01"/>
+        <weapon macro="weapon_kx5_s_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_kx5_s_laser_macro" path="../con_weapon_02" optional="true"/>
+        <weapon macro="weapon_krupx_s_guided_macro" path="../con_weapon_03" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_01" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="missile_proton_light_macro" exact="6"/>
+        <ammunition macro="countermeasure_flares_01_macro" exact="8"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_s_allround_01_mk2_macro"/>
+      </virtualmacros>
+    </loadout>
+
+    <!-- Firespray-31: Bobby's ship in the top config. Class ship_m, but small shield slots and small
+         thrusters (its macro: <thruster tags="small"/>; an M thruster left it with none, 2026-11-10) -->
+    <loadout id="swibh_trial_firespray" description="" macro="firespray_macro">
+      <macros>
+        <engine macro="engine_slave_macro" path="../con_engine_01"/>
+        <weapon macro="weapon_d40_m_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_d40_m_laser_macro" path="../con_weapon_02" optional="true"/>
+        <weapon macro="weapon_a2_s_laser_macro" path="../con_weapon_03" optional="true"/>
+        <weapon macro="weapon_a2_s_laser_macro" path="../con_weapon_04" optional="true"/>
+        <weapon macro="weapon_seismiclauncher_macro" path="../con_weapon_05" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_01" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_02" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_03" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_04" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_05" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_06" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_07" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_08" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_09" optional="true"/>
+        <shield macro="shield_s_novaldex45_macro" path="../con_shield_10" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="seismic_charge_macro" exact="14"/>
+        <ammunition macro="countermeasure_flares_01_macro" exact="10"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_s_allround_01_mk2_macro"/>
+      </virtualmacros>
+    </loadout>
+
+    <!-- Weequay Corvette (top config) -->
+    <loadout id="swibh_trial_weequay" description="" macro="weequay_macro">
+      <macros>
+        <engine macro="engine_cr90_macro" path="../con_engine_01"/>
+        <engine macro="engine_cr90_macro" path="../con_engine_02"/>
+        <engine macro="engine_cr90_macro" path="../con_engine_03"/>
+        <engine macro="engine_cr90_macro" path="../con_engine_04"/>
+        <engine macro="engine_cr90_macro" path="../con_engine_05"/>
+        <engine macro="engine_cr90_macro" path="../con_engine_06"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_02" optional="true"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_03" optional="true"/>
+        <weapon macro="weapon_mediumconclauncher_macro" path="../con_weapon_04" optional="true"/>
+        <weapon macro="weapon_mediumconclauncher_macro" path="../con_weapon_05" optional="true"/>
+        <turret macro="turret_m_ag1g_macro" path="../con_turret_01" optional="true"/>
+        <turret macro="turret_m_ag1g_macro" path="../con_turret_02" optional="true"/>
+        <turret macro="turret_m_ag1g_macro" path="../con_turret_03" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_01" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_02" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_03" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_04" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="missile_concussion_medium_macro" exact="50"/>
+        <ammunition macro="countermeasure_flares_01_macro" exact="10"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_m_allround_01_mk1_macro"/>
+      </virtualmacros>
+    </loadout>
+
+    <!-- Gozanti C-ROC Corsair (top config). Shield slots 01 and 02 are tagged "gonk": GNK astro droids, a
+         small shield SWI sells (3,000 max, no recharge delay) -->
+    <loadout id="swibh_trial_croc" description="" macro="gozanti_croc_raider_macro">
+      <macros>
+        <engine macro="engine_croc_macro" path="../con_engine_01"/>
+        <engine macro="engine_croc_macro" path="../con_engine_02"/>
+        <engine macro="engine_croc_macro" path="../con_engine_03"/>
+        <engine macro="engine_croc_macro" path="../con_engine_04"/>
+        <engine macro="engine_croc_macro" path="../con_engine_05"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_02" optional="true"/>
+        <turret macro="turret_m_ag1g_macro" path="../con_turret_01" optional="true"/>
+        <turret macro="turret_m_quadlaser_red_macro" path="../con_turret_02" optional="true"/>
+        <turret macro="turret_m_llaser_red_macro" path="../con_m_turret_3" optional="true"/>
+        <turret macro="turret_m_llaser_red_macro" path="../con_m_turret_4" optional="true"/>
+        <shield macro="shield_s_gnkastro_macro" path="../con_shield_01" optional="true"/>
+        <shield macro="shield_s_gnkastro_macro" path="../con_shield_02" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_03" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_04" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_05" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_06" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_07" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_08" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="countermeasure_flares_01_macro" exact="10"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_m_allround_01_mk1_macro"/>
+      </virtualmacros>
+    </loadout>
+
+    <!-- Imperial Gozanti-class Cruiser (top config) -->
+    <loadout id="swibh_trial_gozanti" description="" macro="impgozanti_cr_macro">
+      <macros>
+        <engine macro="engine_m_gg0_macro" path="../con_engine_01"/>
+        <engine macro="engine_m_gg0_macro" path="../con_engine_02"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_01" optional="true"/>
+        <weapon macro="weapon_xv1_m_laser_macro" path="../con_weapon_02" optional="true"/>
+        <turret macro="turret_m_quadlaser_red_macro" path="../con_turret_L01" optional="true"/>
+        <turret macro="turret_m_quadlaser_red_macro" path="../con_turret_R01" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_front_R" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_front_L" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_03" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_04" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_05" optional="true"/>
+        <shield macro="shield_m_novaldexga30_01_macro" path="../con_shield_06" optional="true"/>
+      </macros>
+      <ammunition>
+        <ammunition macro="countermeasure_flares_01_macro" exact="10"/>
+      </ammunition>
+      <software>
+        <software ware="software_dockmk1"/>
+        <software ware="software_flightassistmk1"/>
+        <software ware="software_scannerlongrangemk1"/>
+        <software ware="software_scannerobjectmk1"/>
+        <software ware="software_targetmk1"/>
+      </software>
+      <virtualmacros>
+        <thruster macro="thruster_gen_m_allround_01_mk1_macro"/>
+      </virtualmacros>
+    </loadout>
+  </add>
+</diff>

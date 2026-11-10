@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The M-rung trial gamestarts, one per wing config (GLOSSARY: Wing config). Same galaxy, sector
+     and player as the swibh_test gamestart (tests/game/swibh_tests/libraries/gamestarts.xml): SWI's
+     one-sector showcase galaxy, god and jobs off, so nothing but the trial is in the sector. Group 9
+     is SWI's "utility" group in New Game.
+
+     The gamestart only gives Bobby his ship; md/swibh_trials.xml creates the wing on
+     md.Setup.GameStart and reads the config from the gamestart id (swibh_trial_m_<config>).
+     nosave: a trial is a fresh game each time, and the log parser numbers fights per new game. -->
+<diff>
+  <add sel="/gamestarts">
+    <gamestart id="swibh_trial_m_entry" name="SWIBH trial M: entry (HWK-290 + 4 R-41)" description="Dev only. Bobby in an HWK-290 with 4 R-41 wingmen. Comm a wingman to spawn an M target." image="gamestart_bhg" group="9" tags="nosave">
+      <location galaxy="sws_galaxy_macro" sector="sws_clustercoruscant_sector001_macro">
+        <position x="-1000" y="0" z="-8000"/>
+      </location>
+      <player macro="character_player_pirate_gamestart1_macro" money="1000000" name="Bobby">
+        <ship macro="hwk_290_01_macro">
+          <loadout ref="swibh_trial_hwk"/>
+        </ship>
+        <inventory>
+          <ware ware="inv_timewarp" amount="1"/>
+        </inventory>
+      </player>
+      <universe ventures="false" visitors="false">
+        <jobs enabled="false"/>
+        <god enabled="false"/>
+      </universe>
+    </gamestart>
+    <gamestart id="swibh_trial_m_entry_n1" name="SWIBH trial M: entry (HWK-290 + 4 N-1 Modified)" description="Dev only. Bobby in an HWK-290 with 4 N-1 Modified wingmen. Comm a wingman to spawn an M target." image="gamestart_bhg" group="9" tags="nosave">
+      <location galaxy="sws_galaxy_macro" sector="sws_clustercoruscant_sector001_macro">
+        <position x="-1000" y="0" z="-8000"/>
+      </location>
+      <player macro="character_player_pirate_gamestart1_macro" money="1000000" name="Bobby">
+        <ship macro="hwk_290_01_macro">
+          <loadout ref="swibh_trial_hwk"/>
+        </ship>
+        <inventory>
+          <ware ware="inv_timewarp" amount="1"/>
+        </inventory>
+      </player>
+      <universe ventures="false" visitors="false">
+        <jobs enabled="false"/>
+        <god enabled="false"/>
+      </universe>
+    </gamestart>
+    <gamestart id="swibh_trial_m_established" name="SWIBH trial M: established (HWK-290 + 3 HWK-290 + 4 R-41)" description="Dev only. Bobby in an HWK-290 with 3 HWK-290 and 4 R-41 wingmen. Comm a wingman to spawn an M target." image="gamestart_bhg" group="9" tags="nosave">
+      <location galaxy="sws_galaxy_macro" sector="sws_clustercoruscant_sector001_macro">
+        <position x="-1000" y="0" z="-8000"/>
+      </location>
+      <player macro="character_player_pirate_gamestart1_macro" money="1000000" name="Bobby">
+        <ship macro="hwk_290_01_macro">
+          <loadout ref="swibh_trial_hwk"/>
+        </ship>
+        <inventory>
+          <ware ware="inv_timewarp" amount="1"/>
+        </inventory>
+      </player>
+      <universe ventures="false" visitors="false">
+        <jobs enabled="false"/>
+        <god enabled="false"/>
+      </universe>
+    </gamestart>
+    <gamestart id="swibh_trial_m_top" name="SWIBH trial M: top (Firespray + 4 corvettes + 4 HWK-290 + 4 R-41)" description="Dev only. Bobby in a Firespray with 2 Weequay, a C-ROC Corsair, a Gozanti cruiser, 4 HWK-290 and 4 R-41 wingmen. Comm a wingman to spawn an M target." image="gamestart_bhg" group="9" tags="nosave">
+      <location galaxy="sws_galaxy_macro" sector="sws_clustercoruscant_sector001_macro">
+        <position x="-1000" y="0" z="-8000"/>
+      </location>
+      <player macro="character_player_pirate_gamestart1_macro" money="1000000" name="Bobby">
+        <ship macro="firespray_macro">
+          <loadout ref="swibh_trial_firespray"/>
+        </ship>
+        <inventory>
+          <ware ware="inv_timewarp" amount="1"/>
+        </inventory>
+      </player>
+      <universe ventures="false" visitors="false">
+        <jobs enabled="false"/>
+        <god enabled="false"/>
+      </universe>
+    </gamestart>
+  </add>
+</diff>

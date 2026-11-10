@@ -34,7 +34,7 @@ import xml.etree.ElementTree as ET
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXTENSION = os.path.join(ROOT, 'tests', 'game', 'swibh_tests')
 MD_FILE = os.path.join(EXTENSION, 'md', 'swibh_tests.xml')
-EXTENSIONS = [EXTENSION, os.path.join(ROOT, 'extension', 'swibh')]
+EXTENSIONS = [EXTENSION, os.path.join(ROOT, 'extension', 'swibh'), os.path.join(ROOT, 'tests', 'game', 'swibh_trials')]
 
 # Names that look like references but aren't ids to look up
 FACTION_KEYWORDS = {'player', 'ownerless'}
@@ -96,7 +96,7 @@ def check_test_list():
 
 def references():
     """Macros, factions and wares the extension names, each with where it's named."""
-    found = {'macro': {}, 'faction': {}, 'ware': {}}
+    found = {'macro': {}, 'faction': {}, 'ware': {}, 'loadout': {}}
     for _, f in extension_files('*.xml'):
         rel = os.path.relpath(f, ROOT)
         with open(f, encoding='utf-8') as fh:
@@ -106,6 +106,7 @@ def references():
             ('macro', [r'\bmacro="([a-z0-9_]+_macro)"', r'\b(?:galaxy|sector|zone)="([a-z0-9_]+_macro)"', r'\bmacro\.([a-z0-9_]+_macro)\b']),
             ('faction', [r'(?<![$.\w])faction\.([a-z0-9_]+)\b', r'\bfaction="([a-z0-9_]+)"']),
             ('ware', [r'(?<![$.\w])ware\.([a-z0-9_]+)\b', r'\bware="([a-z0-9_]+)"']),
+            ('loadout', [r'<loadout ref="([A-Za-z0-9_]+)"']),
         ):
             for pattern in patterns:
                 for name in re.findall(pattern, text):
@@ -256,6 +257,8 @@ def check_ids(kind, names, unpacked, swi):
     dirs += [os.path.join(d, 'libraries') for d in swi_ext_dirs(swi) if os.path.isdir(os.path.join(d, 'libraries'))]
     if not dirs:
         return ['%ss not checked: X4_UNPACKED and SWI_UNPACKED not found' % kind], []
+    # Our extensions' own libraries (the trials' loadouts) count too
+    dirs += [os.path.join(ext, 'libraries') for ext in EXTENSIONS if os.path.isdir(os.path.join(ext, 'libraries'))]
     ids = library_ids(dirs, kind + 's.xml', kind)
     notes, bad = [], []
     for name in sorted(names):
@@ -284,6 +287,7 @@ def main(argv):
         ('Macros', check_macros(refs['macro'], install, unpacked)),
         ('Factions', check_ids('faction', refs['faction'], unpacked, swi)),
         ('Wares', check_ids('ware', refs['ware'], unpacked, swi)),
+        ('Loadouts', check_ids('loadout', refs['loadout'], unpacked, swi)),
         ('MD diffs', check_md_diffs(unpacked, swi)),
     ):
         print('%s: %s' % (title, 'FAIL' if bad else 'ok'))

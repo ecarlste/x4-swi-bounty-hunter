@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M-rung trials (#47, #63): hand-flown fights between a wing config and an M target.
+     Runs only in the swibh_trial_m_* gamestarts (libraries/gamestarts.xml). No autostart, no quit.
+
+     At game start it gives Bobby the config's wing: player-owned ships with pilots, each assigned
+     straight to his ship (defence): M ships in alpha and S ships in beta when the wing has both. Rearrange them in game as you like (Behaviour > Subordinates);
+     the wing as it stands at each spawn is logged. Comm any wingman, "More..." > "Trials...", for the M
+     targets; picking one spawns it, hostile, 15 km from Bobby, with its escorts. Spawning while a
+     fight is on ends that fight as abandoned.
+
+     Every line is "[swibh-trial] <event> key=value ..." (values have no spaces; t is game seconds),
+     read by tools/trial-log.ts:
+       session config=<entry|entry_n1|established|top> t=<t>
+       fight.start fight=<n> t=<t> target=<macro> faction=<id> escorts=<n> distance=<m> ship=<idcode> shipmacro=<macro>
+       wingman fight=<n> ship=<idcode> macro=<macro> lead=<commander's idcode>   one per wingman at the spawn
+       wingman.lost fight=<n> t=<t> ship=<idcode> macro=<macro>
+       fight.end fight=<n> t=<t> result=<killed|bailed|ship_lost|abandoned>
+
+     The targets are SWI's own M jobs with their usual escorts (research/trials-ships.md section 2),
+     with jobs' level 1.0 loadouts. -->
+<mdscript name="SWIBH_Trials" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="Session">
+      <conditions>
+        <event_cue_signalled cue="md.Setup.GameStart"/>
+        <check_value value="['swibh_trial_m_entry', 'swibh_trial_m_entry_n1', 'swibh_trial_m_established', 'swibh_trial_m_top'].indexof.{player.module}"/>
+      </conditions>
+      <actions>
+        <!-- Wingmen's piloting and morale (0-15; 15 is five stars). The same in every config, so
+             configs compare on ships alone -->
+        <set_value name="$PilotSkill" exact="9"/>
+        <set_value name="$Distance" exact="15km"/>
+
+        <!-- The wing: [macro, loadout id] per wingman -->
+        <set_value name="$Hwk" exact="[macro.hwk_290_01_macro, 'swibh_trial_hwk']"/>
+        <set_value name="$R41" exact="[macro.r41_macro, 'swibh_trial_r41']"/>
+        <set_value name="$N1" exact="[macro.ship_mando_s_n1_macro, 'swibh_trial_n1']"/>
+        <do_if value="player.module == 'swibh_trial_m_entry'">
+          <set_value name="$Config" exact="'entry'"/>
+          <set_value name="$WingSpec" exact="[$R41, $R41, $R41, $R41]"/>
+        </do_if>
+        <do_elseif value="player.module == 'swibh_trial_m_entry_n1'">
+          <set_value name="$Config" exact="'entry_n1'"/>
+          <set_value name="$WingSpec" exact="[$N1, $N1, $N1, $N1]"/>
+        </do_elseif>
+        <do_elseif value="player.module == 'swibh_trial_m_established'">
+          <set_value name="$Config" exact="'established'"/>
+          <set_value name="$WingSpec" exact="[$Hwk, $Hwk, $Hwk, $R41, $R41, $R41, $R41]"/>
+        </do_elseif>
+        <do_else>
+          <set_value name="$Config" exact="'top'"/>
+          <set_value name="$WingSpec" exact="[
+            [macro.weequay_macro, 'swibh_trial_weequay'], [macro.weequay_macro, 'swibh_trial_weequay'],
+            [macro.gozanti_croc_raider_macro, 'swibh_trial_croc'], [macro.impgozanti_cr_macro, 'swibh_trial_gozanti'],
+            $Hwk, $Hwk, $Hwk, $Hwk, $R41, $R41, $R41, $R41]"/>
+        </do_else>
+
+        <!-- The M targets: SWI jobs (jobs.xml, research/trials-ships.md section 2) -->
+        <set_value name="$Targets" exact="[
+          table[$name = 'Black Sun Weequay + 3 R-41', $faction = faction.blacksun, $macro = macro.weequay_macro, $escorts = [macro.r41_macro, macro.r41_macro, macro.r41_macro]],
+          table[$name = 'Hutt pirate C-ROC + Weequay + 2 R-41', $faction = faction.huttpirates, $macro = macro.gozanti_croc_raider_macro, $escorts = [macro.weequay_macro, macro.r41_macro, macro.r41_macro]],
+          table[$name = 'Imperial Gozanti + 4 TIE fighters', $faction = faction.galempire, $macro = macro.impgozanti_cr_macro, $escorts = [macro.tie_fighter_macro, macro.tie_fighter_macro, macro.tie_fighter_macro, macro.tie_fighter_macro]],
+          table[$name = 'New Republic CR-90 + 3 X-wings', $faction = faction.newrepublic, $macro = macro.cr90_01a_macro, $escorts = [macro.t65b_xwing_macro, macro.t65b_xwing_macro, macro.t65b_xwing_macro]],
+          table[$name = 'New Republic GS-80 + 3 X-wings', $faction = faction.newrepublic, $macro = macro.gs80_macro, $escorts = [macro.t65b_xwing_macro, macro.t65b_xwing_macro, macro.t65b_xwing_macro]]
+        ]"/>
+
+        <set_value name="$Fight" exact="0"/>
+        <set_value name="$Active" exact="false"/>
+        <set_value name="$Wing" exact="[]"/>
+        <create_group groupname="$TargetGroup"/>
+        <debug_text text="'[swibh-trial] session config=%s t=%s'.[$Config, (player.age)f]" context="false" filter="general"/>
+      </actions>
+      <cues>
+        <!-- Defence on each wing group, set once through its first member -->
+        <library name="SetGroupAssignments">
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Groups.indexof.{$Groups.{$i}} == $i">
+                <set_subordinate_group_assignment object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Groups.{$i}" assignment="assignment.defence"/>
+              </do_if>
+            </do_all>
+          </actions>
+        </library>
+
+
+        <!-- After the game has settled: the wing, assigned to Bobby's ship (defence). A wing with M
+             ships puts them in alpha and its S ships in beta, so each can be ordered on its own;
+             an all-S wing is all alpha -->
+        <cue name="CreateWing">
+          <delay exact="2s"/>
+          <actions>
+            <set_value name="$Created" exact="[]"/>
+            <do_all exact="$WingSpec.count" counter="$i">
+              <create_ship name="$Ship" macro="$WingSpec.{$i}.{1}" sector="player.sector">
+                <owner exact="faction.player" overridenpc="true"/>
+                <pilot>
+                  <select race="player.entity.race" tags="tag.aipilot"/>
+                  <skills>
+                    <skill type="piloting" exact="$PilotSkill"/>
+                    <skill type="morale" exact="$PilotSkill"/>
+                  </skills>
+                </pilot>
+                <loadout ref="$WingSpec.{$i}.{2}"/>
+                <safepos object="player.occupiedship" x="-1500m + ($i * 300m)" z="-1500m" allowyaxis="false"/>
+              </create_ship>
+              <append_to_list name="$Created" exact="$Ship"/>
+            </do_all>
+            <set_value name="$HasMedium" exact="false"/>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Created.{$i}.isclass.ship_m">
+                <set_value name="$HasMedium" exact="true"/>
+              </do_if>
+            </do_all>
+            <set_value name="$Groups" exact="[]"/>
+            <do_all exact="$Created.count" counter="$i">
+              <append_to_list name="$Groups" exact="if $HasMedium and not $Created.{$i}.isclass.ship_m then 2 else 1"/>
+            </do_all>
+          </actions>
+        </cue>
+
+        <!-- The wing is set up in steps, each its own cue, chained by event_cue_completed so each
+             delay starts when the step before has run. (Sub-cues' delays start when the parent is
+             triggered, not after its actions: an AssignWing sub-cue ran before the wing existed.)
+             Seen 2026-11-10, top config: a commander set in the frame a ship is created didn't
+             stick; set_object_commander seems to apply a frame later (.commander still null
+             right after); and an Escort default order given in the same frame as the commander
+             put every wingman in alpha -->
+        <cue name="AssignWing">
+          <conditions>
+            <event_cue_completed cue="CreateWing"/>
+          </conditions>
+          <delay exact="1s"/>
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <set_object_commander object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Groups.{$i}"/>
+            </do_all>
+            <include_actions ref="SetGroupAssignments"/>
+          </actions>
+        </cue>
+
+        <!-- Second pass: setting a group's assignment drops the ships already in it (every run on
+             2026-11-10: per-ship, the first of each group was dropped; all at once, all were), and
+             ships that join once the group has its assignment keep it. So AssignWing sets the
+             groups to Defence and this re-adds the dropped wingmen; setting the assignments
+             again changes nothing by then -->
+        <cue name="CheckWing">
+          <conditions>
+            <event_cue_completed cue="AssignWing"/>
+          </conditions>
+          <delay exact="2s"/>
+          <actions>
+            <set_value name="$Readded" exact="0"/>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Created.{$i}.exists and $Created.{$i}.commander != player.occupiedship">
+                <debug_text text="'swibh_trials: %s (%s) joins group %s on the second pass (commander was %s)'.[$Created.{$i}.idcode, $Created.{$i}.macro.id, $Groups.{$i}, @$Created.{$i}.commander.idcode]" context="false" filter="general"/>
+                <set_object_commander object="$Created.{$i}" commander="player.occupiedship" subordinategroupid="$Groups.{$i}"/>
+                <set_value name="$Readded" operation="add"/>
+              </do_if>
+            </do_all>
+            <do_if value="$Readded">
+              <include_actions ref="SetGroupAssignments"/>
+            </do_if>
+            <debug_text text="'swibh_trials: wing second pass: %s of %s joined'.[$Readded, $Created.count]" context="false" filter="general"/>
+          </actions>
+        </cue>
+
+        <!-- Last, once commanders and groups have settled: Escort Bobby as each wingman's default
+             order, which the UI gives a defence subordinate (vanilla cpu_ship_manager.xml does the
+             same); without it they sat on an idle "Hold Position". Then log where each one is -->
+        <cue name="EscortWing">
+          <conditions>
+            <event_cue_completed cue="CheckWing"/>
+          </conditions>
+          <delay exact="1s"/>
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <do_if value="$Created.{$i}.exists and $Created.{$i}.commander == player.occupiedship">
+                <create_order object="$Created.{$i}" id="'Escort'" default="true">
+                  <param name="target" value="player.occupiedship"/>
+                </create_order>
+              </do_if>
+            </do_all>
+          </actions>
+        </cue>
+
+        <cue name="LogWing">
+          <conditions>
+            <event_cue_completed cue="EscortWing"/>
+          </conditions>
+          <delay exact="1s"/>
+          <actions>
+            <do_all exact="$Created.count" counter="$i">
+              <debug_text text="'swibh_trials: wing %s (%s): commander %s, group %s (wanted %s), assignment %s, default order %s'.[$Created.{$i}.idcode, $Created.{$i}.macro.id, @$Created.{$i}.commander.idcode, @$Created.{$i}.subordinategroupid, $Groups.{$i}, @$Created.{$i}.assignment, @$Created.{$i}.defaultorder.id]" context="false" filter="general"/>
+            </do_all>
+          </actions>
+        </cue>
+
+        <!-- Comm any wingman, "More..." > "Trials...". The main menu has no free slot (vanilla's
+             "Work somewhere else" takes top_right); in vanilla's g_mainmore (md/conversations.xml) a
+             wingman's pilot gets Fire (top_left), Return to normal duties (bottom_left), Ship details
+             (top_right) and Back, and right only on the player's own ship, so left is free -->
+        <cue name="CommMenu" instantiate="true">
+          <conditions>
+            <check_any>
+              <event_conversation_next_section section="g_mainmore"/>
+              <event_conversation_returned_to_section section="g_mainmore"/>
+            </check_any>
+          </conditions>
+          <actions>
+            <add_player_choice_sub text="'Trials...'" section="swibh_trial_menu" position="left"/>
+          </actions>
+        </cue>
+
+        <cue name="TargetMenu" instantiate="true">
+          <conditions>
+            <check_any>
+              <event_conversation_next_section section="swibh_trial_menu"/>
+              <event_conversation_returned_to_section section="swibh_trial_menu"/>
+            </check_any>
+          </conditions>
+          <actions>
+            <!-- A computed position is the slot number, 1-6 (common.xsd uipositionlookup; a name
+                 string logs "not numeric"). 1-5 for targets, 6 (bottom_right) for Back -->
+            <do_all exact="[$Targets.count, 5].min" counter="$i">
+              <add_player_choice text="'Spawn: ' + $Targets.{$i}.$name" section="swibh_trial_spawn" choiceparam="$i" position="$i"/>
+            </do_all>
+            <add_player_choice_return text="{1002,20}" position="bottom_right" comment="Back"/>
+          </actions>
+        </cue>
+
+        <cue name="Spawn" instantiate="true">
+          <conditions>
+            <event_conversation_next_section section="swibh_trial_spawn"/>
+          </conditions>
+          <actions>
+            <cancel_conversation actor="event.object"/>
+            <do_if value="$Active">
+              <signal_cue_instantly cue="EndFight" param="'abandoned'"/>
+            </do_if>
+            <set_value name="$T" exact="$Targets.{event.param2}"/>
+            <set_value name="$Fight" operation="add"/>
+            <set_value name="$PlayerShip" exact="player.occupiedship"/>
+            <set_faction_relation faction="$T.$faction" otherfaction="faction.player" value="-1"/>
+
+            <create_ship name="$Target" macro="$T.$macro" sector="player.sector">
+              <owner exact="$T.$faction"/>
+              <pilot>
+                <select faction="$T.$faction" tags="tag.aipilot"/>
+              </pilot>
+              <loadout>
+                <level exact="1.0"/>
+              </loadout>
+              <safepos object="$PlayerShip" z="$Distance" allowyaxis="false"/>
+            </create_ship>
+            <clear_group group="$TargetGroup"/>
+            <add_to_group groupname="$TargetGroup" object="$Target"/>
+            <do_all exact="$T.$escorts.count" counter="$i">
+              <create_ship name="$Escort" macro="$T.$escorts.{$i}" sector="player.sector">
+                <owner exact="$T.$faction"/>
+                <pilot>
+                  <select faction="$T.$faction" tags="tag.aipilot"/>
+                </pilot>
+                <loadout>
+                  <level exact="1.0"/>
+                </loadout>
+                <safepos object="$Target" max="2km" allowyaxis="false"/>
+              </create_ship>
+              <set_object_commander object="$Escort" commander="$Target" assignment="assignment.defence"/>
+            </do_all>
+
+            <set_value name="$Start" exact="player.age"/>
+            <set_value name="$Active" exact="true"/>
+            <debug_text text="'[swibh-trial] fight.start fight=%s t=%s target=%s faction=%s escorts=%s distance=%s ship=%s shipmacro=%s'.[$Fight, ($Start)f, $Target.macro.id, $T.$faction.id, $T.$escorts.count, ($Distance)f, $PlayerShip.idcode, $PlayerShip.macro.id]" context="false" filter="general"/>
+            <set_value name="$Wing" exact="$PlayerShip.allsubordinates"/>
+            <do_all exact="$Wing.count" counter="$i">
+              <debug_text text="'[swibh-trial] wingman fight=%s ship=%s macro=%s lead=%s'.[$Fight, $Wing.{$i}.idcode, $Wing.{$i}.macro.id, @$Wing.{$i}.commander.idcode]" context="false" filter="general"/>
+            </do_all>
+            <show_notification text="'Trial %s: %s spawned %s km away'.[$Fight, $T.$name, $Distance / 1km]"/>
+          </actions>
+        </cue>
+
+        <!-- Destroyed, or its crew bailed out (seen 2026-11-10: a Gozanti's pilot bailed, so no
+             destroyed event came); both end the fight as a win -->
+        <cue name="TargetKilled" instantiate="true">
+          <conditions>
+            <check_any>
+              <event_object_destroyed group="$TargetGroup"/>
+              <event_object_abandoned group="$TargetGroup"/>
+            </check_any>
+            <check_value value="$Active and event.object == $Target"/>
+          </conditions>
+          <actions>
+            <do_if value="event.name == 'event_object_abandoned'">
+              <signal_cue_instantly cue="EndFight" param="'bailed'"/>
+            </do_if>
+            <do_else>
+              <signal_cue_instantly cue="EndFight" param="'killed'"/>
+            </do_else>
+          </actions>
+        </cue>
+
+        <cue name="PlayerOwnedLost" instantiate="true">
+          <conditions>
+            <event_player_owned_destroyed/>
+            <check_value value="$Active"/>
+          </conditions>
+          <actions>
+            <do_if value="event.param == $PlayerShip">
+              <signal_cue_instantly cue="EndFight" param="'ship_lost'"/>
+            </do_if>
+            <do_elseif value="$Wing.indexof.{event.param}">
+              <debug_text text="'[swibh-trial] wingman.lost fight=%s t=%s ship=%s macro=%s'.[$Fight, (player.age)f, event.param.idcode, event.param.macro.id]" context="false" filter="general"/>
+            </do_elseif>
+          </actions>
+        </cue>
+
+        <!-- param: the result. Escorts left from the fight stay where they are -->
+        <cue name="EndFight" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$Active" exact="false"/>
+            <debug_text text="'[swibh-trial] fight.end fight=%s t=%s result=%s'.[$Fight, (player.age)f, event.param]" context="false" filter="general"/>
+            <show_notification text="'Trial %s: %s after %s s'.[$Fight, event.param, (player.age - $Start)i]"/>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+  </cues>
+</mdscript>

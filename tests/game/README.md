@@ -4,7 +4,7 @@ Status: **runs in game** (2026-11-02): `make game-test` passes 7 of 7 in about 4
 
 `make game-test` plays short scripted scenarios in the real game (X4 8.00 HF4 NoSteam + SWI 0.90) and reports PASS/FAIL, with no clicks. It's a copy of [A Pirate's Life's harness](https://github.com/ecarlste/x4-pirates-life-mod/blob/main/docs/research/automated-game-testing.md), adapted for the 8.00 NoSteam copy and SWI. Dev only: never loaded in a recorded episode.
 
-[Back to the test plan](../../test-plan.md)
+[Back to the test plan](../../test-plan.md). Hand-flown fights instead of scripted ones (M-rung trials, `make trials`): [trials.md](trials.md).
 
 ## How it works
 

@@ -1,4 +1,4 @@
-.PHONY: setup check check-xml check-lua check-xsd check-runner check-tools log-xml hunt-log game-test help
+.PHONY: setup check check-xml check-lua check-xsd check-runner check-tools log-xml hunt-log game-test trials trials-uninstall trial-log help
 
 # Runs Windows PowerShell through WSL interop; override to run it another way
 POWERSHELL ?= powershell.exe -NoProfile -ExecutionPolicy Bypass -File
@@ -13,6 +13,9 @@ help:
 	@echo "  make log-xml     - Regenerate extension/swibh/md/swibh_log.xml from the log schema (tools/log/schema.ts)"
 	@echo "  make hunt-log LOG=<debuglog.txt> - Add a play session's hunts to data/hunts.csv, rebuild data/hunts-summary.md"
 	@echo "  make game-test   - Install the test extension, run the in-game tests in X4 8.00 + SWI, remove it (Windows)"
+	@echo "  make trials      - Install the trials extension, start X4 for hand-flown M-rung fights, print the results table after you quit"
+	@echo "  make trials-uninstall - Remove the trials extension (after a killed run, or ARGS=-KeepExtension)"
+	@echo "  make trial-log LOG=<debuglog.txt> - Print the trials results table from a log"
 	@echo "  make help        - Show this help message"
 	@echo ""
 	@echo "First run: make game-test ARGS=-PrepareProfile  (creates the test profile with SWI switched on)"
@@ -45,6 +48,7 @@ check-lua:
 check-xsd:
 	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$($(PYTHON) tools/check_game_tests.py --get-windows X4_UNPACKED)"
 	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$($(PYTHON) tools/check_game_tests.py --get-windows X4_UNPACKED)" -ExtensionDir "$$(wslpath -w extension/swibh)"
+	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$($(PYTHON) tools/check_game_tests.py --get-windows X4_UNPACKED)" -ExtensionDir "$$(wslpath -w tests/game/swibh_trials)"
 
 # The runner's log parsing and reports against sample log lines
 check-runner:
@@ -70,3 +74,17 @@ hunt-log:
 game-test:
 	@$(POWERSHELL) "$$(wslpath -w tools/run-game-tests.ps1)" $(ARGS)
 	@case "$(ARGS)" in *-Manual*) ;; *) node tools/log/game-check.ts tests/game/debuglog.txt ;; esac
+
+# Hand-flown M-rung trials (tests/game/trials.md): installs the trials extension, starts X4
+# in the test profile and waits until you quit, removes the extension, then prints the results
+# table from the log. Close X4 first. ARGS=-KeepExtension leaves the extension installed
+trials:
+	@$(POWERSHELL) "$$(wslpath -w tools/run-trials.ps1)" $(ARGS)
+	@node tools/trial-log.ts tests/game/trials-debuglog.txt
+
+trials-uninstall:
+	@$(POWERSHELL) "$$(wslpath -w tools/run-trials.ps1)" -Uninstall
+
+trial-log:
+	@if [ -z "$(LOG)" ]; then echo "Usage: make trial-log LOG=<copy of debuglog.txt>"; exit 2; fi
+	@node tools/trial-log.ts "$(LOG)"
