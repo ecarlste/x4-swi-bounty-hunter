@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No md/no_such_script.xml in the game to patch -->
+<diff>
+  <add sel="/mdscript/cues">
+    <cue name="Lost"/>
+  </add>
+</diff>

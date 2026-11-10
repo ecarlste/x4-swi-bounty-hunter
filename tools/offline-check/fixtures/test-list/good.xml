@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="Tests">
+  <cues>
+    <cue name="Run">
+      <actions>
+        <set_value name="$Tests" exact="[Alpha, Beta]"/>
+      </actions>
+      <cues>
+        <cue name="NotARootCue"/>
+      </cues>
+    </cue>
+    <cue name="Alpha"/>
+    <cue name="Beta"/>
+  </cues>
+</mdscript>

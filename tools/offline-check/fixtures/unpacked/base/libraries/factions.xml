@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<factions>
+  <faction id="argon" name="Argon Federation"/>
+  <faction id="shared" name="Defined in base first"/>
+</factions>

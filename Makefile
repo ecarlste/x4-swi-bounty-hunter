@@ -2,7 +2,6 @@
 
 # Runs Windows PowerShell through WSL interop; override to run it another way
 POWERSHELL ?= powershell.exe -NoProfile -ExecutionPolicy Bypass -File
-PYTHON ?= python3 -I
 
 help:
 	@echo "SWI Bounty Hunter playthrough: in-game test harness"
@@ -36,9 +35,10 @@ setup:
 
 check: check-xml check-lua check-xsd check-runner check-tools
 
-# Well-formed XML, test list, every macro, faction and ware named exists in 8.00 or SWI, and MD diff sels match
+# Well-formed XML, test list, every macro, faction, ware and loadout named exists in 8.00 or SWI, and MD diff sels match.
+# Needs npm install (make setup)
 check-xml:
-	@$(PYTHON) tools/check_game_tests.py
+	@node tools/offline-check.ts
 
 # The autostart Lua parses as Lua 5.1 (X4's LuaJIT dialect); -p only parses, runs nothing
 check-lua:
@@ -46,9 +46,9 @@ check-lua:
 
 # The test extension and the swibh extension against X4 8.00's own md.xsd, diff.xsd and gamestarts.xsd (.NET's validator)
 check-xsd:
-	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$($(PYTHON) tools/check_game_tests.py --get-windows X4_UNPACKED)"
-	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$($(PYTHON) tools/check_game_tests.py --get-windows X4_UNPACKED)" -ExtensionDir "$$(wslpath -w extension/swibh)"
-	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$($(PYTHON) tools/check_game_tests.py --get-windows X4_UNPACKED)" -ExtensionDir "$$(wslpath -w tests/game/swibh_trials)"
+	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$(node tools/offline-check.ts --get-windows X4_UNPACKED)"
+	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$(node tools/offline-check.ts --get-windows X4_UNPACKED)" -ExtensionDir "$$(wslpath -w extension/swibh)"
+	@$(POWERSHELL) "$$(wslpath -w tools/validate-xml.ps1)" -SchemaDir "$$(node tools/offline-check.ts --get-windows X4_UNPACKED)" -ExtensionDir "$$(wslpath -w tests/game/swibh_trials)"
 
 # The runner's log parsing and reports against sample log lines
 check-runner:

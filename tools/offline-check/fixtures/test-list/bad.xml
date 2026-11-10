@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Tests names Gamma, which isn't a root cue, and leaves out the root cue Beta -->
+<mdscript name="Tests">
+  <cues>
+    <cue name="Run">
+      <actions>
+        <set_value name="$Tests" exact="[Alpha, Gamma]"/>
+      </actions>
+    </cue>
+    <cue name="Alpha"/>
+    <cue name="Beta"/>
+  </cues>
+</mdscript>

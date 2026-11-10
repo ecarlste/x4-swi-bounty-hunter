@@ -1,0 +1,4 @@
+<mdscript name="Filler"/>
+<macros><macro name="ship_test_macro" class="ship_s"/></macros>
+<macros><macro name="noclass_macro"/></macros>
+<macros><macro name="galaxy_test_macro" class="galaxy"/></macros>
