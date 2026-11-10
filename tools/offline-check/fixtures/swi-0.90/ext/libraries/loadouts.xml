@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SWI 0.90: everything in ext_01 (ext/), no ext02/ -->
+<loadouts>
+  <loadout id="ext01_only_loadout" macro="ship_test_macro"/>
+</loadouts>

@@ -3,15 +3,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { isDir, list, type Result } from "./files.ts";
-import { swiExtDirs } from "./config.ts";
+import { swiExtDirs, swiFile } from "./config.ts";
 import { namedIn, type Kind, type Names } from "./references.ts";
 
-// id -> the first library file (in dirs' order) that defines it
-const libraryIds = (dirs: string[], filename: string, element: string): Map<string, string> => {
+// id -> the first library file (in libs' order) that defines it
+const libraryIds = (libs: string[], element: string): Map<string, string> => {
   const ids = new Map<string, string>();
   const pattern = new RegExp(`<${element} id="([^"]+)"`, "g");
-  for (const d of dirs) {
-    const lib = join(d, filename);
+  for (const lib of libs) {
     if (!existsSync(lib)) continue;
     for (const [, id] of readFileSync(lib, "utf8").matchAll(pattern)) if (!ids.has(id)) ids.set(id, lib);
   }
@@ -25,16 +24,21 @@ export const checkIds = (
   swi: string,
   extensions: string[],
 ): Result => {
-  const dirs: string[] = [];
+  const filename = `${kind}s.xml`;
+  const gameDirs: string[] = [];
   if (isDir(unpacked)) {
     const top = dirname(unpacked);
-    dirs.push(...list(top).map((d) => join(top, d, "libraries")).filter(isDir).sort());
+    gameDirs.push(...list(top).map((d) => join(top, d, "libraries")).filter(isDir).sort());
   }
-  dirs.push(...swiExtDirs(swi).map((d) => join(d, "libraries")).filter(isDir));
-  if (!dirs.length) return { notes: [`${kind}s not checked: X4_UNPACKED and SWI_UNPACKED not found`], bad: [] };
+  if (!gameDirs.length && !swiExtDirs(swi).some((d) => isDir(join(d, "libraries"))))
+    return { notes: [`${kind}s not checked: X4_UNPACKED and SWI_UNPACKED not found`], bad: [] };
+  const libs = gameDirs.map((d) => join(d, filename));
+  // SWI's one file at this path: ext02's replaces ext's
+  const swiLib = swiFile(swi, join("libraries", filename));
+  if (swiLib) libs.push(swiLib);
   // Our extensions' own libraries (the trials' loadouts) count too
-  dirs.push(...extensions.map((ext) => join(ext, "libraries")).filter(isDir));
-  const ids = libraryIds(dirs, `${kind}s.xml`, kind);
+  libs.push(...extensions.map((ext) => join(ext, "libraries", filename)));
+  const ids = libraryIds(libs, kind);
   const notes: string[] = [];
   const bad: string[] = [];
   for (const name of [...names.keys()].sort()) {

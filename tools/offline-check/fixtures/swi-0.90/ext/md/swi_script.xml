@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SWI 0.90: everything in ext_01 (ext/), no ext02/ -->
+<mdscript name="Swi">
+  <cues>
+    <cue name="Old"/>
+  </cues>
+</mdscript>

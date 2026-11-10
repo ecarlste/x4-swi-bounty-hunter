@@ -40,3 +40,8 @@ export const SWI_FOLDER = "starwarsmod_m1";
 // ext_01 (ext/) to ext_02 (ext02/), and a later catalog overrides an earlier one
 export const swiExtDirs = (swi: string): string[] =>
   swi ? [join(swi, "ext02"), join(swi, "ext")].filter((d) => existsSync(d) && statSync(d).isDirectory()) : [];
+
+// The SWI file X4 loads at rel (such as md/x.xml or libraries/x.xml): ext02's when it has one,
+// since it replaces ext's whole file, else ext's. null when neither has it.
+export const swiFile = (swi: string, rel: string): string | null =>
+  swiExtDirs(swi).map((d) => join(d, rel)).find((f) => existsSync(f)) ?? null;
