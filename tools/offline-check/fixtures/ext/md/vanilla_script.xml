@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- md/<name> patches the game's md/<name> -->
+<diff>
+  <add sel="/mdscript/cues/cue[@name='Start']/actions">
+    <set_value name="$B" exact="2"/>
+  </add>
+</diff>

@@ -25,7 +25,7 @@ Status: **runs in game** (2026-11-02): `make game-test` passes 7 of 7 in about 4
 | `../../extension/swibh/md/*.xml` | The `swibh` extension's MD (log libraries, engagements). The runner copies it into the installed test extension's `md/`, so tests run against it without installing `swibh` |
 | `../../tools/log/game-check.ts` | After the run, `make game-test` reads the engagement test's log events from `tests/game/debuglog.txt` (the runner's copy) with the log parser |
 | `../../tools/run-game-tests.ps1` | The runner |
-| `../../tools/check_game_tests.py`, `../../tools/validate-xml.ps1`, `../GameTests.Check.ps1` | Offline checks (`make check`) |
+| `../../tools/offline-check.ts`, `../../tools/validate-xml.ps1`, `../GameTests.Check.ps1` | Offline checks (`make check`) |
 | `../../test.config` | Paths and test profile id (copy `test.config.example`) |
 
 ### The test gamestart

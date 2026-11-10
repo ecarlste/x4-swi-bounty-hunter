@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<macros>
+  <macro name="character_test_macro" class="npc"/>
+</macros>

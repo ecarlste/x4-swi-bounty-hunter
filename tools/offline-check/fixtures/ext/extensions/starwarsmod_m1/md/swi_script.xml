@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- extensions/starwarsmod_m1/md/<name> patches SWI's script, ext02/ before ext/ -->
+<diff>
+  <add sel="/mdscript/cues/cue[@name='Ext02Only']/actions/x[@v='b']"/>
+  <add sel="/mdscript/cues/cue/actions/x[@v='a'][2]"/>
+  <add sel="/mdscript/cues/cue[@name='Old']"/>
+  <add sel="/mdscript/cues/cue[@name='Second'"/>
+  <remove sel="//cue[@name='Second']/@name"/>
+  <add sel="mdscript/cues"/>
+  <add sel="count(//x)"/>
+</diff>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <add sel="/factions">
+    <faction id="dlcfaction" name="From a DLC folder next to base"/>
+    <faction id="shared" name="Also defined here, but base comes first"/>
+  </add>
+</diff>

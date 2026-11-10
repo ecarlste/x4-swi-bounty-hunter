@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built so XPath and ElementTree read [n] differently. x[@v='a'][2] is, by XPath (and X4), the
+     2nd a in each parent: the 3rd x of both cues, so 2 nodes. ElementTree reads it as "an a that is
+     the 2nd x", which is true only in the first cue, so it counts 1. -->
+<mdscript name="Swi">
+  <cues>
+    <cue name="Ext02Only">
+      <actions>
+        <x v="b"/>
+        <x v="a"/>
+        <x v="a"/>
+      </actions>
+    </cue>
+    <cue name="Second">
+      <actions>
+        <x v="a"/>
+        <x v="b"/>
+        <x v="a"/>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>

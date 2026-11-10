@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- extensions/<folder>/md/<name> patches that DLC's script, unpacked next to X4_UNPACKED -->
+<diff>
+  <add sel="/mdscript/cues/cue[@name='DlcStart']">
+    <actions/>
+  </add>
+</diff>

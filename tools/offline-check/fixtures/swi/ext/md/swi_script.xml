@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 0.90 layout: ext02/md/swi_script.xml overrides this one, which lacks the Ext02Only cue -->
+<mdscript name="Swi">
+  <cues>
+    <cue name="Old"/>
+  </cues>
+</mdscript>

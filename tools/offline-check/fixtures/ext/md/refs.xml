@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Names each kind of reference the checks look up. A reference in a comment is skipped:
+     macro="commented_out_macro" faction="commentfaction" -->
+<mdscript name="Refs">
+  <cues>
+    <cue name="Refs">
+      <actions>
+        <create_ship name="$Ship" macro="ship_test_macro" zone="player.zone">
+          <owner exact="faction.argon"/>
+          <loadout>
+            <loadout ref="own_loadout"/>
+          </loadout>
+        </create_ship>
+        <find_sector name="$S" macro="macro.galaxy_test_macro"/>
+        <set_value name="$C" exact="macro.character_test_macro"/>
+        <set_value name="$P" exact="macro.noclass_macro"/>
+        <set_value name="$Missing" exact="macro.missing_macro"/>
+        <set_value name="$F" exact="[faction.galempire, faction.dlcfaction, faction.shared, faction.player, faction.nosuchfaction]"/>
+        <set_value name="$NotARef" exact="$faction.id"/>
+        <add_wares object="$Ship" ware="ware.energycells" exact="1"/>
+        <set_value name="$NotAWare" exact="$x.ware.id"/>
+        <create_ship name="$S2" macro="ship_test_macro">
+          <loadout>
+            <loadout ref="swi_loadout"/>
+          </loadout>
+        </create_ship>
+        <add_wares object="$Ship" ware="nosuchware" exact="1"/>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>
