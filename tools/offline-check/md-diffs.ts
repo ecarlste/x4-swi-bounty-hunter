@@ -7,7 +7,7 @@ import type { Document, Element } from "@xmldom/xmldom";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, relative, sep } from "node:path";
 import * as xpath from "xpath";
-import { SWI_FOLDER, swiExtDirs } from "./config.ts";
+import { SWI_FOLDER, swiFile } from "./config.ts";
 import { parseXml, type Result } from "./files.ts";
 
 // The unpacked MD script the diff at rel (relative to its extension) patches, or null.
@@ -15,12 +15,16 @@ import { parseXml, type Result } from "./files.ts";
 // another extension's script as a new script and ignores its <diff> root (T12, 2026-11-02).
 export const mdDiffTarget = (rel: string, unpacked: string, swi: string): string | null => {
   const parts = rel.split(sep);
-  let bases: string[];
-  if (parts.length === 2 && unpacked) bases = [unpacked];
-  else if (parts.length === 4 && parts[0] === "extensions")
-    bases = parts[1] === SWI_FOLDER ? swiExtDirs(swi) : unpacked ? [join(dirname(unpacked), parts[1])] : [];
-  else return null;
-  return bases.map((b) => join(b, "md", parts.at(-1)!)).find(existsSync) ?? null;
+  const script = join("md", parts.at(-1)!);
+  let base: string;
+  if (parts.length === 2 && unpacked) base = unpacked;
+  else if (parts.length === 4 && parts[0] === "extensions") {
+    if (parts[1] === SWI_FOLDER) return swiFile(swi, script);
+    if (!unpacked) return null;
+    base = join(dirname(unpacked), parts[1]);
+  } else return null;
+  const target = join(base, script);
+  return existsSync(target) ? target : null;
 };
 
 // How many nodes sel selects in doc, or why it can't be counted

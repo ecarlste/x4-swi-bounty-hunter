@@ -8,7 +8,8 @@ import { references } from "./references.ts";
 export const fixtures = fileURLToPath(new URL("fixtures", import.meta.url));
 export const install = join(fixtures, "install");
 export const unpacked = join(fixtures, "unpacked", "base");
-export const swi = join(fixtures, "swi");
+export const swi = join(fixtures, "swi"); // 0.91's layout: ext/ and ext02/
+export const swi090 = join(fixtures, "swi-0.90"); // 0.90's: ext/ only
 export const ext = join(fixtures, "ext");
 export const extFiles = extensionFiles([ext]);
 export const refs = references(extFiles, fixtures);

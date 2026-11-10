@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ext02/libraries/loadouts.xml replaces this whole file (a later catalog wins by path), so this id is gone -->
+<loadouts>
+  <loadout id="ext01_only_loadout" macro="ship_test_macro"/>
+</loadouts>

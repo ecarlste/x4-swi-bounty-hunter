@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { checkIds } from "./ids.ts";
-import { ext, refs, swi, unpacked } from "./fixtures.ts";
+import { ext, refs, swi, swi090, unpacked } from "./fixtures.ts";
 
 test("factions come from the unpacked game, its DLC folders (base first) and SWI", () => {
   assert.deepEqual(checkIds("faction", refs.faction, unpacked, swi, [ext]), {
@@ -25,6 +25,22 @@ test("wares", () => {
 test("loadouts come from SWI's ext02 and our own extensions' libraries too", () => {
   assert.deepEqual(checkIds("loadout", refs.loadout, unpacked, swi, [ext]), {
     notes: ["loadout own_loadout: ext/libraries/loadouts.xml", "loadout swi_loadout: ext02/libraries/loadouts.xml"],
+    bad: [],
+  });
+});
+
+test("SWI's ext02 library replaces ext's file of the same name, so an id only ext's has is gone", () => {
+  const names = new Map([["ext01_only_loadout", new Set(["ext/md/refs.xml"])]]);
+  assert.deepEqual(checkIds("loadout", names, "", swi, []), {
+    notes: [],
+    bad: ["loadout ext01_only_loadout (in ext/md/refs.xml) not found in loadouts.xml"],
+  });
+});
+
+test("SWI 0.90, with only ext/, still has its ids", () => {
+  const names = new Map([["ext01_only_loadout", new Set(["ext/md/refs.xml"])]]);
+  assert.deepEqual(checkIds("loadout", names, "", swi090, []), {
+    notes: ["loadout ext01_only_loadout: ext/libraries/loadouts.xml"],
     bad: [],
   });
 });

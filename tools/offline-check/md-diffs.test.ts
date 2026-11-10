@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { join } from "node:path";
-import { extFiles, fixtures, swi, unpacked } from "./fixtures.ts";
+import { extFiles, fixtures, swi, swi090, unpacked } from "./fixtures.ts";
 import { checkMdDiffs } from "./md-diffs.ts";
 
 const swiTarget = join(swi, "ext02/md/swi_script.xml");
@@ -27,6 +27,13 @@ test("each sel must match one node in the script its path patches", () => {
     `${swiDiff}: <add sel="count(//x)">: not a node set`,
     "ext/md/no_such_script.xml: no script at this path to patch (an MD diff in md/ only patches the game's own scripts; another extension's goes in extensions/<its folder>/md/)",
   ]);
+});
+
+test("SWI 0.90, with only ext/, is patched there", () => {
+  const { notes, bad } = checkMdDiffs(extFiles, fixtures, "", swi090);
+  const target = join(swi090, "ext/md/swi_script.xml");
+  assert.ok(notes.includes(`${swiDiff}: <add sel="/mdscript/cues/cue[@name='Old']"> matches 1 node in ${target}`));
+  assert.ok(bad.includes(`${swiDiff}: <add sel="/mdscript/cues/cue[@name='Ext02Only']/actions/x[@v='b']"> matches 0 nodes in ${target}`));
 });
 
 test("without SWI_UNPACKED, a diff of SWI's script has nothing to patch", () => {
