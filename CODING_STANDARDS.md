@@ -13,6 +13,9 @@ TypeScript first, PowerShell only for the Windows side: see
 
 ## CLIs (`tools/<name>.ts`)
 
+These rules cover every script a person or `make` runs, including ones inside a module folder,
+like `tools/log/generate.ts`.
+
 - Read arguments with `parseArgs` from `node:util`. Don't parse `process.argv` by hand.
 - On bad arguments, print a usage line to stderr and exit 2. That includes the error
   `parseArgs` throws for an unknown option (catch it, as `tools/offline-check.ts` does).
@@ -35,5 +38,6 @@ A path from `test.config` or the command line goes through `fromWindows`
 
 - devDependencies use `^` ranges in `package.json`; `package-lock.json` does the pinning.
   npm only changes locked versions when `package.json` changes, and CI's `npm ci` installs
-  exactly the locked versions.
+  exactly the locked versions. On a 0.x version `^` is narrow: `^0.9.12` stays in 0.9.x and
+  `^0.0.36` allows only 0.0.36.
 - Commit `package-lock.json` with any change to `package.json`.
