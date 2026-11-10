@@ -6,4 +6,6 @@
   <add sel="/mdscript/cues/cue[@name='Old']"/>
   <add sel="/mdscript/cues/cue[@name='Second'"/>
   <remove sel="//cue[@name='Second']/@name"/>
+  <add sel="mdscript/cues"/>
+  <add sel="count(//x)"/>
 </diff>

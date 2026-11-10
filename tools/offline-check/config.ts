@@ -3,8 +3,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fromWindows } from "../wsl-path.ts";
-
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+import { escapeRegExp } from "./regexp.ts";
 
 // Python's str.strip(chars): drop any of chars from both ends
 const stripChars = (s: string, chars: string) => {

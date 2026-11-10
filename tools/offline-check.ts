@@ -18,6 +18,7 @@
 //   node tools/offline-check.ts --get-windows KEY   # ...and as Windows sees it
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { configValue, windowsPath } from "./offline-check/config.ts";
 import { extensionFiles, type Result } from "./offline-check/files.ts";
 import { checkIds } from "./offline-check/ids.ts";
@@ -31,10 +32,22 @@ const root = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "");
 const testExtension = join(root, "tests", "game", "swibh_tests");
 const extensions = [testExtension, join(root, "extension", "swibh"), join(root, "tests", "game", "swibh_trials")];
 
-const args = process.argv.slice(2);
-if (args.length === 2 && (args[0] === "--get" || args[0] === "--get-windows")) {
-  const value = configValue(args[1], root);
-  console.log(value && args[0] === "--get-windows" ? windowsPath(value) : value);
+const usage = "Usage: node tools/offline-check.ts [--get KEY | --get-windows KEY]";
+let values;
+try {
+  ({ values } = parseArgs({ options: { get: { type: "string" }, "get-windows": { type: "string" } } }));
+} catch (e) {
+  console.error(`${(e as Error).message}\n${usage}`);
+  process.exit(2);
+}
+const getKey = values.get ?? values["get-windows"];
+if (getKey !== undefined) {
+  if (values.get !== undefined && values["get-windows"] !== undefined) {
+    console.error(usage);
+    process.exit(2);
+  }
+  const value = configValue(getKey, root);
+  console.log(value && values["get-windows"] !== undefined ? windowsPath(value) : value);
   process.exit(value ? 0 : 1);
 }
 

@@ -15,6 +15,8 @@ test("each sel must match one node in the script its path patches", () => {
     `${swiDiff}: <add sel="/mdscript/cues/cue[@name='Ext02Only']/actions/x[@v='b']"> matches 1 node in ${swiTarget}`,
     // Any XPath is followed, an attribute or a // included
     `${swiDiff}: <remove sel="//cue[@name='Second']/@name"> matches 1 node in ${swiTarget}`,
+    // A relative sel is read from the document
+    `${swiDiff}: <add sel="mdscript/cues"> matches 1 node in ${swiTarget}`,
     `ext/md/vanilla_script.xml: <add sel="/mdscript/cues/cue[@name='Start']/actions"> matches 1 node in ${join(unpacked, "md/vanilla_script.xml")}`,
   ]);
   assert.deepEqual(bad, [
@@ -22,6 +24,7 @@ test("each sel must match one node in the script its path patches", () => {
     `${swiDiff}: <add sel="/mdscript/cues/cue/actions/x[@v='a'][2]"> matches 2 nodes in ${swiTarget}`,
     `${swiDiff}: <add sel="/mdscript/cues/cue[@name='Old']"> matches 0 nodes in ${swiTarget}`,
     `${swiDiff}: <add sel="/mdscript/cues/cue[@name='Second'">: not a valid XPath (XPath parse error)`,
+    `${swiDiff}: <add sel="count(//x)">: not a node set`,
     "ext/md/no_such_script.xml: no script at this path to patch (an MD diff in md/ only patches the game's own scripts; another extension's goes in extensions/<its folder>/md/)",
   ]);
 });

@@ -33,3 +33,11 @@ test("the CLI's --get prints a value and exits 1 when it's unset", () => {
   const unset = spawnSync(process.execPath, [cli, "--get", "SWIBH_NO_SUCH_KEY"], { encoding: "utf8" });
   assert.deepEqual([unset.status, unset.stdout], [1, "\n"]);
 });
+
+test("the CLI turns away an unknown flag with its usage, without running the checks", () => {
+  const cli = fileURLToPath(new URL("../offline-check.ts", import.meta.url));
+  const run = spawnSync(process.execPath, [cli, "--nope"], { encoding: "utf8" });
+  assert.equal(run.status, 2);
+  assert.equal(run.stdout, "");
+  assert.match(run.stderr, /Usage: node tools\/offline-check\.ts/);
+});

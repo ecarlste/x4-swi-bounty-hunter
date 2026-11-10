@@ -7,11 +7,10 @@ import { basename, dirname, join, relative } from "node:path";
 import { catalogs, readCatalog, readEntry } from "./catalog.ts";
 import { isDir, list, type Result } from "./files.ts";
 import { namedIn, type Names } from "./references.ts";
+import { escapeRegExp } from "./regexp.ts";
 
 // Map files bigger than this are skipped: no macro we name lives in one
 const MAX_MAP_FILE = 4 * 1024 * 1024;
-
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const macroClass = (text: string, name: string) =>
   new RegExp(`<macro name="${escapeRegExp(name)}" class="([a-z_]+)"`).exec(text)?.[1];
 
