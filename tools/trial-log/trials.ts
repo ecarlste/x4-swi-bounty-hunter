@@ -4,7 +4,8 @@
 
 export const MARKER = "[swibh-trial]";
 
-export type Result = "killed" | "ship_lost" | "abandoned" | "unfinished";
+// bailed: the target's crew abandoned it, which ends the fight like a kill
+export type Result = "killed" | "bailed" | "ship_lost" | "abandoned" | "unfinished";
 
 export type Wingman = { ship: string; macro: string; lead: string };
 
@@ -29,7 +30,7 @@ export type Fight = {
   lost: { ship: string; macro: string; t: number }[];
   result: Result;
   won: boolean;
-  // Seconds from spawn to the target's death; null unless won
+  // Seconds from spawn to the target's death or abandonment; null unless won
   timeToKill: number | null;
 };
 
@@ -43,7 +44,8 @@ const fields = (text: string): Record<string, string> =>
       .map((part) => [part.slice(0, part.indexOf("=")), part.slice(part.indexOf("=") + 1)]),
   );
 
-const results: readonly string[] = ["killed", "ship_lost", "abandoned"];
+const results: readonly string[] = ["killed", "bailed", "ship_lost", "abandoned"];
+const wins: readonly string[] = ["killed", "bailed"];
 
 export function readTrials(lines: Iterable<string>): { fights: Fight[]; errors: LineError[] } {
   const fights: Fight[] = [];
@@ -114,7 +116,7 @@ export function readTrials(lines: Iterable<string>): { fights: Fight[]; errors: 
         if (!results.includes(result)) throw new Error(`result: expected one of ${results.join(", ")}`);
         fight.result = result as Result;
         fight.end = num("t");
-        fight.won = result === "killed";
+        fight.won = wins.includes(result);
         fight.timeToKill = fight.won ? fight.end - fight.start : null;
       } else {
         throw new Error(`unknown event ${event}`);

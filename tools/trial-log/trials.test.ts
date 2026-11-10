@@ -45,6 +45,19 @@ test("losing the player's ship is no win and has no time to kill", () => {
   assert.equal(fights[0].end, 90);
 });
 
+test("the target's crew bailing out is a win, timed like a kill", () => {
+  const { fights, errors } = readTrials([
+    line(5, "session config=entry t=5"),
+    line(70, "fight.start fight=1 t=70 target=impgozanti_cr_macro faction=galempire escorts=4 distance=15000 ship=BOB-001 shipmacro=hwk_290_01_macro"),
+    line(190, "fight.end fight=1 t=190 result=bailed"),
+  ]);
+
+  assert.deepEqual(errors, []);
+  assert.equal(fights[0].result, "bailed");
+  assert.equal(fights[0].won, true);
+  assert.equal(fights[0].timeToKill, 120);
+});
+
 test("a fight with no end line is unfinished", () => {
   const { fights } = readTrials([
     line(5, "session config=entry t=5"),

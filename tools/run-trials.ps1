@@ -91,7 +91,7 @@ if (Test-Path $logPath) { Move-Item $logPath (Join-Path $profileDir 'debuglog.pr
 
 $arguments = "-skipintro -debug all -logfile debuglog.txt -scriptlogfiles -personalfolderid $ProfileId"
 Write-Host "Starting $GameExe $arguments"
-Write-Host "New Game > the utility group: pick an 'SWIBH trial' start. Comm any of your wingmen for 'Trials: spawn ...'. Quit X4 when done."
+Write-Host "New Game > the utility group: pick an 'SWIBH trial' start. Comm a wingman: 'More...' > 'Trials...' > 'Spawn: ...'. Quit X4 when done."
 $game = Start-Process -FilePath $GameExe -ArgumentList $arguments -WorkingDirectory $X4Path -PassThru
 try { $game.WaitForExit() }
 finally {

@@ -4,7 +4,7 @@
 
      At game start it gives Bobby the config's wing: player-owned ships with pilots, each assigned
      straight to his ship (defence). Rearrange them in game as you like (Behaviour > Subordinates);
-     the wing as it stands at each spawn is logged. Comm any wingman: "Trials..." lists the M
+     the wing as it stands at each spawn is logged. Comm any wingman, "More..." > "Trials...", for the M
      targets; picking one spawns it, hostile, 15 km from Bobby, with its escorts. Spawning while a
      fight is on ends that fight as abandoned.
 
@@ -14,7 +14,7 @@
        fight.start fight=<n> t=<t> target=<macro> faction=<id> escorts=<n> distance=<m> ship=<idcode> shipmacro=<macro>
        wingman fight=<n> ship=<idcode> macro=<macro> lead=<commander's idcode>   one per wingman at the spawn
        wingman.lost fight=<n> t=<t> ship=<idcode> macro=<macro>
-       fight.end fight=<n> t=<t> result=<killed|ship_lost|abandoned>
+       fight.end fight=<n> t=<t> result=<killed|bailed|ship_lost|abandoned>
 
      The targets are SWI's own M jobs with their usual escorts (research/trials-ships.md section 2),
      with jobs' level 1.0 loadouts. -->
@@ -93,16 +93,19 @@
           </actions>
         </cue>
 
-        <!-- Comm any ship: "Trials..." (top_right is free in a player-owned ship's default menu) -->
+        <!-- Comm any wingman, "More..." > "Trials...". The main menu has no free slot (vanilla's
+             "Work somewhere else" takes top_right); in vanilla's g_mainmore (md/conversations.xml) a
+             wingman's pilot gets Fire (top_left), Return to normal duties (bottom_left), Ship details
+             (top_right) and Back, and right only on the player's own ship, so left is free -->
         <cue name="CommMenu" instantiate="true">
           <conditions>
             <check_any>
-              <event_conversation_started conversation="default"/>
-              <event_conversation_returned_to_section section="default"/>
+              <event_conversation_next_section section="g_mainmore"/>
+              <event_conversation_returned_to_section section="g_mainmore"/>
             </check_any>
           </conditions>
           <actions>
-            <add_player_choice_sub text="'Trials...'" section="swibh_trial_menu" position="top_right"/>
+            <add_player_choice_sub text="'Trials...'" section="swibh_trial_menu" position="left"/>
           </actions>
         </cue>
 
@@ -114,9 +117,10 @@
             </check_any>
           </conditions>
           <actions>
-            <set_value name="$Positions" exact="['top_left', 'left', 'bottom_left', 'top_right', 'right']"/>
-            <do_all exact="[$Targets.count, $Positions.count].min" counter="$i">
-              <add_player_choice text="'Spawn: ' + $Targets.{$i}.$name" section="swibh_trial_spawn" choiceparam="$i" position="$Positions.{$i}"/>
+            <!-- A computed position is the slot number, 1-6 (common.xsd uipositionlookup; a name
+                 string logs "not numeric"). 1-5 for targets, 6 (bottom_right) for Back -->
+            <do_all exact="[$Targets.count, 5].min" counter="$i">
+              <add_player_choice text="'Spawn: ' + $Targets.{$i}.$name" section="swibh_trial_spawn" choiceparam="$i" position="$i"/>
             </do_all>
             <add_player_choice_return text="{1002,20}" position="bottom_right" comment="Back"/>
           </actions>
@@ -173,13 +177,23 @@
           </actions>
         </cue>
 
+        <!-- Destroyed, or its crew bailed out (seen 2026-11-10: a Gozanti's pilot bailed, so no
+             destroyed event came); both end the fight as a win -->
         <cue name="TargetKilled" instantiate="true">
           <conditions>
-            <event_object_destroyed group="$TargetGroup"/>
+            <check_any>
+              <event_object_destroyed group="$TargetGroup"/>
+              <event_object_abandoned group="$TargetGroup"/>
+            </check_any>
             <check_value value="$Active and event.object == $Target"/>
           </conditions>
           <actions>
-            <signal_cue_instantly cue="EndFight" param="'killed'"/>
+            <do_if value="event.name == 'event_object_abandoned'">
+              <signal_cue_instantly cue="EndFight" param="'bailed'"/>
+            </do_if>
+            <do_else>
+              <signal_cue_instantly cue="EndFight" param="'killed'"/>
+            </do_else>
           </actions>
         </cue>
 
