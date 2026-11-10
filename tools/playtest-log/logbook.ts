@@ -65,8 +65,9 @@ function pacing(hunts: Hunt[]): Pacing {
   };
 }
 
-// SWI 0.90's faction names, page 999840 of ext/t/0001.xml. The logbook names
-// factions by these text ids, for example "{999840,504110}".
+// SWI's faction names, page 999840 of t/0001.xml (ext/ in 0.90, ext02/ in 0.91 HF1;
+// these ids read the same in both). The logbook names factions by these text ids,
+// for example "{999840,504110}".
 const SWI_FACTIONS: Record<string, string> = {
   "500110": "Galactic Empire",
   "501110": "Bounty Hunters Guild",
