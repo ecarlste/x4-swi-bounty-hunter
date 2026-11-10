@@ -1,6 +1,6 @@
 # M-rung trials (hand-flown wing config fights)
 
-Status: **partly tried in game** (2026-11-10, [#63](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/63)). The offline checks pass (`make check`: ids, loadouts, 8.00 XSDs). One entry run on 2026-11-10: the wing spawned assigned to Bobby, the comm menu worked once moved under "More..." (vanilla fills the main menu's top_right), and an Imperial Gozanti + 4 TIEs spawned and fought, with no wingmen lost. Two fixes came out of it and are not yet tried in game: the Gozanti's pilot bailed out, which never fires the destroyed event, so a bail-out now ends the fight as `bailed`; and the R-41's two HM-6 launcher slots were empty, so every launcher slot now gets a launcher and missiles. See "Unverified" below.
+Status: **flown in game** (2026-11-10, [#63](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/63), [#95](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/95)). It set the M rung's configs ([#47](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/47)); see "Results". Since #95, every ship has a full crew and every pilot (wing, target, escorts) is at piloting and morale 9. Earlier notes follow. The offline checks pass (`make check`: ids, loadouts, 8.00 XSDs). One entry run on 2026-11-10: the wing spawned assigned to Bobby, the comm menu worked once moved under "More..." (vanilla fills the main menu's top_right), and an Imperial Gozanti + 4 TIEs spawned and fought, with no wingmen lost. Two fixes came out of it and are not yet tried in game: the Gozanti's pilot bailed out, which never fires the destroyed event, so a bail-out now ends the fight as `bailed`; and the R-41's two HM-6 launcher slots were empty, so every launcher slot now gets a launcher and missiles. See "Unverified" below.
 
 The trials extension lets you fly the M rung's [wing configs](../../GLOSSARY.md) by hand against M targets, for the wayfinder ticket "M-rung loadout trials" ([#47](https://github.com/ecarlste/x4-swi-bounty-hunter/issues/47)). It's modelled on the [game-test harness](README.md), but it has **no autostart and no auto-quit**: you start a trial from New Game and play. It's dev only and never loaded in a recorded episode.
 
@@ -91,11 +91,27 @@ Hand-flown fights so far, from `make trials` (pilot skill 9; targets spawned 15 
 | 2026-11-10 | entry_n1 (4 N-1) | Hutt C-ROC + Weequay + 2 R-41 | `bailed` | 2:58 | 0 of 4 |
 | 2026-11-10 | top (12 wingmen; Firespray with no thrusters, so the wing fought alone) | New Republic GS-80 + 3 X-wings | `killed` | 1:47 | 0 of 12 |
 | 2026-11-10 | top (12 wingmen, 2 assigned by hand; Firespray flying) | New Republic CR-90 + 3 X-wings | `killed` | 1:05 | 0 of 12 |
+| 2026-11-10 | entry (4 R-41) | Black Sun Weequay + 3 R-41 | `bailed` | 2:43 | 1 of 4 (R-41) |
+| 2026-11-10 | entry (4 R-41) | Hutt C-ROC + Weequay + 2 R-41 | `unfinished` (game quit mid-fight) | - | 0 of 4 |
+| 2026-11-10 | entry (4 R-41), full crews | Hutt C-ROC + Weequay + 2 R-41 | `killed` | 3:00 | 0 of 4 |
+| 2026-11-10 | entry (4 R-41), full crews | New Republic CR-90 + 3 X-wings | `ship_lost` (wipe: the X-wings took long to kill, leaving Bobby and 1 R-41 against the CR-90) | - | 4 of 4 |
+| 2026-11-10 | entry (4 R-41), pinned | New Republic CR-90 + 3 X-wings | `ship_lost` (wipe again; R-41s lost at 1:15, 2:23, 2:45, 2:53) | - | 4 of 4 |
+| 2026-11-10 | established (3 HWK, 4 R-41), pinned | New Republic CR-90 + 3 X-wings | `killed` (won, but lost more than it pays) | 2:13 | 3 of 7 (R-41) |
+| 2026-11-10 | established, pinned | Imperial Gozanti + 4 TIEs | `killed` | 1:20 | 1 of 7 (R-41) |
+| 2026-11-10 | established, pinned | New Republic GS-80 + 3 X-wings | `killed` | 2:11 | 1 of 7 (R-41) |
+| 2026-11-10 | top (12 wingmen), pinned, wing as spawned | New Republic CR-90 + 3 X-wings | `killed` | 1:12 | 1 of 12 (R-41) |
+| 2026-11-10 | top (12 wingmen), pinned, split by hand: all M ships and the HWK-290s burst the CR-90, Bobby and the R-41s took the X-wings (Bobby picked off an X-wing chasing an R-41) | New Republic CR-90 + 3 X-wings | `killed` | 0:51 | 0 of 12 |
+
+"Pinned": full crews and every pilot (wing, target, escorts) at piloting and morale 9. Why crews matter: [research/crew-turret-accuracy-files.md](https://github.com/ecarlste/x4-swi-bounty-hunter/blob/research/crew-turret-accuracy-files/research/crew-turret-accuracy-files.md) and [research/crew-turret-accuracy-sources.md](https://github.com/ecarlste/x4-swi-bounty-hunter/blob/research/crew-turret-accuracy-sources/research/crew-turret-accuracy-sources.md): turret aim in the player's sector doesn't read crew; a pilot-only ship bails on its first successful roll, a crewed one needs several.
+
+Every fight above ran with **pilots only**: `create_ship` adds no crew, so a target's crew bailed on the first check (an M ship with only its pilot most of all), which made targets easier than in a real hunt. From the next run, every ship (wing, targets and escorts) has a full crew; treat the rows above as easier than the rest. Rows marked "full crews" had crews but **random target pilot skill**; from the run after them, target and escort pilots are pinned at the wing's 9.
 
 ## Unverified
 
 To check on the first run, and record here:
 
+- ~~Target and escort pilots at piloting and morale 9~~ Used in every fight marked "pinned" (2026-11-10).
+- Full crews (added 2026-11-10, first run fought with them; the Crew tabs not yet checked): every ship is created with `<people ref="..."><fillpercent exact="100"/></people>`. Targets and escorts take their faction's `<faction>_military_crew` (the `$crew` in each target's table), the wing takes `huttcartel_military_crew` (`$WingCrew`; SWI 0.90 has no player crew set). Check a wingman's and a target's Crew tab: it should be full, and a target should no longer bail on the first hit.
 - The loadouts fit: engines on every player ship, and the weapons, launchers, turrets and shields picked by slot tag (all `optional`, so a wrong pick leaves the slot empty rather than failing). Confirmed 2026-11-10: the R-41's four lasers and engines, the N-1's Krupx launcher and missiles, and the top config's ships otherwise. The Firespray's small thrusters and the C-ROC's four turrets (with the two `con_m_turret` lasers) work (second top run, 2026-11-10).
 - Back from the "Trials..." menu returns to "More...". The five spawn choices use slot numbers 1-5 (a name string logged "not numeric"; fixed and clean in the 2026-11-10 top run). (Found 2026-11-10: the main comm menu has no free slot, since vanilla puts "Work somewhere else for me" at `top_right`, so "Trials..." sits at `left` in vanilla's `g_mainmore`.)
 - `event_player_owned_destroyed` fires for Bobby's own ship as well as the wingmen, with the ship as `event.param`.
