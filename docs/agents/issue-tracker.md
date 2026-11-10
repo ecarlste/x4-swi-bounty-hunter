@@ -14,6 +14,13 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
+## Blockers
+
+A ticket's body is written before its blockers land, so it can describe code that a blocker's PR has since changed or partly built. Blocking edges are GitHub's native issue dependencies (see **Blocking** under **Wayfinding operations**).
+
+- **When your PR closes a ticket that blocks others**: after the merge, list the tickets it blocks with `gh api repos/<owner>/<repo>/issues/<n>/dependencies/blocking --jq '.[] | "#\(.number) \(.title) [\(.state)]"'`. On each open one, comment one or two lines on what landed that its body doesn't know about, with a link to the PR. If the body is now wrong, edit it (`gh issue edit <n> --body-file ...`) and say so in the comment.
+- **When starting a ticket**: read its comments, then the PRs that closed its blockers, before trusting the body. List the blockers with `gh api repos/<owner>/<repo>/issues/<n>/dependencies/blocked_by --jq '.[] | "#\(.number) [\(.state)]"'`. For each closed one, find the PR that closed it with `gh api graphql -f query='{repository(owner:"<owner>",name:"<repo>"){issue(number:<blocker>){closedByPullRequestsReferences(first:5,includeClosedPrs:true){nodes{number url merged}}}}}' --jq '.data.repository.issue.closedByPullRequestsReferences.nodes[] | select(.merged)'`, then read it with `gh pr view <pr>` and `gh pr diff <pr>`. `gh pr list --search "Closes #<blocker>" --state merged` also works but is a text search, so it returns PRs that only mention the blocker too.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
