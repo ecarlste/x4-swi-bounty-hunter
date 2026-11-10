@@ -1,4 +1,4 @@
-.PHONY: setup check check-xml check-lua check-xsd check-runner check-tools log-xml hunt-log game-test trials trials-uninstall trial-log help
+.PHONY: setup check check-linux check-xml check-lua check-xsd check-runner check-tools log-xml hunt-log game-test trials trials-uninstall trial-log help
 
 # Runs Windows PowerShell through WSL interop; override to run it another way
 POWERSHELL ?= powershell.exe -NoProfile -ExecutionPolicy Bypass -File
@@ -9,6 +9,7 @@ help:
 	@echo "Available commands:"
 	@echo "  make setup       - npm install, create test.config, and turn on the git hooks in .githooks"
 	@echo "  make check       - Offline checks, no game: XML, test list, macro/faction/ware ids, Lua, 8.00 XSDs, runner, TypeScript tools"
+	@echo "  make check-linux - The part of make check CI runs: XML, test list, Lua, TypeScript tools (ids skip without test.config)"
 	@echo "  make log-xml     - Regenerate extension/swibh/md/swibh_log.xml from the log schema (tools/log/schema.ts)"
 	@echo "  make hunt-log LOG=<debuglog.txt> - Add a play session's hunts to data/hunts.csv, rebuild data/hunts-summary.md"
 	@echo "  make game-test   - Install the test extension, run the in-game tests in X4 8.00 + SWI, remove it (Windows)"
@@ -33,7 +34,10 @@ setup:
 		echo "Please edit test.config with your X4 8.00 path and test profile id"; \
 	fi
 
-check: check-xml check-lua check-xsd check-runner check-tools
+check: check-linux check-xsd check-runner
+
+# The checks with no Windows side; CI (.github/workflows/check.yml) runs this target
+check-linux: check-xml check-lua check-tools
 
 # Well-formed XML, test list, every macro, faction, ware and loadout named exists in 8.00 or SWI, and MD diff sels match.
 # Needs npm install (make setup)

@@ -10,8 +10,9 @@ import { fileURLToPath } from "node:url";
 const CODE = new Set([".ts", ".ps1", ".lua", ".xml", ".sh"]);
 // Not code: docs, config, data and images
 const NOT_CODE = new Set([".md", ".json", ".png", ".webp", ".csv", ".txt", ".cat", ".dat", ".example", ".gitignore", ".worktreeinclude"]);
-// Make and git-hook glue, which have no extension
-const GLUE = (path: string) => basename(path) === "Makefile" || path.startsWith(".githooks/");
+// Glue: Make and the git hooks (no extension), and GitHub Actions workflows (YAML only there)
+const GLUE = (path: string) =>
+  basename(path) === "Makefile" || path.startsWith(".githooks/") || (path.startsWith(".github/workflows/") && extname(path) === ".yml");
 
 export const allowed = (path: string): boolean => {
   if (path.startsWith("research/") || GLUE(path)) return true;
@@ -20,9 +21,9 @@ export const allowed = (path: string): boolean => {
 };
 
 test("the allowlist takes the ADR's languages and turns away others", () => {
-  for (const path of ["tools/a.ts", "tools/x.ps1", "tests/game/x/ui/a.lua", "extension/swibh/md/a.xml", "Makefile", ".githooks/pre-commit", "README.md", "research/old.py"])
+  for (const path of ["tools/a.ts", "tools/x.ps1", "tests/game/x/ui/a.lua", "extension/swibh/md/a.xml", "Makefile", ".githooks/pre-commit", ".github/workflows/check.yml", "README.md", "research/old.py"])
     assert.ok(allowed(path), path);
-  for (const path of ["tools/check.py", "tools/a.js", "tools/a.awk", "scripts/build.rb", "tools/no-extension"])
+  for (const path of ["tools/check.py", "tools/a.js", "tools/a.awk", "tools/config.yml", ".github/workflows/check.py", "scripts/build.rb", "tools/no-extension"])
     assert.ok(!allowed(path), path);
 });
 

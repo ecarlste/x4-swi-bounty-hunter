@@ -71,6 +71,8 @@ Close X4 first. A run takes as long as X4 takes to load SWI plus a few seconds o
 
 `make check` needs the unpacked vanilla 8.00 game files (`X4_UNPACKED`, the folder with `libraries\md.xsd`) and SWI's unpacked reference (`SWI_UNPACKED`). XSD validation uses the .NET validator in Windows PowerShell. The TypeScript check (`make check-tools`: `tsc` and `node --test` on `tools/**/*.test.ts`) needs `npm install` once (`make setup` runs it).
 
+`make check-linux` is the part with no Windows side: the XML checks, the Lua parse and the TypeScript tools. Without test.config or the unpacked game files, the macro, id and MD-diff checks skip with a note. CI (`.github/workflows/check.yml`) runs it on every PR and push to main; the XSD and runner checks stay local.
+
 ## Playtest logbook extractor
 
 After a playtest, `tools/playtest-log.ts` reads the end save's logbook and prints the money and relation columns of the results sheet in `playtests/stock-bounty-loop.md` as markdown:
