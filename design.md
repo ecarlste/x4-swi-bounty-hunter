@@ -73,4 +73,4 @@ Every feature is proven by automated tests in `make game-test` as it's built. Pl
 
 - **Extension source:** `extension/swibh/`. `make install` copies it into the 8.00 install's `extensions/` folder, refuses while X4 is running, and every install gets a row in [mods.md](mods.md).
 - **Scripts in TypeScript:** run with Node 26's built-in TypeScript support (`node tools/<name>.ts`). `typescript` is a dev dependency, used for a type check in `make check`.
-- **Existing tools:** `tools/check_game_tests.py` stays in Python until its next real change, then gets ported to TypeScript.
+- **Languages:** TypeScript first, PowerShell only for the Windows side, and no other language without a reason ([ADR 0003](docs/adr/0003-typescript-first-fewest-languages.md)). `tools/check_game_tests.py` is being ported to TypeScript.
