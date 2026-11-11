@@ -1,7 +1,8 @@
 # Coding standards: `tools/`
 
 Judgement calls for the TypeScript under `tools/`. Anything mechanical belongs in a check in
-`make check`, not here. For how the tooling fits together see [design.md](design.md)
+`make check`, not here. The rules below marked "Tested" are checked by `tools/standards.test.ts`
+and stay here only to say why. For how the tooling fits together see [design.md](design.md)
 "Repo and tooling"; for decisions see [docs/adr/](docs/adr/).
 
 Out of scope: the X4 XML, Lua and PowerShell sides.
@@ -16,9 +17,13 @@ TypeScript first, PowerShell only for the Windows side: see
 These rules cover every script a person or `make` runs, including ones inside a module folder,
 like `tools/log/generate.ts`.
 
-- Read arguments with `parseArgs` from `node:util`. Don't parse `process.argv` by hand.
+- Read arguments with `parseArgs` from `node:util`; a file that's both a module and a CLI uses
+  `import.meta.main` to tell when it's run. Tested: no `.ts` file under `tools/` reads
+  `process.argv`.
 - On bad arguments, print a usage line to stderr and exit 2. That includes the error
   `parseArgs` throws for an unknown option (catch it, as `tools/offline-check.ts` does).
+  Tested: every CLI (a non-test file that uses `parseArgs`) exits 2 with `Usage:` on stderr
+  for `--no-such-option`.
 - Keep logic in modules under `tools/<name>/`. The CLI file is thin glue: read arguments,
   call the modules, print, set the exit code.
 
@@ -36,8 +41,7 @@ A path from `test.config` or the command line goes through `fromWindows`
 
 ## Dependencies
 
-- devDependencies use `^` ranges in `package.json`; `package-lock.json` does the pinning.
-  npm only changes locked versions when `package.json` changes, and CI's `npm ci` installs
-  exactly the locked versions. On a 0.x version `^` is narrow: `^0.9.12` stays in 0.9.x and
-  `^0.0.36` allows only 0.0.36.
-- Commit `package-lock.json` with any change to `package.json`.
+- devDependencies use `^` ranges in `package.json` (tested); `package-lock.json` does the
+  pinning. npm only changes locked versions when `package.json` changes, and CI's `npm ci`
+  installs exactly the locked versions, and fails when the two disagree (so CI checks they match). On a 0.x version `^` is
+  narrow: `^0.9.12` stays in 0.9.x and `^0.0.36` allows only 0.0.36.

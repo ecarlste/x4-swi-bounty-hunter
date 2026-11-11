@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { readPlaytestLog } from "./logbook.ts";
 
-const fixture = new URL("../fixtures/save_007-logbook.xml", import.meta.url);
+const fixture = new URL("./fixtures/save_007-logbook.xml", import.meta.url);
 const save007Lines = () => readFileSync(fixture, "utf8").split("\n");
 
 test("a successful hunt in save_007 gives the AEL-112 row", async () => {

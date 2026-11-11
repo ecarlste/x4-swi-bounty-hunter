@@ -9,20 +9,25 @@ import { parseArgs } from "node:util";
 import { createGunzip } from "node:zlib";
 import { readPlaytestLog } from "./playtest-log/logbook.ts";
 import { renderMarkdown } from "./playtest-log/markdown.ts";
+import { fromWindows } from "./wsl-path.ts";
 
 const usage = "Usage: node tools/playtest-log.ts <save.xml.gz> [--since <game time>]";
 
-const { positionals, values } = parseArgs({
-  allowPositionals: true,
-  options: { since: { type: "string" } },
-});
+let parsed;
+try {
+  parsed = parseArgs({ allowPositionals: true, options: { since: { type: "string" } } });
+} catch (e) {
+  console.error(`${(e as Error).message}\n${usage}`);
+  process.exit(2);
+}
+const { positionals, values } = parsed;
 const since = values.since === undefined ? undefined : Number(values.since);
 if (positionals.length !== 1 || Number.isNaN(since)) {
   console.error(usage);
   process.exit(2);
 }
 
-const [savePath] = positionals;
+const savePath = fromWindows(positionals[0]);
 const file = createReadStream(savePath);
 const input = savePath.endsWith(".gz") ? file.pipe(createGunzip()) : file;
 const lines = createInterface({ input, crlfDelay: Infinity });
