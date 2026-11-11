@@ -93,10 +93,10 @@ It prints four sections:
 
 What it reads, and what it can't:
 
-- A hunt's ending comes from EM's debrief text (`Mission_Hunt_GetMissionTexts` in SWI's `ext/md/kuertee_emergent_missions.xml`): a payout is success; "You failed to find/confirm/damage …" or "… is still operational" with "Total reward: 0.00 Cr." is failure; "Mission aborted." is abort. EM writes no logbook entry when a hunt is aborted and cleaned up, so an abort may not show at all: note aborts by hand.
+- A hunt's ending comes from EM's debrief text (`Mission_Hunt_GetMissionTexts` in SWI's `ext02/md/kuertee_emergent_missions.xml`; `ext/md/` in 0.90): a payout is success; "You failed to find/confirm/damage …" or "… is still operational" with "Total reward: 0.00 Cr." is failure; "Mission aborted." is abort. EM writes no logbook entry when a hunt is aborted and cleaned up, so an abort may not show at all: note aborts by hand.
 - The offering faction is the faction of the "Reputation gained/lost" entry written at the same game time as the hunt's entry; the hunt entry itself has none.
 - Not in the logbook, so still by hand: board offers, L/XL offers, the real-time split, sanctions, and the ticker's "Payment received" lines (loot sales).
-- The faction names are SWI 0.90's (`tools/playtest-log/logbook.ts`); an unknown text id prints as is.
+- The faction names are SWI's page 999840 (`tools/playtest-log/logbook.ts`), the same in 0.90 and 0.91 HF1 (checked 2026-11-10 against `ext02/t/0001.xml`); an unknown text id prints as is.
 
 Tests: `tools/playtest-log/*.test.ts`, against `tools/fixtures/save_007-logbook.xml`, a cut of save_007 ("Bankrupt Bounty Hunter Test 1") with the logbook and a few lines either side.
 
