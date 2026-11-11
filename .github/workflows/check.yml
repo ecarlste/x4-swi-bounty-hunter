@@ -1,0 +1,25 @@
+# `make check-linux` on every PR and push to main. Glue only (ADR 0003): the step list lives in
+# the Makefile; what it covers and skips is in tests/game/README.md.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The tools run .ts directly, which needs Node's native type stripping (Node 26 locally)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends lua5.1
+      - run: npm ci --no-fund --no-audit
+      - run: make check-linux
