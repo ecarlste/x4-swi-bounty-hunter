@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkDeps } from "./check-deps.ts";
+import { checkDeps } from "./deps.ts";
 
 const writeJson = (path: string, value: unknown) => {
   mkdirSync(join(path, ".."), { recursive: true });

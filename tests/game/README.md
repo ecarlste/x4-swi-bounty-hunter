@@ -60,7 +60,7 @@ By hand instead: launch `X4_nonsteam.exe -personalfolderid 90000201` once, quit,
 ## Running
 
 ```
-make check                               # offline: XML, test list, ids, Lua, 8.00 XSDs, runner, TypeScript tools (no game)
+make check                               # offline: node_modules vs the lock, XML, test list, ids, Lua, 8.00 XSDs, runner, TypeScript tools (no game)
 make game-test                           # or: .\tools\run-game-tests.ps1 (PowerShell)
 make game-test ARGS="-KeepExtension"     # leave the extension installed, e.g. to start swibh_test by hand
 ```
@@ -71,7 +71,7 @@ Close X4 first. A run takes as long as X4 takes to load SWI plus a few seconds o
 
 `make check` needs the unpacked vanilla 8.00 game files (`X4_UNPACKED`, the folder with `libraries\md.xsd`) and SWI's unpacked reference (`SWI_UNPACKED`). XSD validation uses the .NET validator in Windows PowerShell. The TypeScript check (`make check-tools`: `tsc` and `node --test` on `tools/**/*.test.ts`) needs `npm install` once (`make setup` runs it).
 
-`make check-linux` is the part with no Windows side: the XML checks, the Lua parse and the TypeScript tools. Without test.config or the unpacked game files, the macro, id and MD-diff checks skip with a note. CI (`.github/workflows/check.yml`) runs it on every PR and push to main; the XSD and runner checks stay local.
+`make check-linux` is the part with no Windows side: the dependency check (`make check-deps`: `node_modules` matches `package-lock.json`, runs first), the XML checks, the Lua parse and the TypeScript tools. Without test.config or the unpacked game files, the macro, id and MD-diff checks skip with a note. CI (`.github/workflows/check.yml`) runs it on every PR and push to main; the XSD and runner checks stay local.
 
 ## Playtest logbook extractor
 
