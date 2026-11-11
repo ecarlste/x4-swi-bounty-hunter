@@ -25,7 +25,8 @@ session works in the main checkout. Its working tree belongs to nobody, and main
   commits and merge commits on main.
 - **In the worktree:** `test.config` is copied in (`.worktreeinclude`), and Node finds the main
   checkout's `node_modules`, so `make check` works as long as those match `package-lock.json`
-  (`make check-deps` runs first and says when they don't).
+  (`make check-deps` runs first and says when they don't). Run each git command as its own
+  Bash call. A worktree session refuses a chain that includes git (`a && git b`).
 - **Dependencies:** a branch that changes `package.json` runs `npm install` in its own worktree.
   After it merges, run `make setup` in the main checkout.
 - **One issue per session and branch.** Don't edit another session's worktree or branch. If you
