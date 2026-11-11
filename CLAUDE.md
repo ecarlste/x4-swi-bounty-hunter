@@ -33,8 +33,11 @@ session works in the main checkout. Its working tree belongs to nobody, and main
 - **PRs:** every change reaches main through a PR. Write the body with `/mattpocock-skills:pr`
   and include `Closes #<issue>`. Rebase on origin/main first. Push and open the PR when the user
   asks.
-- **After the merge:** update the main checkout with `git pull --ff-only`, then remove the
-  worktree (`ExitWorktree`).
+- **After the merge:** squash merges leave the branch's commits off main, so in the worktree run
+  `git fetch origin` and confirm `git status` is clean and `git diff HEAD <squash>` is empty, where
+  `<squash>` is `gh pr view --json mergeCommit -q .mergeCommit.oid`. Then `ExitWorktree` with
+  `action: "remove", discard_changes: true`, and `git pull --ff-only` in the main checkout.
+  Otherwise keep the worktree and ask.
 - **Shared files:** HANDOFF.md and test-plan.md are edited by many issues. Keep those edits
   small, and expect to rebase.
 - **The game is shared:** one `make game-test` or `make install` at a time. The runner refuses
