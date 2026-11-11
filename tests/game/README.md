@@ -98,7 +98,7 @@ What it reads, and what it can't:
 - Not in the logbook, so still by hand: board offers, L/XL offers, the real-time split, sanctions, and the ticker's "Payment received" lines (loot sales).
 - The faction names are SWI's page 999840 (`tools/playtest-log/logbook.ts`), the same in 0.90 and 0.91 HF1 (checked 2026-11-10 against `ext02/t/0001.xml`); an unknown text id prints as is.
 
-Tests: `tools/playtest-log/*.test.ts`, against `tools/fixtures/save_007-logbook.xml`, a cut of save_007 ("Bankrupt Bounty Hunter Test 1") with the logbook and a few lines either side.
+Tests: `tools/playtest-log/*.test.ts`, against `tools/playtest-log/fixtures/save_007-logbook.xml`, a cut of save_007 ("Bankrupt Bounty Hunter Test 1") with the logbook and a few lines either side.
 
 ## Hunt log (`make hunt-log`)
 

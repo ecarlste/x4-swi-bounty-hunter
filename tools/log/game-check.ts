@@ -4,7 +4,8 @@
 // CLI also runs the hunt_log test's check (#19, game-check-hunt.ts).
 // Usage: node tools/log/game-check.ts <debuglog.txt>; prints each problem and exits 1 if any.
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
+import { fromWindows } from "../wsl-path.ts";
 import { checkHuntLogTest } from "./game-check-hunt.ts";
 import { readLog } from "./parse.ts";
 import type { LogEventOf } from "./schema.ts";
@@ -55,12 +56,20 @@ export async function checkEngagementTest(lines: string[]): Promise<string[]> {
   return problems;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const path = process.argv[2];
-  if (!path) {
-    console.error("usage: node tools/log/game-check.ts <debuglog.txt>");
+if (import.meta.main) {
+  const usage = "Usage: node tools/log/game-check.ts <debuglog.txt>";
+  let positionals;
+  try {
+    ({ positionals } = parseArgs({ allowPositionals: true, options: {} }));
+  } catch (e) {
+    console.error(`${(e as Error).message}\n${usage}`);
     process.exit(2);
   }
+  if (positionals.length !== 1) {
+    console.error(usage);
+    process.exit(2);
+  }
+  const path = fromWindows(positionals[0]);
   const lines = (await readFile(path, "utf8")).split(/\r?\n/);
   const engagement = await checkEngagementTest(lines);
   for (const problem of engagement) console.log(`  FAIL engagement log: ${problem}`);

@@ -13,10 +13,14 @@ import { fromWindows } from "./wsl-path.ts";
 
 const usage = "Usage: node tools/hunt-log.ts <debuglog.txt> [--data <folder>]";
 
-const { positionals, values } = parseArgs({
-  allowPositionals: true,
-  options: { data: { type: "string" } },
-});
+let parsed;
+try {
+  parsed = parseArgs({ allowPositionals: true, options: { data: { type: "string" } } });
+} catch (e) {
+  console.error(`${(e as Error).message}\n${usage}`);
+  process.exit(2);
+}
+const { positionals, values } = parsed;
 if (positionals.length !== 1) {
   console.error(usage);
   process.exit(2);
@@ -25,7 +29,7 @@ if (positionals.length !== 1) {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 const logPath = fromWindows(positionals[0]);
-const dataDir = values.data ?? fileURLToPath(new URL("../data", import.meta.url));
+const dataDir = values.data !== undefined ? fromWindows(values.data) : fileURLToPath(new URL("../data", import.meta.url));
 mkdirSync(dataDir, { recursive: true });
 
 const file = createReadStream(logPath);

@@ -7,9 +7,17 @@ import { resultsTable } from "./trial-log/table.ts";
 import { readTrials } from "./trial-log/trials.ts";
 import { fromWindows } from "./wsl-path.ts";
 
-const { positionals } = parseArgs({ allowPositionals: true, options: {} });
+const usage = "Usage: node tools/trial-log.ts <debuglog.txt>";
+
+let positionals;
+try {
+  ({ positionals } = parseArgs({ allowPositionals: true, options: {} }));
+} catch (e) {
+  console.error(`${(e as Error).message}\n${usage}`);
+  process.exit(2);
+}
 if (positionals.length !== 1) {
-  console.error("Usage: node tools/trial-log.ts <debuglog.txt>");
+  console.error(usage);
   process.exit(2);
 }
 

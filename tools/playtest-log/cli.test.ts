@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 
 const cli = fileURLToPath(new URL("../playtest-log.ts", import.meta.url));
-const fixture = new URL("../fixtures/save_007-logbook.xml", import.meta.url);
+const fixture = new URL("./fixtures/save_007-logbook.xml", import.meta.url);
 
 test("the CLI prints save_007's AEL-112 hunt as markdown from a gzipped save", () => {
   const save = join(mkdtempSync(join(tmpdir(), "playtest-log-")), "save_007.xml.gz");
